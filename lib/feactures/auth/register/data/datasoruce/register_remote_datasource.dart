@@ -4,7 +4,7 @@ import '../../../../../shared/error/app_error.dart';
 import '../../domain/entitie/user_entity.dart';
 
 class RegisterRemoteDatasource {
-  static const _baseUrl = 'http://10.0.2.2:8080/api';
+  static const _baseUrl = 'http://localhost:8080/api';
 
   Future<UserEntity> register({
     required String name,

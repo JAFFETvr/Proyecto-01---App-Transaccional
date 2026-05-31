@@ -5,7 +5,7 @@ import '../../../../../shared/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 
 class ToolRemoteDatasource {
-  static const _baseUrl = 'http://10.0.2.2:8080/api';
+  static const _baseUrl = 'http://localhost:8080/api';
 
   // Lee el JWT guardado y lo pone en el header
   Future<Map<String, String>> get _authHeaders async {
