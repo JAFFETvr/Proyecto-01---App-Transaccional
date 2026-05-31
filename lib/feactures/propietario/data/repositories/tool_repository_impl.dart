@@ -1,13 +1,28 @@
-import '../../../propietario/domain/entitie/tool.dart';
-import '../../../propietario/data/datasoruce/tool_remote_data_source.dart';
+import '../../domain/entitie/tool_entity.dart';
+import '../../domain/repositories/tool_repository.dart';
+import '../datasoruce/tool_remote_datasource.dart';
 
-class ToolRepositoryImpl {
-  final ToolRemoteDataSourceImpl remoteDataSource;
+class ToolRepositoryImpl implements ToolRepository {
+  final ToolRemoteDatasource _datasource;
+  const ToolRepositoryImpl(this._datasource);
 
-  ToolRepositoryImpl({required this.remoteDataSource});
+  @override Future<List<ToolEntity>> getTools() =>
+      _datasource.getTools();
 
-  Future<List<Tool>> getTools(String token) => remoteDataSource.getTools(token);
-  Future<void> createTool(String token, Map<String, dynamic> data) => remoteDataSource.createTool(token, data);
-  Future<void> updateTool(String token, String id, Map<String, dynamic> data) => remoteDataSource.updateTool(token, id, data);
-  Future<void> deleteTool(String token, String id) => remoteDataSource.deleteTool(token, id);
+  @override Future<ToolEntity> createTool({
+    required String name, required String description,
+    required String category, required bool isAvailable,
+  }) => _datasource.createTool(
+        name: name, description: description,
+        category: category, isAvailable: isAvailable);
+
+  @override Future<ToolEntity> updateTool({
+    required String id, String? name, String? description,
+    String? category, bool? isAvailable,
+  }) => _datasource.updateTool(
+        id: id, name: name, description: description,
+        category: category, isAvailable: isAvailable);
+
+  @override Future<void> deleteTool(String id) =>
+      _datasource.deleteTool(id);
 }

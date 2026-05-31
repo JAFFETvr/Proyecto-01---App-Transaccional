@@ -1,12 +1,9 @@
-import '../entitie/tool.dart';
+import '../entitie/tool_entity.dart';
 import '../repositories/tool_repository.dart';
 
 class GetToolsUseCase {
-  final ToolRepository repository;
+  final ToolRepository _repository;
+  const GetToolsUseCase(this._repository);
 
-  GetToolsUseCase(this.repository);
-
-  Future<List<Tool>> call(String token) {
-    return repository.getTools(token);
-  }
+  Future<List<ToolEntity>> execute() => _repository.getTools();
 }

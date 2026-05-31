@@ -1,11 +1,8 @@
 import '../repositories/tool_repository.dart';
 
 class DeleteToolUseCase {
-  final ToolRepository repository;
+  final ToolRepository _repository;
+  const DeleteToolUseCase(this._repository);
 
-  DeleteToolUseCase(this.repository);
-
-  Future<void> call(String token, String id) {
-    return repository.deleteTool(token, id);
-  }
+  Future<void> execute(String id) => _repository.deleteTool(id);
 }

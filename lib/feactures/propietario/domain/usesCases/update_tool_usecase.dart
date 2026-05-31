@@ -1,11 +1,20 @@
+import '../entitie/tool_entity.dart';
 import '../repositories/tool_repository.dart';
 
 class UpdateToolUseCase {
-  final ToolRepository repository;
+  final ToolRepository _repository;
+  const UpdateToolUseCase(this._repository);
 
-  UpdateToolUseCase(this.repository);
-
-  Future<void> call(String token, String id, Map<String, dynamic> toolData) {
-    return repository.updateTool(token, id, toolData);
+  Future<ToolEntity> execute({
+    required String id,
+    String? name,
+    String? description,
+    String? category,
+    bool? isAvailable,
+  }) {
+    return _repository.updateTool(
+      id: id, name: name, description: description,
+      category: category, isAvailable: isAvailable,
+    );
   }
 }

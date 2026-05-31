@@ -1,12 +1,19 @@
+import '../entitie/tool_entity.dart';
 import '../repositories/tool_repository.dart';
 
 class CreateToolUseCase {
-  final ToolRepository repository;
+  final ToolRepository _repository;
+  const CreateToolUseCase(this._repository);
 
-  CreateToolUseCase(this.repository);
-
-  Future<void> call(String token, Map<String, dynamic> toolData) {
-    // Aquí podrías agregar validaciones de negocio puro antes de ir al repo
-    return repository.createTool(token, toolData);
+  Future<ToolEntity> execute({
+    required String name,
+    required String description,
+    required String category,
+    required bool isAvailable,
+  }) {
+    return _repository.createTool(
+      name: name, description: description,
+      category: category, isAvailable: isAvailable,
+    );
   }
 }
