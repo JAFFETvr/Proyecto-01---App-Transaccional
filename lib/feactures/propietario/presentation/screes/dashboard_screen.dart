@@ -94,40 +94,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: const Icon(Icons.add_rounded),
         label: const Text('Nueva Herramienta'),
       ),
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              expandedHeight: 140,
-              backgroundColor: cs.surface,
-              actions: [
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded),
-                  onPressed: _logout,
-                ),
-              ],
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding: const EdgeInsets.only(left: 20, bottom: 14),
-                title: Text('Mi Panel',
-                    style: tt.titleLarge?.copyWith(color: cs.onSurface)),
-                background: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 52, 20, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Hola, $_userName 👋',
-                          style: tt.bodySmall
-                              ?.copyWith(color: cs.onSurfaceVariant)),
-                      const SizedBox(height: 4),
-                      Text('Gestiona tu inventario',
-                          style: tt.headlineSmall
-                              ?.copyWith(fontWeight: FontWeight.w700)),
-                    ],
-                  ),
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            title: Text('Mi Panel',
+                style: tt.titleLarge?.copyWith(color: cs.onSurface)),
+            backgroundColor: cs.surface,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                onPressed: _logout,
+              ),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Hola, $_userName 👋',
+                      style: tt.bodySmall
+                          ?.copyWith(color: cs.onSurfaceVariant)),
+                  const SizedBox(height: 4),
+                  Text('Gestiona tu inventario',
+                      style: tt.headlineSmall
+                          ?.copyWith(fontWeight: FontWeight.w700)),
+                ],
               ),
             ),
+          ),
 
             SliverToBoxAdapter(
               child: Padding(
@@ -193,26 +190,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               )
             else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (ctx, i) => ToolListItem(
-                      tool: provider.tools[i],
-                      onEdit: () => Navigator.push(ctx,
-                          MaterialPageRoute(
-                              builder: (_) => ToolFormScreen(
-                                  tool: provider.tools[i]))),
-                      onDelete: () => _confirmDelete(
-                          provider.tools[i].id, provider.tools[i].name),
+              SliverSafeArea(
+                top: false,
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (ctx, i) => ToolListItem(
+                        tool: provider.tools[i],
+                        onEdit: () => Navigator.push(ctx,
+                            MaterialPageRoute(
+                                builder: (_) => ToolFormScreen(
+                                    tool: provider.tools[i]))),
+                        onDelete: () => _confirmDelete(
+                            provider.tools[i].id, provider.tools[i].name),
+                      ),
+                      childCount: provider.tools.length,
                     ),
-                    childCount: provider.tools.length,
                   ),
                 ),
               ),
           ],
         ),
-      ),
     );
   }
 }

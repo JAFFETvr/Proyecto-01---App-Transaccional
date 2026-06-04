@@ -102,65 +102,58 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
     return Scaffold(
       backgroundColor: cs.surfaceContainerLowest,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              floating: true,
-              expandedHeight: 130,
-              backgroundColor: cs.surface,
-              actions: [
-                FilterChip(
-                  label: const Text('Disponibles'),
-                  selected: provider.onlyAvailable,
-                  onSelected: (v) =>
-                      context.read<CatalogProvider>().setOnlyAvailable(v),
-                  showCheckmark: false,
-                ),
-                const SizedBox(width: 4),
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded),
-                  onPressed: _logout,
-                ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            backgroundColor: cs.surface,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Catálogo',
+                    style: tt.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w800, color: cs.onSurface)),
+                Text('${provider.totalCount} herramientas',
+                    style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
               ],
-              flexibleSpace: FlexibleSpaceBar(
-                titlePadding:
-                    const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                title: SearchBar(
+            ),
+            actions: [
+              FilterChip(
+                label: const Text('Disponibles'),
+                selected: provider.onlyAvailable,
+                onSelected: (v) =>
+                    context.read<CatalogProvider>().setOnlyAvailable(v),
+                showCheckmark: false,
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: const Icon(Icons.logout_rounded),
+                onPressed: _logout,
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(68),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                child: SearchBar(
                   hintText: 'Buscar herramientas…',
-                  leading: Icon(Icons.search,
-                      color: cs.onSurfaceVariant),
+                  leading: Icon(Icons.search, color: cs.onSurfaceVariant),
                   onChanged: (v) =>
                       context.read<CatalogProvider>().setSearch(v),
                   elevation: const WidgetStatePropertyAll(0),
                   backgroundColor: WidgetStatePropertyAll(
-                      cs.surfaceContainerHighest.withOpacity(0.7)),
+                      cs.surfaceContainerHighest),
                   shape: WidgetStatePropertyAll(
                       RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12))),
                   padding: const WidgetStatePropertyAll(
                       EdgeInsets.symmetric(horizontal: 12)),
-                  constraints:
-                      const BoxConstraints(maxHeight: 44),
-                ),
-                background: Padding(
-                  padding:
-                      const EdgeInsets.fromLTRB(16, 52, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Catálogo',
-                          style: tt.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.w800)),
-                      Text('${provider.totalCount} herramientas',
-                          style: tt.bodySmall?.copyWith(
-                              color: cs.onSurfaceVariant)),
-                    ],
-                  ),
+                  constraints: const BoxConstraints(maxHeight: 44),
                 ),
               ),
             ),
+          ),
 
             SliverToBoxAdapter(
               child: SizedBox(
@@ -239,28 +232,30 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 ),
               )
             else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                sliver: SliverGrid(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 14,
-                    crossAxisSpacing: 14,
-                    childAspectRatio: 0.72,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (_, i) => ToolCard(
-                      tool: tools[i],
-                      onTap: () => _showDetail(context, tools[i]),
+              SliverSafeArea(
+                top: false,
+                sliver: SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 14,
+                      crossAxisSpacing: 14,
+                      childAspectRatio: 0.72,
                     ),
-                    childCount: tools.length,
+                    delegate: SliverChildBuilderDelegate(
+                      (_, i) => ToolCard(
+                        tool: tools[i],
+                        onTap: () => _showDetail(context, tools[i]),
+                      ),
+                      childCount: tools.length,
+                    ),
                   ),
                 ),
               ),
           ],
         ),
-      ),
     );
   }
 }
