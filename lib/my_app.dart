@@ -1,79 +1,103 @@
-//cuando son nos palabras para nombrar el archivo se recomienda usar guion bajo
-
 import 'package:flutter/material.dart';
+import 'package:device_preview/device_preview.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import 'shared/theme/util.dart';
 import 'shared/theme/theme.dart';
 
+import './feactures/auth/login/presentation/providers/login_provider.dart';
+import './feactures/auth/register/presentation/providers/register_provider.dart';
+import './feactures/propietario/presentation/providers/tool_provider.dart';
+import './feactures/solicitante/presentation/providers/catalog_provider.dart';
+
+import './feactures/auth/login/data/di/login_di.dart';
+import './feactures/auth/register/data/di/register_di.dart';
+import './feactures/propietario/data/di/propietario_di.dart';
+import './feactures/solicitante/data/di/solicitante_di.dart';
+
+import './feactures/auth/login/presentation/screes/login_screen.dart';
+import './feactures/auth/register/presentation/screes/register_screen.dart';
+import './feactures/propietario/presentation/screes/dashboard_screen.dart';
+import './feactures/solicitante/presentation/screes/catalog_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-        TextTheme textTheme = createTextTheme(context, "Macondo Swash Caps", "Roboto");
-        MaterialTheme theme = MaterialTheme(textTheme);
+  Future<Widget> _resolveHome() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwt_token');
+    final role  = prefs.getString('user_role') ?? '';
 
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: theme.light(),
-      darkTheme: theme.dark(),
-      themeMode: ThemeMode.system,
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-//staful si o si nesecita un estado mientras que un stateless no lo nesecita
-
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
- 
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-     
-      _counter++;
-    });
+    if (token == null) return const LoginScreen();
+    if (role == 'owner') return const DashboardScreen();
+    return const CatalogScreen();
   }
 
   @override
   Widget build(BuildContext context) {
-    
-    return Scaffold(
-      appBar: AppBar(
-     
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      
-        title: Text(widget.title),
-      ),
-      body: Center(
-   
-        child: Column(
-       
-          mainAxisAlignment: .center,
-          children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+    TextTheme textTheme = createTextTheme(context, "Macondo Swash Caps", "Roboto");
+    MaterialTheme theme = MaterialTheme(textTheme);
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<LoginProvider>(
+          create: (_) => LoginProvider(
+            loginUseCase: LoginDI.provideLoginUseCase(),
+          ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
+
+        ChangeNotifierProvider<RegisterProvider>(
+          create: (_) => RegisterProvider(
+            registerUseCase: RegisterDI.provideRegisterUseCase(),
+          ),
+        ),
+
+        ChangeNotifierProvider<ToolProvider>(
+          create: (_) => ToolProvider(
+            getTools:   PropietarioDI.provideGetTools(),
+            createTool: PropietarioDI.provideCreateTool(),
+            updateTool: PropietarioDI.provideUpdateTool(),
+            deleteTool: PropietarioDI.provideDeleteTool(),
+          ),
+        ),
+
+        ChangeNotifierProvider<CatalogProvider>(
+          create: (_) => CatalogProvider(
+            getCatalog: SolicitanteDI.provideGetCatalog(),
+          ),
+        ),
+      ],
+
+      child: MaterialApp(
+        title: 'ToolShare', 
+        debugShowCheckedModeBanner: false,
+        
+        locale: DevicePreview.locale(context),
+        builder: DevicePreview.appBuilder,
+        
+        theme: theme.light(),
+        darkTheme: theme.dark(),
+        themeMode: ThemeMode.system,
+        
+        home: FutureBuilder<Widget>(
+          future: _resolveHome(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            return snapshot.data ?? const LoginScreen();
+          },
+        ),
+        
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/propietario': (context) => const DashboardScreen(),
+          '/solicitante': (context) => const CatalogScreen(),
+        },
       ),
     );
   }
