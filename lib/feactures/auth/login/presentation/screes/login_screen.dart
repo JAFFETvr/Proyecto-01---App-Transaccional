@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
-import '../viewModels/login_viewmodel.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/login_provider.dart';
 import '../components/login_form.dart';
+
 import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
 import '../../../register/presentation/screes/register_screen.dart';
@@ -13,22 +16,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _vm = LoginViewModel();
-
-  @override
-  void dispose() {
-    _vm.dispose();
-    super.dispose();
-  }
 
   Future<void> _handleLogin(String email, String password) async {
-    await _vm.login(email: email, password: password);
+    await context.read<LoginProvider>().login(
+      email: email,
+      password: password,
+    );
 
     if (!mounted) return;
-    if (_vm.user == null) return; // hubo error, el form lo muestra
 
-    // Navegar sin posibilidad de volver al Login
-    final dest = _vm.user!.isOwner
+    final provider = context.read<LoginProvider>();
+    if (provider.user == null) return;
+
+    final dest = provider.user!.isOwner
         ? const DashboardScreen()
         : const CatalogScreen();
 
@@ -43,6 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    final provider = context.watch<LoginProvider>();
+
     return Scaffold(
       backgroundColor: cs.surface,
       body: SafeArea(
@@ -50,47 +52,43 @@ class _LoginScreenState extends State<LoginScreen> {
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(
                 horizontal: 28, vertical: 40),
-            child: AnimatedBuilder(
-              animation: _vm,
-              builder: (context, _) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Logo
-                  Center(
-                    child: Container(
-                      width: 72, height: 72,
-                      decoration: BoxDecoration(
-                        color: cs.primaryContainer,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Icon(Icons.construction_rounded,
-                          color: cs.onPrimaryContainer, size: 38),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 72, height: 72,
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: BorderRadius.circular(20),
                     ),
+                    child: Icon(Icons.construction_rounded,
+                        color: cs.onPrimaryContainer, size: 38),
                   ),
-                  const SizedBox(height: 28),
-                  Text('Bienvenido', style: tt.headlineLarge),
-                  const SizedBox(height: 6),
-                  Text('Inicia sesión para continuar',
-                      style: tt.bodyMedium
-                          ?.copyWith(color: cs.onSurfaceVariant)),
-                  const SizedBox(height: 32),
+                ),
+                const SizedBox(height: 28),
+                Text('Bienvenido', style: tt.headlineLarge),
+                const SizedBox(height: 6),
+                Text('Inicia sesión para continuar',
+                    style: tt.bodyMedium
+                        ?.copyWith(color: cs.onSurfaceVariant)),
+                const SizedBox(height: 32),
 
-                  LoginForm(
-                    onSubmit: _handleLogin,
-                    isLoading: _vm.loading,
-                    errorMessage: _vm.errorMessage,
-                  ),
+                LoginForm(
+                  onSubmit: _handleLogin,
+                  isLoading: provider.loading,
+                  errorMessage: provider.errorMessage,
+                ),
 
-                  const SizedBox(height: 16),
-                  OutlinedButton(
-                    onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const RegisterScreen())),
-                    child: const Text('Crear una cuenta'),
-                  ),
-                ],
-              ),
+                const SizedBox(height: 16),
+                OutlinedButton(
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const RegisterScreen())),
+                  child: const Text('Crear una cuenta'),
+                ),
+              ],
             ),
           ),
         ),

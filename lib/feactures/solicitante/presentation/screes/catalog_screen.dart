@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../viewModels/catalog_viewmodel.dart';
+
+import '../providers/catalog_provider.dart';
+
 import '../components/tool_card.dart';
 import '../../domain/entitie/tool_entity.dart';
+
 import '../../../auth/login/presentation/screes/login_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
@@ -13,16 +17,14 @@ class CatalogScreen extends StatefulWidget {
 }
 
 class _CatalogScreenState extends State<CatalogScreen> {
-  final _vm = CatalogViewModel();
 
   @override
   void initState() {
     super.initState();
-    _vm.fetchTools();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CatalogProvider>().fetchTools();
+    });
   }
-
-  @override
-  void dispose() { _vm.dispose(); super.dispose(); }
 
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
@@ -95,173 +97,168 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    final provider = context.watch<CatalogProvider>();
+    final tools = provider.filtered;
+
     return Scaffold(
       backgroundColor: cs.surfaceContainerLowest,
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _vm,
-          builder: (context, _) {
-            final tools = _vm.filtered;
-
-            return CustomScrollView(
-              slivers: [
-                // SliverAppBar con buscador
-                SliverAppBar(
-                  pinned: true,
-                  floating: true,
-                  expandedHeight: 130,
-                  backgroundColor: cs.surface,
-                  actions: [
-                    FilterChip(
-                      label: const Text('Disponibles'),
-                      selected: _vm.onlyAvailable,
-                      onSelected: _vm.setOnlyAvailable,
-                      showCheckmark: false,
-                    ),
-                    const SizedBox(width: 4),
-                    IconButton(
-                      icon: const Icon(Icons.logout_rounded),
-                      onPressed: _logout,
-                    ),
-                  ],
-                  flexibleSpace: FlexibleSpaceBar(
-                    titlePadding:
-                        const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                    title: SearchBar(
-                      hintText: 'Buscar herramientas…',
-                      leading: Icon(Icons.search,
-                          color: cs.onSurfaceVariant),
-                      onChanged: _vm.setSearch,
-                      elevation: const WidgetStatePropertyAll(0),
-                      backgroundColor: WidgetStatePropertyAll(
-                          cs.surfaceContainerHighest.withOpacity(0.7)),
-                      shape: WidgetStatePropertyAll(
-                          RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12))),
-                      padding: const WidgetStatePropertyAll(
-                          EdgeInsets.symmetric(horizontal: 12)),
-                      constraints:
-                          const BoxConstraints(maxHeight: 44),
-                    ),
-                    background: Padding(
-                      padding:
-                          const EdgeInsets.fromLTRB(16, 52, 16, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Catálogo',
-                              style: tt.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.w800)),
-                          Text('${_vm.totalCount} herramientas',
-                              style: tt.bodySmall?.copyWith(
-                                  color: cs.onSurfaceVariant)),
-                        ],
-                      ),
-                    ),
-                  ),
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              floating: true,
+              expandedHeight: 130,
+              backgroundColor: cs.surface,
+              actions: [
+                FilterChip(
+                  label: const Text('Disponibles'),
+                  selected: provider.onlyAvailable,
+                  onSelected: (v) =>
+                      context.read<CatalogProvider>().setOnlyAvailable(v),
+                  showCheckmark: false,
                 ),
-
-                // Chips de categoría
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: 50,
-                    child: ListView.separated(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _vm.categories.length,
-                      separatorBuilder: (_, __) =>
-                          const SizedBox(width: 8),
-                      itemBuilder: (_, i) {
-                        final cat = _vm.categories[i];
-                        return FilterChip(
-                          label: Text(cat),
-                          selected: _vm.filterCategory == cat,
-                          onSelected: (_) => _vm.setCategory(cat),
-                          showCheckmark: false,
-                        );
-                      },
-                    ),
-                  ),
+                const SizedBox(width: 4),
+                IconButton(
+                  icon: const Icon(Icons.logout_rounded),
+                  onPressed: _logout,
                 ),
-
-                // Contador
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                    child: Text(
-                      _vm.loading
-                          ? 'Cargando…'
-                          : '${tools.length} resultado${tools.length != 1 ? 's' : ''}',
-                      style: tt.bodySmall
-                          ?.copyWith(color: cs.onSurfaceVariant),
-                    ),
-                  ),
-                ),
-
-                // Contenido
-                if (_vm.loading)
-                  const SliverFillRemaining(
-                      child: Center(child: CircularProgressIndicator()))
-                else if (_vm.error != null)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.wifi_off_rounded, size: 48,
-                              color: cs.onSurfaceVariant),
-                          const SizedBox(height: 12),
-                          Text(_vm.error!, style: tt.bodyMedium),
-                          const SizedBox(height: 16),
-                          FilledButton(
-                            onPressed: _vm.fetchTools,
-                            style: FilledButton.styleFrom(
-                                minimumSize: const Size(140, 44)),
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                else if (tools.isEmpty)
-                  SliverFillRemaining(
-                    child: Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.search_off_rounded, size: 56,
-                              color: cs.outlineVariant),
-                          const SizedBox(height: 12),
-                          Text('Sin resultados', style: tt.titleMedium),
-                        ],
-                      ),
-                    ),
-                  )
-                else
-                  // GridView con Cards
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 14,
-                        crossAxisSpacing: 14,
-                        childAspectRatio: 0.72,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => ToolCard(
-                          tool: tools[i],
-                          onTap: () => _showDetail(context, tools[i]),
-                        ),
-                        childCount: tools.length,
-                      ),
-                    ),
-                  ),
               ],
-            );
-          },
+              flexibleSpace: FlexibleSpaceBar(
+                titlePadding:
+                    const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                title: SearchBar(
+                  hintText: 'Buscar herramientas…',
+                  leading: Icon(Icons.search,
+                      color: cs.onSurfaceVariant),
+                  onChanged: (v) =>
+                      context.read<CatalogProvider>().setSearch(v),
+                  elevation: const WidgetStatePropertyAll(0),
+                  backgroundColor: WidgetStatePropertyAll(
+                      cs.surfaceContainerHighest.withOpacity(0.7)),
+                  shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12))),
+                  padding: const WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(horizontal: 12)),
+                  constraints:
+                      const BoxConstraints(maxHeight: 44),
+                ),
+                background: Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(16, 52, 16, 0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Catálogo',
+                          style: tt.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.w800)),
+                      Text('${provider.totalCount} herramientas',
+                          style: tt.bodySmall?.copyWith(
+                              color: cs.onSurfaceVariant)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 50,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: provider.categories.length,
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(width: 8),
+                  itemBuilder: (_, i) {
+                    final cat = provider.categories[i];
+                    return FilterChip(
+                      label: Text(cat),
+                      selected: provider.filterCategory == cat,
+                      onSelected: (_) =>
+                          context.read<CatalogProvider>().setCategory(cat),
+                      showCheckmark: false,
+                    );
+                  },
+                ),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: Text(
+                  provider.loading
+                      ? 'Cargando…'
+                      : '${tools.length} resultado${tools.length != 1 ? 's' : ''}',
+                  style: tt.bodySmall
+                      ?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ),
+            ),
+
+            if (provider.loading)
+              const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()))
+            else if (provider.error != null)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.wifi_off_rounded, size: 48,
+                          color: cs.onSurfaceVariant),
+                      const SizedBox(height: 12),
+                      Text(provider.error!, style: tt.bodyMedium),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () =>
+                            context.read<CatalogProvider>().fetchTools(),
+                        style: FilledButton.styleFrom(
+                            minimumSize: const Size(140, 44)),
+                        child: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            else if (tools.isEmpty)
+              SliverFillRemaining(
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.search_off_rounded, size: 56,
+                          color: cs.outlineVariant),
+                      const SizedBox(height: 12),
+                      Text('Sin resultados', style: tt.titleMedium),
+                    ],
+                  ),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 14,
+                    crossAxisSpacing: 14,
+                    childAspectRatio: 0.72,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => ToolCard(
+                      tool: tools[i],
+                      onTap: () => _showDetail(context, tools[i]),
+                    ),
+                    childCount: tools.length,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -6,7 +6,7 @@ import '../../domain/entitie/user_entity.dart';
 // Única clase que sabe hablar con el endpoint real de tu API Go.
 class LoginRemoteDatasource {
   // Emulador Android → 10.0.2.2 | Simulador iOS → localhost
-  static const _baseUrl = 'http://localhost:8080/api';
+  static const _baseUrl = 'http://100.50.210.8:8080/api';
 
   Future<UserEntity> login({
     required String email,
