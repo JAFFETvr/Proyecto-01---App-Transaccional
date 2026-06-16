@@ -1,121 +1,177 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../domain/entitie/tool_entity.dart';
+import '../../../../../shared/theme/app_colors.dart';
 
 class ToolCard extends StatelessWidget {
   final ToolEntity tool;
   final VoidCallback onTap;
+  final String zone;
 
-  const ToolCard({super.key, required this.tool, required this.onTap});
+  const ToolCard({
+    super.key,
+    required this.tool,
+    required this.onTap,
+    this.zone = '~2.3 km',
+  });
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Imagen con Stack de badges
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Fondo
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          cs.secondaryContainer,
-                          cs.primaryContainer.withOpacity(0.5),
-                        ],
-                      ),
-                    ),
-                    child: Icon(Icons.handyman_outlined,
-                        size: 48,
-                        color: cs.primary.withOpacity(0.6)),
-                  ),
-                  // Badge categoría (Stack)
-                  if (tool.category.isNotEmpty)
-                    Positioned(
-                      top: 8, left: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: cs.surface.withOpacity(0.9),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(tool.category,
-                            style: tt.labelSmall?.copyWith(
-                                color: cs.primary,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  // Punto disponibilidad (Stack)
-                  Positioned(
-                    top: 8, right: 8,
-                    child: Container(
-                      width: 12, height: 12,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedScale(
+        scale: 1.0,
+        duration: const Duration(milliseconds: 150),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(16),
+            // Sombra flotante premium
+            boxShadow: AppColors.cardShadow,
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Hero imagen / placeholder ─────────────────────────────────
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Fondo con degradado industrial
+                    Container(
                       decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: tool.isAvailable
-                            ? const Color(0xFF16A34A) : cs.error,
-                        border: Border.all(color: cs.surface, width: 2),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            const Color(0xFF1E293B),
+                            const Color(0xFF334155),
+                          ],
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.handyman_outlined,
+                        size: 52,
+                        color: Colors.white.withOpacity(0.15),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Info
-            Padding(
-              padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(tool.name,
-                      style: tt.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w700),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                    // Overlay inferior para legibilidad
+                    Positioned(
+                      bottom: 0, left: 0, right: 0,
+                      child: Container(
+                        height: 40,
                         decoration: BoxDecoration(
-                          color: tool.isAvailable
-                              ? const Color(0xFF16A34A).withOpacity(0.1)
-                              : cs.errorContainer,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          tool.isAvailable ? 'Disponible' : 'Rentado',
-                          style: tt.labelSmall?.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: tool.isAvailable
-                                ? const Color(0xFF16A34A) : cs.error,
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.35),
+                              Colors.transparent,
+                            ],
                           ),
                         ),
                       ),
-                      Icon(Icons.arrow_forward_ios_rounded,
-                          size: 12, color: cs.onSurfaceVariant),
-                    ],
-                  ),
-                ],
+                    ),
+                    // Badge categoría
+                    if (tool.category.isNotEmpty)
+                      Positioned(
+                        top: 10, left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.92),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            tool.category,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.slate900,
+                            ),
+                          ),
+                        ),
+                      ),
+                    // Indicador disponibilidad
+                    Positioned(
+                      top: 10, right: 10,
+                      child: Container(
+                        width: 10, height: 10,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: tool.isAvailable
+                              ? AppColors.success
+                              : AppColors.danger,
+                          border: Border.all(color: Colors.white, width: 1.5),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+
+              // ── Info ──────────────────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tool.name,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.slate900,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    // Badge estado con fondo desvanecido al 10 %
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: tool.isAvailable
+                            ? AppColors.successBg
+                            : AppColors.dangerBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        tool.isAvailable ? 'Disponible' : 'Rentado',
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: tool.isAvailable
+                              ? AppColors.success
+                              : AppColors.danger,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    // Zona
+                    Row(children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 11, color: AppColors.slate600),
+                      const SizedBox(width: 2),
+                      Flexible(
+                        child: Text(
+                          zone,
+                          style: GoogleFonts.inter(
+                            fontSize: 10,
+                            color: AppColors.slate600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

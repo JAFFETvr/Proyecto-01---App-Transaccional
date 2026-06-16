@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-// Componente puro de UI: sólo renderiza el formulario,
-// las acciones las recibe por callback.
+import '../../../../../../shared/theme/app_colors.dart';
+import '../../../../../../shared/widgets/primary_gradient_button.dart';
+
+/// Componente puro de UI: solo renderiza el formulario,
+/// las acciones las recibe por callback.
 class LoginForm extends StatefulWidget {
   final void Function(String email, String password) onSubmit;
   final bool isLoading;
@@ -38,8 +42,6 @@ class _LoginFormState extends State<LoginForm> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-
     return Form(
       key: _formKey,
       child: Column(
@@ -51,28 +53,45 @@ class _LoginFormState extends State<LoginForm> {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: cs.errorContainer,
+                color: AppColors.dangerBg,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: AppColors.danger.withOpacity(0.3)),
               ),
               child: Row(children: [
-                Icon(Icons.error_outline, color: cs.error, size: 18),
+                const Icon(Icons.error_outline,
+                    color: AppColors.danger, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(widget.errorMessage!,
-                      style: TextStyle(color: cs.error, fontSize: 13)),
+                  child: Text(
+                    widget.errorMessage!,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      color: AppColors.danger,
+                    ),
+                  ),
                 ),
               ]),
             ),
             const SizedBox(height: 16),
           ],
 
-          const Text('Correo electrónico'),
+          // Label correo
+          Text(
+            'Correo electrónico',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate900,
+            ),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _emailCtrl,
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             autocorrect: false,
+            style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900),
             decoration: const InputDecoration(
               hintText: 'correo@ejemplo.com',
               prefixIcon: Icon(Icons.email_outlined),
@@ -85,20 +104,30 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 18),
 
-          const Text('Contraseña'),
+          // Label contraseña
+          Text(
+            'Contraseña',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.slate900,
+            ),
+          ),
           const SizedBox(height: 8),
           TextFormField(
             controller: _passwordCtrl,
             obscureText: _obscure,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _submit(),
+            style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900),
             decoration: InputDecoration(
               hintText: '••••••••',
               prefixIcon: const Icon(Icons.lock_outline),
               suffixIcon: IconButton(
                 icon: Icon(_obscure
                     ? Icons.visibility_outlined
-                    : Icons.visibility_off_outlined),
+                    : Icons.visibility_off_outlined,
+                    color: AppColors.slate600),
                 onPressed: () => setState(() => _obscure = !_obscure),
               ),
             ),
@@ -107,16 +136,15 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 28),
 
-          FilledButton(
-            onPressed: widget.isLoading ? null : _submit,
-            child: widget.isLoading
-                ? SizedBox(
-                    height: 20, width: 20,
-                    child: CircularProgressIndicator(
-                        strokeWidth: 2.5, color: cs.onPrimary),
-                  )
-                : const Text('Iniciar Sesión'),
-          ),
+          // Botón con degradado naranja
+          widget.isLoading
+              ? const PrimaryGradientButtonLoading(height: 52)
+              : PrimaryGradientButton(
+                  label: 'Iniciar Sesión',
+                  icon: Icons.login_rounded,
+                  height: 52,
+                  onPressed: _submit,
+                ),
         ],
       ),
     );

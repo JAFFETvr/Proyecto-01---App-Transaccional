@@ -1,11 +1,15 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../shared/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 
 class ToolRemoteDatasource {
-  static const _baseUrl = 'http://100.50.210.8:8080/api';
+  static String get _baseUrl {
+    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api';
+    return 'http://localhost:8080/api';
+  }
 
   // Lee el JWT guardado y lo pone en el header
   Future<Map<String, String>> get _authHeaders async {
@@ -41,7 +45,7 @@ class ToolRemoteDatasource {
   Future<List<ToolEntity>> getTools() async {
     try {
       final res = await http.get(
-          Uri.parse('$_baseUrl/tools'), headers: _jsonHeaders);
+          Uri.parse('$_baseUrl/tools'), headers: await _authHeaders);
       _throwIfError(res);
       final list = json.decode(utf8.decode(res.bodyBytes)) as List;
       return list.map((e) => _fromJson(e as Map<String, dynamic>)).toList();

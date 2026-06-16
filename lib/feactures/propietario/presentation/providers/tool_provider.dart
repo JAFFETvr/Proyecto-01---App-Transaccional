@@ -25,6 +25,13 @@ class ToolProvider extends ChangeNotifier {
   int get availableCount => _tools.where((t) => t.isAvailable).length;
   int get rentedCount    => _tools.where((t) => !t.isAvailable).length;
 
+  void clearTools() {
+    _tools = [];
+    _error = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   ToolProvider({
     required GetToolsUseCase getTools,
     required CreateToolUseCase createTool,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/login_provider.dart';
@@ -7,6 +8,7 @@ import '../components/login_form.dart';
 import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
 import '../../../register/presentation/screes/register_screen.dart';
+import '../../../../../../shared/theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,53 +42,114 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-
     final provider = context.watch<LoginProvider>();
 
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: AppColors.background,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 28, vertical: 40),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Logo ─────────────────────────────────────────────────
                 Center(
-                  child: Container(
-                    width: 72, height: 72,
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Icon(Icons.construction_rounded,
-                        color: cs.onPrimaryContainer, size: 38),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 76, height: 76,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: AppColors.primaryButtonShadow,
+                        ),
+                        child: const Icon(Icons.construction_rounded,
+                            color: Colors.white, size: 40),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'ToolShare',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.slate900,
+                        ),
+                      ),
+                      Text(
+                        'Economía circular de herramientas',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppColors.slate600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 28),
-                Text('Bienvenido', style: tt.headlineLarge),
-                const SizedBox(height: 6),
-                Text('Inicia sesión para continuar',
-                    style: tt.bodyMedium
-                        ?.copyWith(color: cs.onSurfaceVariant)),
+                const SizedBox(height: 40),
+
+                // ── Títulos ─────────────────────────────────────────────
+                Text(
+                  'Bienvenido',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.slate900,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Inicia sesión para continuar',
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: AppColors.slate600,
+                  ),
+                ),
                 const SizedBox(height: 32),
 
-                LoginForm(
-                  onSubmit: _handleLogin,
-                  isLoading: provider.loading,
-                  errorMessage: provider.errorMessage,
+                // ── Formulario ───────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: LoginForm(
+                    onSubmit: _handleLogin,
+                    isLoading: provider.loading,
+                    errorMessage: provider.errorMessage,
+                  ),
                 ),
-
                 const SizedBox(height: 16),
-                OutlinedButton(
-                  onPressed: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const RegisterScreen())),
-                  child: const Text('Crear una cuenta'),
+
+                // ── Crear cuenta ─────────────────────────────────────────
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const RegisterScreen())),
+                    child: RichText(
+                      text: TextSpan(
+                        text: '¿No tienes cuenta? ',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: AppColors.slate600,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: 'Crear una',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.orange500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),

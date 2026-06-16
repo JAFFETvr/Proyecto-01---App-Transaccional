@@ -20,6 +20,9 @@ import './feactures/auth/login/presentation/screes/login_screen.dart';
 import './feactures/auth/register/presentation/screes/register_screen.dart';
 import './feactures/propietario/presentation/screes/dashboard_screen.dart';
 import './feactures/solicitante/presentation/screes/catalog_screen.dart';
+import './feactures/checkout/presentation/screes/checkout_screen.dart';
+import './feactures/checkout/presentation/screes/rental_tracking_requester_screen.dart';
+import './feactures/checkout/presentation/screes/rental_tracking_owner_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -36,7 +39,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    TextTheme textTheme = createTextTheme(context, "Macondo Swash Caps", "Roboto");
+    TextTheme textTheme = createTextTheme(context, "Inter", "Montserrat");
     MaterialTheme theme = MaterialTheme(textTheme);
 
     return MultiProvider(
@@ -93,10 +96,15 @@ class MyApp extends StatelessWidget {
         ),
         
         routes: {
-          '/login': (context) => const LoginScreen(),
-          '/register': (context) => const RegisterScreen(),
+          '/login':       (context) => const LoginScreen(),
+          '/register':    (context) => const RegisterScreen(),
           '/propietario': (context) => const DashboardScreen(),
           '/solicitante': (context) => const CatalogScreen(),
+          '/checkout':    (context) => const CheckoutScreen(),
+          '/seguimiento-solicitante': (context) =>
+              const RentalTrackingRequesterScreen(),
+          '/seguimiento-propietario': (context) =>
+              const RentalTrackingOwnerScreen(),
         },
       ),
     );
