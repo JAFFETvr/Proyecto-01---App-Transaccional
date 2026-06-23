@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   late final TextEditingController _modelCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _catCtrl;
+  late final TextEditingController _estValCtrl;
 
   bool _isAvailable = true;
   String _wearLevel = 'Nuevo';
@@ -33,8 +35,12 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool _locationLoading = false;
   bool _imageLoading = false;
 
-  final double _suggestedPrice = 350.0;
+  double _suggestedPrice = 100.0;
+  double _minPrice = 50.0;
   late double _finalPrice;
+  bool _fetchingPricing = false;
+  String _pricingDesc = '';
+  Timer? _debounceTimer;
 
   bool get _isEditing => widget.tool != null;
 
@@ -54,8 +60,21 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     _modelCtrl = TextEditingController();
     _descCtrl  = TextEditingController(text: t?.description ?? '');
     _catCtrl   = TextEditingController(text: t?.category ?? '');
+    _estValCtrl = TextEditingController(
+        text: (t != null && t.estimatedValue > 0) ? t.estimatedValue.toStringAsFixed(0) : '');
     _isAvailable = t?.isAvailable ?? true;
-    _finalPrice  = _suggestedPrice;
+
+    if (t != null) {
+      _suggestedPrice = t.dailyRate;
+      _minPrice = t.suggestedMinDailyRate;
+      _finalPrice = t.dailyRate;
+      if (t.latitude != 0.0) {
+        _latitude = t.latitude;
+        _longitude = t.longitude;
+      }
+    } else {
+      _finalPrice = _suggestedPrice;
+    }
   }
 
   @override
@@ -65,7 +84,67 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     _modelCtrl.dispose();
     _descCtrl.dispose();
     _catCtrl.dispose();
+    _estValCtrl.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _onFieldChanged() {
+    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 1000), () {
+      if (mounted) {
+        _updatePricingSuggestion();
+      }
+    });
+  }
+
+  Future<void> _updatePricingSuggestion() async {
+    final name = _nameCtrl.text.trim();
+    if (name.isEmpty) return;
+
+    setState(() => _fetchingPricing = true);
+
+    double score = 0.7;
+    if (_wearLevel == 'Nuevo') {
+      score = 1.0;
+    } else if (_wearLevel == 'Buen Estado') {
+      score = 0.8;
+    } else if (_wearLevel == 'Desgastado') {
+      score = 0.5;
+    }
+
+    try {
+      final res = await context.read<ToolProvider>().autoValuate(
+        name: name,
+        scoreCondicion: score,
+        category: _catCtrl.text.trim(),
+        brand: _brandCtrl.text.trim(),
+      );
+      if (res != null && mounted) {
+        setState(() {
+          final estVal = (res['estimated_value'] as num?)?.toDouble() ?? 0.0;
+          _estValCtrl.text = estVal > 0 ? estVal.toStringAsFixed(0) : '';
+          _suggestedPrice = (res['suggested_daily_rate'] as num?)?.toDouble() ?? 100.0;
+          _minPrice = (res['minimum_daily_rate'] as num?)?.toDouble() ?? 50.0;
+          _pricingDesc = res['description'] as String? ?? '';
+          
+          if (_finalPrice < _minPrice) {
+            _finalPrice = _minPrice;
+          } else {
+            final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
+            if (_finalPrice > maxRateVal) {
+              _finalPrice = maxRateVal;
+            }
+          }
+        });
+      }
+    } catch (_) {
+      // Keep existing values on transient errors
+    } finally {
+      if (mounted) {
+        setState(() => _fetchingPricing = false);
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -78,10 +157,34 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         maxWidth: 1080,
       );
       if (xFile != null) {
-        setState(() => _pickedImage = File(xFile.path));
+        final file = File(xFile.path);
+        setState(() {
+          _pickedImage = file;
+        });
+
+        if (mounted) {
+          final pred = await context.read<ToolProvider>().predictCondition(file);
+          if (pred != null && mounted) {
+            final clase = pred['clase_predicha'] as String?;
+            String mappedLevel = _wearLevel;
+            if (clase == 'nuevo') {
+              mappedLevel = 'Nuevo';
+            } else if (clase == 'uso_moderado') {
+              mappedLevel = 'Buen Estado';
+            } else if (clase == 'viejo_desgastado') {
+              mappedLevel = 'Desgastado';
+            }
+            setState(() {
+              _wearLevel = mappedLevel;
+            });
+            await _updatePricingSuggestion();
+          }
+        }
       }
     } finally {
-      setState(() => _imageLoading = false);
+      if (mounted) {
+        setState(() => _imageLoading = false);
+      }
     }
   }
 
@@ -137,6 +240,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final provider = context.read<ToolProvider>();
+    final estVal = double.tryParse(_estValCtrl.text.trim()) ?? 0.0;
     bool ok;
 
     if (_isEditing) {
@@ -146,6 +250,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         description: _descCtrl.text.trim(),
         category:    _catCtrl.text.trim(),
         isAvailable: _isAvailable,
+        estimatedValue: estVal,
+        dailyRate: _finalPrice,
+        latitude: _latitude,
+        longitude: _longitude,
       );
     } else {
       ok = await provider.createTool(
@@ -153,6 +261,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         description: _descCtrl.text.trim(),
         category:    _catCtrl.text.trim(),
         isAvailable: _isAvailable,
+        estimatedValue: estVal,
+        dailyRate: _finalPrice,
+        latitude: _latitude,
+        longitude: _longitude,
       );
     }
 
@@ -179,7 +291,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     final tt = Theme.of(context).textTheme;
 
     final provider = context.watch<ToolProvider>();
-    final minPrice = _suggestedPrice * 0.5;
+    final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
 
     return Scaffold(
       appBar: AppBar(
@@ -263,6 +375,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 ),
                 validator: (v) => (v == null || v.trim().isEmpty)
                     ? 'Campo requerido' : null,
+                onChanged: (_) => _onFieldChanged(),
               ),
               const SizedBox(height: 14),
 
@@ -276,6 +389,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                       hintText: 'DeWalt',
                       prefixIcon: Icon(Icons.business_outlined),
                     ),
+                    onChanged: (_) => _onFieldChanged(),
+                    onEditingComplete: () {
+                      FocusScope.of(context).nextFocus();
+                    },
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -287,6 +404,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                       labelText: 'Modelo',
                       hintText: 'DCD777',
                     ),
+                    onChanged: (_) => _onFieldChanged(),
                   ),
                 ),
               ]),
@@ -301,12 +419,34 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                   prefixIcon: const Icon(Icons.category_outlined),
                   suffixIcon: PopupMenuButton<String>(
                     icon: const Icon(Icons.arrow_drop_down),
-                    onSelected: (v) => _catCtrl.text = v,
+                    onSelected: (v) {
+                      _catCtrl.text = v;
+                      _updatePricingSuggestion();
+                    },
                     itemBuilder: (_) => _categories
                         .map((c) => PopupMenuItem(value: c, child: Text(c)))
                         .toList(),
                   ),
                 ),
+                onChanged: (_) => _onFieldChanged(),
+              ),
+              const SizedBox(height: 14),
+
+              TextFormField(
+                controller: _estValCtrl,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Valor original de catálogo (MXN) *',
+                  hintText: 'Ej. 2500',
+                  prefixIcon: Icon(Icons.attach_money_outlined),
+                ),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Campo requerido';
+                  final val = double.tryParse(v);
+                  if (val == null || val <= 0) return 'Ingrese un valor válido';
+                  return null;
+                },
               ),
               const SizedBox(height: 14),
 
@@ -354,7 +494,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                         ]),
                       );
                     }).toList(),
-                    onChanged: (v) => setState(() => _wearLevel = v!),
+                    onChanged: (v) {
+                      setState(() => _wearLevel = v!);
+                      _updatePricingSuggestion();
+                    },
                   ),
                 ),
               ),
@@ -418,12 +561,19 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('Precio sugerido por IA:',
-                            style: tt.bodyMedium),
-                        Text('\$${_suggestedPrice.toStringAsFixed(0)} MXN/día',
-                            style: tt.titleMedium?.copyWith(
-                                color: cs.primary,
-                                fontWeight: FontWeight.w700)),
+                        Expanded(
+                          child: Text('Precio sugerido por IA:',
+                              style: tt.bodyMedium),
+                        ),
+                        _fetchingPricing
+                            ? const SizedBox(
+                                width: 16, height: 16,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Text('\$${_suggestedPrice.toStringAsFixed(0)} MXN/día',
+                                style: tt.titleMedium?.copyWith(
+                                    color: cs.primary,
+                                    fontWeight: FontWeight.w700)),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -431,30 +581,39 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                       'Basado en el modelo de regresión del backend',
                       style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
+                    if (_pricingDesc.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _pricingDesc,
+                        style: tt.bodySmall?.copyWith(color: cs.primary, fontStyle: FontStyle.italic),
+                      ),
+                    ],
                     const Divider(height: 20),
                     Text('Tu precio final: \$${_finalPrice.toStringAsFixed(0)} MXN/día',
                         style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Text(
-                      'Mínimo permitido: \$${minPrice.toStringAsFixed(0)} MXN/día (50%)',
+                      'Mínimo permitido: \$${_minPrice.toStringAsFixed(0)} MXN/día (50%)',
                       style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                     ),
                     const SizedBox(height: 12),
                     Slider(
-                      value: _finalPrice,
-                      min: minPrice,
-                      max: _suggestedPrice * 2,
+                      value: _finalPrice.clamp(_minPrice, maxRateVal),
+                      min: _minPrice,
+                      max: maxRateVal,
                       divisions: 30,
                       label: '\$${_finalPrice.toStringAsFixed(0)}',
-                      onChanged: (v) => setState(() => _finalPrice = v),
+                      onChanged: _fetchingPricing
+                          ? null
+                          : (v) => setState(() => _finalPrice = v),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('\$${minPrice.toStringAsFixed(0)} (mín)',
+                        Text('\$${_minPrice.toStringAsFixed(0)} (mín)',
                             style: tt.labelSmall
                                 ?.copyWith(color: cs.onSurfaceVariant)),
-                        Text('\$${(_suggestedPrice * 2).toStringAsFixed(0)} (máx)',
+                        Text('\$${maxRateVal.toStringAsFixed(0)} (máx)',
                             style: tt.labelSmall
                                 ?.copyWith(color: cs.onSurfaceVariant)),
                       ],

@@ -12,8 +12,16 @@ class RegisterRepositoryImpl implements RegisterRepository {
     required String email,
     required String password,
     required String role,
+    required String phone,
+    required String ine,
   }) {
     return _datasource.register(
-        name: name, email: email, password: password, role: role);
+      name: name,
+      email: email,
+      password: password,
+      role: role,
+      phone: phone,
+      ine: ine,
+    );
   }
 }

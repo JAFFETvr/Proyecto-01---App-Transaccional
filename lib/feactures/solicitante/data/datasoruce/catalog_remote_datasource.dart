@@ -1,14 +1,11 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 import '../../../../../shared/error/app_error.dart';
+import '../../../../../shared/config/api_config.dart';
 import '../../domain/entitie/tool_entity.dart';
 
 class CatalogRemoteDatasource {
-  static String get _baseUrl {
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api';
-    return 'http://localhost:8080/api';
-  }
+  static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<List<ToolEntity>> getTools({bool onlyAvailable = false}) async {
     try {
@@ -28,6 +25,10 @@ class CatalogRemoteDatasource {
             name:        j['name']        as String,
             description: j['description'] as String? ?? '',
             category:    j['category']    as String? ?? '',
+            photoUrl:    j['photo_url']   as String? ?? '',
+            estimatedValue: (j['estimated_value'] as num?)?.toDouble() ?? 0.0,
+            dailyRate:      (j['daily_rate']      as num?)?.toDouble() ?? 0.0,
+            suggestedMinDailyRate: (j['suggested_min_daily_rate'] as num?)?.toDouble() ?? 0.0,
             isAvailable: j['is_available'] as bool,
             createdAt:   j['created_at']  as String,
             updatedAt:   j['updated_at']  as String,

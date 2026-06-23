@@ -9,6 +9,7 @@ abstract class AppColors {
   // ── Estructura / Texto ─────────────────────────────────────────────────────
   /// Azul Pizarra muy oscuro: AppBar, títulos, menús.
   static const slate900 = Color(0xFF0F172A);
+  static const slate700 = Color(0xFF334155);
   static const slate600 = Color(0xFF475569);
   static const slate300 = Color(0xFFCBD5E1);
   static const slate100 = Color(0xFFF1F5F9);

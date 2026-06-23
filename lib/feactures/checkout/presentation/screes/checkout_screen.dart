@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:provider/provider.dart';
 
 import 'rental_tracking_requester_screen.dart';
+import '../providers/rental_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
-
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -17,6 +18,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _webViewReady = false;
   late final WebViewController _webViewController;
+  bool _processingPayment = false;
 
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
@@ -36,11 +38,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final toolName = _args['tool']?.name ?? 'Herramienta';
+    final tool     = _args['tool'];
+    final toolName = tool?.name ?? 'Herramienta';
     final days     = _args['days'] ?? 1;
     final total    = _args['total'] ?? 0.0;
     final deposit  = _args['deposit'] ?? 0.0;
     final priceDay = _args['pricePerDay'] ?? 0.0;
+
+    final rentalProvider = context.watch<RentalProvider>();
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -223,49 +228,88 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: PrimaryGradientButton(
-            label:
-                'Confirmar — \$${(total is double ? total : (total as num).toDouble()).toStringAsFixed(0)} MXN',
-            icon: Icons.lock_outline,
-            height: 55,
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  icon: const Icon(Icons.check_circle_outline,
-                      size: 52, color: AppColors.success),
-                  title: Text('¡Pago procesado!',
-                      style: GoogleFonts.montserrat(
-                          fontWeight: FontWeight.w800)),
-                  content: Text(
-                    'Los fondos han sido retenidos de forma segura. '
-                    'Ahora coordina el encuentro con el propietario.',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: AppColors.slate600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  actions: [
-                    FilledButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const RentalTrackingRequesterScreen()),
-                          (_) => false,
+          child: _processingPayment || rentalProvider.loading
+              ? const SizedBox(
+                  height: 55,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              : PrimaryGradientButton(
+                  label:
+                      'Confirmar — \$${(total is double ? total : (total as num).toDouble()).toStringAsFixed(0)} MXN',
+                  icon: Icons.lock_outline,
+                  height: 55,
+                  onPressed: () async {
+                    if (tool == null) return;
+                    setState(() => _processingPayment = true);
+
+                    // Formato ISO8601 UTC
+                    final startDateStr = DateTime.now().toUtc().toIso8601String();
+                    final endDateStr = DateTime.now().add(Duration(days: days)).toUtc().toIso8601String();
+
+                    final success = await context.read<RentalProvider>().createRental(
+                          toolId: tool.id as String,
+                          startDate: startDateStr,
+                          endDate: endDateStr,
+                          cardToken: 'TEST-card-token', // Sandbox token
+                          payerEmail: 'solicitante@ejemplo.com',
                         );
-                      },
-                      child: const Text('Ver seguimiento'),
-                    ),
-                  ],
+
+                    setState(() => _processingPayment = false);
+
+                    if (!mounted) return;
+
+                    if (success) {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                          icon: const Icon(Icons.check_circle_outline,
+                              size: 52, color: AppColors.success),
+                          title: Text('¡Pago procesado!',
+                              style: GoogleFonts.montserrat(
+                                  fontWeight: FontWeight.w800)),
+                          content: Text(
+                            'Los fondos han sido retenidos de forma segura. '
+                            'Ahora coordina el encuentro con el propietario.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.slate600,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          actions: [
+                            FilledButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                Navigator.of(context).pushAndRemoveUntil(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const RentalTrackingRequesterScreen(),
+                                    settings: RouteSettings(
+                                      arguments: rentalProvider.currentRental,
+                                    ),
+                                  ),
+                                  (_) => false,
+                                );
+                              },
+                              child: const Text('Ver seguimiento'),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(rentalProvider.error ?? 'Error al procesar el pago y registrar la renta'),
+                          backgroundColor: AppColors.danger,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ),
     );

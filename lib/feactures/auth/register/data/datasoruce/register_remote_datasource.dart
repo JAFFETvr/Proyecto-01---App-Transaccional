@@ -1,20 +1,19 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'package:http/http.dart' as http;
 import '../../../../../shared/error/app_error.dart';
+import '../../../../../shared/config/api_config.dart';
 import '../../domain/entitie/user_entity.dart';
 
 class RegisterRemoteDatasource {
-  static String get _baseUrl {
-    if (Platform.isAndroid) return 'http://10.0.2.2:8080/api';
-    return 'http://localhost:8080/api';
-  }
+  static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<UserEntity> register({
     required String name,
     required String email,
     required String password,
     required String role,
+    required String phone,
+    required String ine,
   }) async {
     try {
       final response = await http.post(
@@ -25,6 +24,8 @@ class RegisterRemoteDatasource {
           'email': email,
           'password': password,
           'role': role,
+          'phone': phone,
+          'ine': ine,
         }),
       );
 
@@ -39,6 +40,9 @@ class RegisterRemoteDatasource {
           email: user['email'] as String,
           role:  user['role']  as String,
           token: body['token'] as String,
+          isPro: user['is_pro'] as bool? ?? false,
+          phone: user['phone'] as String? ?? '',
+          ine:   user['ine']   as String? ?? '',
         );
       }
 

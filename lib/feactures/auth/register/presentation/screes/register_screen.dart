@@ -42,6 +42,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       email:    _emailCtrl.text.trim(),
       password: _passwordCtrl.text,
       role:     _role,
+      phone:    _phoneCtrl.text.trim(),
+      ine:      _ineCtrl.text.trim(),
     );
 
     if (!mounted) return;

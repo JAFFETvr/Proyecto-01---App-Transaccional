@@ -11,10 +11,21 @@ class UpdateToolUseCase {
     String? description,
     String? category,
     bool? isAvailable,
+    double? estimatedValue,
+    double? dailyRate,
+    double? latitude,
+    double? longitude,
   }) {
     return _repository.updateTool(
-      id: id, name: name, description: description,
-      category: category, isAvailable: isAvailable,
+      id: id,
+      name: name,
+      description: description,
+      category: category,
+      isAvailable: isAvailable,
+      estimatedValue: estimatedValue,
+      dailyRate: dailyRate,
+      latitude: latitude,
+      longitude: longitude,
     );
   }
 }

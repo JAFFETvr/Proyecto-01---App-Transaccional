@@ -39,6 +39,7 @@ class LoginProvider extends ChangeNotifier {
       await prefs.setString('user_name',  _user!.name);
       await prefs.setString('user_email', _user!.email);
       await prefs.setString('user_role',  _user!.role);
+      await prefs.setBool('user_is_pro',  _user!.isPro);
 
     } on AppError catch (e) {
       _errorMessage = e.userMessage;

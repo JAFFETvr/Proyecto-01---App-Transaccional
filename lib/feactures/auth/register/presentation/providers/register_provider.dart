@@ -24,6 +24,8 @@ class RegisterProvider extends ChangeNotifier {
     required String email,
     required String password,
     required String role,
+    required String phone,
+    required String ine,
   }) async {
     _loading = true;
     _errorMessage = null;
@@ -35,6 +37,8 @@ class RegisterProvider extends ChangeNotifier {
         email: email,
         password: password,
         role: role,
+        phone: phone,
+        ine: ine,
       );
 
       final prefs = await SharedPreferences.getInstance();
@@ -43,6 +47,8 @@ class RegisterProvider extends ChangeNotifier {
       await prefs.setString('user_name',  _user!.name);
       await prefs.setString('user_email', _user!.email);
       await prefs.setString('user_role',  _user!.role);
+      await prefs.setString('user_phone', _user!.phone);
+      await prefs.setString('user_ine',   _user!.ine);
 
     } on AppError catch (e) {
       _errorMessage = e.userMessage;

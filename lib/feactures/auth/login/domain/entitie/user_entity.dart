@@ -5,6 +5,9 @@ class UserEntity {
   final String email;
   final String role; // 'owner' | 'requester'
   final String token;
+  final bool isPro;
+  final String phone;
+  final String ine;
 
   const UserEntity({
     required this.id,
@@ -12,6 +15,9 @@ class UserEntity {
     required this.email,
     required this.role,
     required this.token,
+    this.isPro = false,
+    this.phone = '',
+    this.ine = '',
   });
 
   bool get isOwner => role == 'owner';

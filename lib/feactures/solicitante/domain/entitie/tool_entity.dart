@@ -5,6 +5,10 @@ class ToolEntity {
   final String name;
   final String description;
   final String category;
+  final String photoUrl;
+  final double estimatedValue;
+  final double dailyRate;
+  final double suggestedMinDailyRate;
   final bool isAvailable;
   final String createdAt;
   final String updatedAt;
@@ -15,6 +19,10 @@ class ToolEntity {
     required this.name,
     required this.description,
     required this.category,
+    this.photoUrl = '',
+    this.estimatedValue = 0.0,
+    this.dailyRate = 0.0,
+    this.suggestedMinDailyRate = 0.0,
     required this.isAvailable,
     required this.createdAt,
     required this.updatedAt,

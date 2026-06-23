@@ -10,11 +10,13 @@ import './feactures/auth/login/presentation/providers/login_provider.dart';
 import './feactures/auth/register/presentation/providers/register_provider.dart';
 import './feactures/propietario/presentation/providers/tool_provider.dart';
 import './feactures/solicitante/presentation/providers/catalog_provider.dart';
+import './feactures/checkout/presentation/providers/rental_provider.dart';
 
 import './feactures/auth/login/data/di/login_di.dart';
 import './feactures/auth/register/data/di/register_di.dart';
 import './feactures/propietario/data/di/propietario_di.dart';
 import './feactures/solicitante/data/di/solicitante_di.dart';
+import './feactures/checkout/data/di/checkout_di.dart';
 
 import './feactures/auth/login/presentation/screes/login_screen.dart';
 import './feactures/auth/register/presentation/screes/register_screen.dart';
@@ -62,12 +64,28 @@ class MyApp extends StatelessWidget {
             createTool: PropietarioDI.provideCreateTool(),
             updateTool: PropietarioDI.provideUpdateTool(),
             deleteTool: PropietarioDI.provideDeleteTool(),
+            getPricingSuggestion: PropietarioDI.provideGetPricingSuggestion(),
+            predictCondition: PropietarioDI.providePredictCondition(),
+            autoValuate: PropietarioDI.provideAutoValuate(),
+            subscribe: PropietarioDI.provideSubscribe(),
           ),
         ),
 
         ChangeNotifierProvider<CatalogProvider>(
           create: (_) => CatalogProvider(
             getCatalog: SolicitanteDI.provideGetCatalog(),
+          ),
+        ),
+
+        ChangeNotifierProvider<RentalProvider>(
+          create: (_) => RentalProvider(
+            createRental:    CheckoutDI.provideCreateRental(),
+            getRentals:      CheckoutDI.provideGetRentals(),
+            getRental:       CheckoutDI.provideGetRental(),
+            confirmDelivery: CheckoutDI.provideConfirmDelivery(),
+            confirmReturn:   CheckoutDI.provideConfirmReturn(),
+            disputeRental:   CheckoutDI.provideDisputeRental(),
+            cancelRental:    CheckoutDI.provideCancelRental(),
           ),
         ),
       ],

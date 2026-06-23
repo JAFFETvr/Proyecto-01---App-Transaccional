@@ -1,7 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
+import '../providers/rental_provider.dart';
+import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 
@@ -15,46 +19,200 @@ class RentalTrackingRequesterScreen extends StatefulWidget {
 
 class _RentalTrackingRequesterScreenState
     extends State<RentalTrackingRequesterScreen> {
-  int _phase = 0;
+  int _localPhase = 0; // 0: Funds secured (Introduction), 1: Main tracking
   bool _loading = false;
-  double? _lat;
-  double? _lng;
-  String? _contractHash;
+  Timer? _pollTimer;
 
-  Future<void> _confirmDelivery() async {
-    setState(() => _loading = true);
-    try {
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final initialRental = ModalRoute.of(context)?.settings.arguments as RentalEntity?;
+      if (initialRental != null) {
+        context.read<RentalProvider>().fetchRental(initialRental.id);
+        _startPolling(initialRental.id);
       }
-      if (perm != LocationPermission.deniedForever) {
-        final pos = await Geolocator.getCurrentPosition(
-            locationSettings:
-                const LocationSettings(accuracy: LocationAccuracy.high));
-        _lat = pos.latitude;
-        _lng = pos.longitude;
-      }
-    } catch (_) {}
-
-    await Future.delayed(const Duration(seconds: 1));
-    final hash =
-        DateTime.now().millisecondsSinceEpoch.toRadixString(16).toUpperCase();
-    setState(() {
-      _contractHash = 'SHA-$hash';
-      _phase = 2;
-      _loading = false;
     });
   }
 
-  Future<void> _confirmReturn() async {
+  void _startPolling(String rentalId) {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted) return;
+      final provider = context.read<RentalProvider>();
+      provider.fetchRental(rentalId);
+      final rental = provider.currentRental;
+      if (rental != null && (rental.isCompleted || rental.isCancelled || rental.isDisputed)) {
+        timer.cancel();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _confirmDelivery(String rentalId) async {
     setState(() => _loading = true);
-    await Future.delayed(const Duration(seconds: 1));
-    setState(() { _phase = 3; _loading = false; });
+    double? latitude;
+    double? longitude;
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (serviceEnabled) {
+        LocationPermission perm = await Geolocator.checkPermission();
+        if (perm == LocationPermission.denied) {
+          perm = await Geolocator.requestPermission();
+        }
+        if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
+          final pos = await Geolocator.getCurrentPosition(
+              locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+          latitude = pos.latitude;
+          longitude = pos.longitude;
+        }
+      }
+    } catch (_) {}
+
+    final ok = await context.read<RentalProvider>().confirmDelivery(
+          rentalId,
+          latitude: latitude,
+          longitude: longitude,
+        );
+
+    setState(() => _loading = false);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Entrega física confirmada por ti! ✓'),
+          backgroundColor: Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      final err = context.read<RentalProvider>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err ?? 'Error al confirmar la entrega'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _confirmReturn(String rentalId) async {
+    setState(() => _loading = true);
+    final ok = await context.read<RentalProvider>().confirmReturn(rentalId);
+    setState(() => _loading = false);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Devolución confirmada por ti! ✓'),
+          backgroundColor: Color(0xFF10B981),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      final err = context.read<RentalProvider>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err ?? 'Error al confirmar la devolución'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reportDispute(String rentalId) async {
+    final reasonCtrl = TextEditingController();
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Reportar disputa', style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Describe el problema con la herramienta para que soporte intervenga y retenga los fondos.',
+              style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'Ej. La herramienta no enciende...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Abrir Disputa'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || reasonCtrl.text.trim().length < 10) {
+      if (confirm == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('La justificación debe tener al menos 10 caracteres')),
+        );
+      }
+      return;
+    }
+
+    setState(() => _loading = true);
+    final ok = await context.read<RentalProvider>().disputeRental(rentalId, reasonCtrl.text.trim());
+    setState(() => _loading = false);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Disputa reportada. Soporte intervendrá.'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final provider = context.watch<RentalProvider>();
+    final rental = provider.currentRental;
+
+    if (rental == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Determine current index for PhaseIndicator
+    // 0: Retención (Status: pending, both unconfirmed)
+    // 1: Entrega (Status: pending, requester or owner confirmed, but not both)
+    // 2: Devolución (Status: active or completed)
+    int phaseIndicatorIndex = 0;
+    if (rental.ownerConfirmedDelivery || rental.requesterConfirmedDelivery) {
+      phaseIndicatorIndex = 1;
+    }
+    if (rental.isActive || rental.isCompleted || rental.isDisputed) {
+      phaseIndicatorIndex = 2;
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -62,7 +220,7 @@ class _RentalTrackingRequesterScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.slate900),
-        automaticallyImplyLeading: _phase == 3,
+        automaticallyImplyLeading: rental.isCompleted || rental.isCancelled || rental.isDisputed,
         title: Text(
           'Seguimiento de Renta',
           style: GoogleFonts.montserrat(
@@ -79,36 +237,149 @@ class _RentalTrackingRequesterScreenState
       body: SafeArea(
         child: Column(
           children: [
-            _PhaseIndicator(currentPhase: _phase > 2 ? 2 : _phase),
+            _PhaseIndicator(currentPhase: phaseIndicatorIndex),
             const SizedBox(height: 8),
             Expanded(
-              child: IndexedStack(
-                index: _phase > 2 ? 2 : _phase,
-                children: [
-                  _Phase1Widget(
-                      onNext: () => setState(() => _phase = 1)),
-                  _Phase2RequesterWidget(
-                    loading: _loading,
-                    onConfirm: _confirmDelivery,
-                  ),
-                  _Phase3RequesterWidget(
-                    loading: _loading,
-                    contractHash: _contractHash,
-                    lat: _lat, lng: _lng,
-                    onConfirmReturn: _confirmReturn,
-                    confirmed: _phase == 3,
-                  ),
-                ],
-              ),
+              child: _localPhase == 0 && phaseIndicatorIndex == 0
+                  ? _Phase1Widget(onNext: () => setState(() => _localPhase = 1))
+                  : _buildMainContent(rental),
             ),
           ],
         ),
       ),
     );
   }
-}
 
-// ── Fase 1: Fondos retenidos ─────────────────────────────────────────────────
+  Widget _buildMainContent(RentalEntity rental) {
+    if (rental.isDisputed) {
+      return _buildDisputedWidget(rental);
+    }
+    if (rental.isCompleted) {
+      return _buildCompletedWidget(rental);
+    }
+
+    // Pending stage (Delivery)
+    if (rental.isPending) {
+      return _Phase2RequesterWidget(
+        loading: _loading,
+        rental: rental,
+        onConfirm: () => _confirmDelivery(rental.id),
+      );
+    }
+
+    // Active stage (Return)
+    return _Phase3RequesterWidget(
+      loading: _loading,
+      rental: rental,
+      onConfirmReturn: () => _confirmReturn(rental.id),
+      onReportDispute: () => _reportDispute(rental.id),
+    );
+  }
+
+  Widget _buildDisputedWidget(RentalEntity rental) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100, height: 100,
+            decoration: BoxDecoration(
+              color: AppColors.dangerBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.gavel_rounded, size: 50, color: AppColors.danger),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Renta en Disputa',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.danger,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Se ha abierto un folio de mediación debido a un reporte en la entrega/devolución.\nLos fondos permanecerán congelados temporalmente.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.slate600,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          if (rental.disputeReason.isNotEmpty)
+            Card(
+              color: AppColors.dangerBg.withOpacity(0.4),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Motivo de disputa:', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.danger)),
+                    const SizedBox(height: 6),
+                    Text(rental.disputeReason, style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate700)),
+                  ],
+                ),
+              ),
+            ),
+          const Spacer(),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pushReplacementNamed('/solicitante'),
+            child: const Text('Volver al Catálogo'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompletedWidget(RentalEntity rental) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100, height: 100,
+            decoration: const BoxDecoration(
+              color: Color(0xFF10B981),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_rounded, size: 50, color: Colors.white),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            '¡Renta Finalizada!',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF10B981),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'El propietario ha confirmado el retorno de la herramienta en buen estado.\nTu depósito en garantía ha sido liberado.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.slate600,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const Spacer(),
+          PrimaryGradientButton(
+            label: 'Volver al Catálogo',
+            onPressed: () => Navigator.of(context).pushReplacementNamed('/solicitante'),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _Phase1Widget extends StatelessWidget {
   final VoidCallback onNext;
@@ -189,14 +460,16 @@ class _Phase1Widget extends StatelessWidget {
   }
 }
 
-// ── Fase 2: Confirmar entrega ────────────────────────────────────────────────
-
 class _Phase2RequesterWidget extends StatelessWidget {
   final bool loading;
+  final RentalEntity rental;
   final VoidCallback onConfirm;
 
-  const _Phase2RequesterWidget(
-      {required this.loading, required this.onConfirm});
+  const _Phase2RequesterWidget({
+    required this.loading,
+    required this.rental,
+    required this.onConfirm,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -208,14 +481,7 @@ class _Phase2RequesterWidget extends StatelessWidget {
           Container(
             width: 100, height: 100,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppColors.orange500.withOpacity(0.12),
-                  AppColors.orange600.withOpacity(0.06),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: AppColors.orange500.withOpacity(0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.handshake_outlined,
@@ -233,7 +499,7 @@ class _Phase2RequesterWidget extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Al presionar el botón, capturaremos tu ubicación GPS actual como prueba de la entrega.',
+            'Al presionar el botón, capturaremos tu ubicación GPS actual como prueba de la entrega física.',
             style: GoogleFonts.inter(
               fontSize: 14,
               color: AppColors.slate600,
@@ -256,7 +522,9 @@ class _Phase2RequesterWidget extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'El propietario también debe presionar su botón de "Confirmar Entrega" para completar el proceso.',
+                  rental.requesterConfirmedDelivery
+                      ? 'Confirmaste la entrega. Esperando que el propietario confirme...'
+                      : 'El propietario también debe confirmar la entrega para iniciar formalmente la renta.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: const Color(0xFF3730A3),
@@ -270,11 +538,11 @@ class _Phase2RequesterWidget extends StatelessWidget {
           loading
               ? const CircularProgressIndicator()
               : PrimaryGradientButton(
-                  label: 'Confirmar Entrega',
+                  label: rental.requesterConfirmedDelivery ? 'Esperando Propietario...' : 'Confirmar Entrega',
                   icon: Icons.check_circle_outlined,
                   height: 58,
                   fontSize: 16,
-                  onPressed: onConfirm,
+                  onPressed: rental.requesterConfirmedDelivery ? null : onConfirm,
                 ),
         ],
       ),
@@ -282,23 +550,17 @@ class _Phase2RequesterWidget extends StatelessWidget {
   }
 }
 
-// ── Fase 3: Devolución ───────────────────────────────────────────────────────
-
 class _Phase3RequesterWidget extends StatelessWidget {
   final bool loading;
-  final String? contractHash;
-  final double? lat;
-  final double? lng;
+  final RentalEntity rental;
   final VoidCallback onConfirmReturn;
-  final bool confirmed;
+  final VoidCallback onReportDispute;
 
   const _Phase3RequesterWidget({
     required this.loading,
-    this.contractHash,
-    this.lat,
-    this.lng,
+    required this.rental,
     required this.onConfirmReturn,
-    required this.confirmed,
+    required this.onReportDispute,
   });
 
   @override
@@ -308,7 +570,7 @@ class _Phase3RequesterWidget extends StatelessWidget {
       child: Column(
         children: [
           // Contrato digital
-          if (contractHash != null) ...[
+          if (rental.contractHash.isNotEmpty) ...[
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -323,25 +585,26 @@ class _Phase3RequesterWidget extends StatelessWidget {
                     color: AppColors.success, size: 28),
                 const SizedBox(height: 6),
                 Text(
-                  'Contrato digital generado',
+                  'Contrato digital inmutable generado',
                   style: GoogleFonts.inter(
                     fontWeight: FontWeight.w700,
                     color: AppColors.success,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  contractHash!,
+                SelectableText(
+                  rental.contractHash,
                   style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: AppColors.slate600,
+                    fontSize: 11,
+                    color: AppColors.slate700,
+                    fontWeight: FontWeight.w600,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (lat != null) ...[
+                if (rental.deliveryLat != 0) ...[
                   const SizedBox(height: 4),
                   Text(
-                    'GPS: ${lat!.toStringAsFixed(5)}, ${lng!.toStringAsFixed(5)}',
+                    'Coordenadas de encuentro: ${rental.deliveryLat.toStringAsFixed(5)}, ${rental.deliveryLng.toStringAsFixed(5)}',
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       color: AppColors.slate600,
@@ -353,7 +616,7 @@ class _Phase3RequesterWidget extends StatelessWidget {
             const SizedBox(height: 20),
           ],
 
-          if (!confirmed) ...[
+          if (!rental.requesterConfirmedReturn) ...[
             Container(
               width: 90, height: 90,
               decoration: BoxDecoration(
@@ -375,7 +638,7 @@ class _Phase3RequesterWidget extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              'Cuando devuelvas la herramienta, presiona el botón para notificar al propietario.',
+              'Cuando devuelvas la herramienta física al propietario, presiona el botón para solicitar la finalización y liberación de fondos.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppColors.slate600,
@@ -386,18 +649,31 @@ class _Phase3RequesterWidget extends StatelessWidget {
             const SizedBox(height: 28),
             loading
                 ? const CircularProgressIndicator()
-                : PrimaryGradientButton(
-                    label: 'Confirmar Devolución',
-                    icon: Icons.check_outlined,
-                    height: 55,
-                    onPressed: onConfirmReturn,
+                : Column(
+                    children: [
+                      PrimaryGradientButton(
+                        label: 'Confirmar Devolución',
+                        icon: Icons.check_outlined,
+                        height: 55,
+                        onPressed: onConfirmReturn,
+                      ),
+                      const SizedBox(height: 14),
+                      TextButton.icon(
+                        onPressed: onReportDispute,
+                        icon: const Icon(Icons.report_problem_outlined, color: AppColors.danger),
+                        label: Text(
+                          'Reportar problema / disputa',
+                          style: GoogleFonts.inter(color: AppColors.danger, fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
                   ),
           ] else ...[
             const SizedBox(height: 20),
             Container(
               width: 90, height: 90,
               decoration: const BoxDecoration(
-                color: AppColors.success,
+                color: Color(0xFF10B981),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.check_rounded,
@@ -405,17 +681,17 @@ class _Phase3RequesterWidget extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             Text(
-              'Devolución confirmada',
+              'Devolución confirmada por ti',
               style: GoogleFonts.montserrat(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppColors.success,
+                color: const Color(0xFF10B981),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 12),
             Text(
-              'Esperando confirmación del propietario. El depósito será devuelto una vez que acepte la devolución.',
+              'Esperando confirmación del propietario. El depósito en garantía será devuelto a tu tarjeta en cuanto el propietario apruebe el estado físico.',
               style: GoogleFonts.inter(
                 fontSize: 14,
                 color: AppColors.slate600,
@@ -429,8 +705,6 @@ class _Phase3RequesterWidget extends StatelessWidget {
     );
   }
 }
-
-// ── Indicador de fases ───────────────────────────────────────────────────────
 
 class _PhaseIndicator extends StatelessWidget {
   final int currentPhase;
@@ -507,8 +781,6 @@ class _PhaseIndicator extends StatelessWidget {
     );
   }
 }
-
-// ── _InfoTile ────────────────────────────────────────────────────────────────
 
 class _InfoTile extends StatelessWidget {
   final IconData icon;
