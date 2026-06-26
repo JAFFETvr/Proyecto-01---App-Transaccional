@@ -19,6 +19,13 @@ class RegisterProvider extends ChangeNotifier {
   RegisterProvider({required RegisterUseCase registerUseCase})
       : _registerUseCase = registerUseCase;
 
+  void logout() {
+    _user = null;
+    _errorMessage = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   Future<void> register({
     required String name,
     required String email,
@@ -29,6 +36,7 @@ class RegisterProvider extends ChangeNotifier {
   }) async {
     _loading = true;
     _errorMessage = null;
+    _user = null;
     notifyListeners();
 
     try {

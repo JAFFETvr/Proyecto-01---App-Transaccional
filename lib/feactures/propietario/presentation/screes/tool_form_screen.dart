@@ -278,10 +278,110 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       ));
       Navigator.pop(context);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(provider.error ?? 'Error al guardar'),
-        backgroundColor: Theme.of(context).colorScheme.error,
-      ));
+      final errorMsg = provider.error ?? 'Error al guardar';
+      // Detectar si el error es por límite del plan gratuito
+      final bool isPlanError = errorMsg.toLowerCase().contains('plan') ||
+          errorMsg.toLowerCase().contains('limit') ||
+          errorMsg.toLowerCase().contains('máximo') ||
+          errorMsg.toLowerCase().contains('maximo') ||
+          errorMsg.toLowerCase().contains('suscripci') ||
+          errorMsg.toLowerCase().contains('pro') ||
+          errorMsg.toLowerCase().contains('herramienta') ||
+          errorMsg.toLowerCase().contains('valor') ||
+          errorMsg.toLowerCase().contains('1500') ||
+          errorMsg.toLowerCase().contains('3 ');
+      if (isPlanError && !_isEditing) {
+        await showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            icon: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.workspace_premium_rounded,
+                  size: 32, color: Color(0xFFF97316)),
+            ),
+            title: const Text(
+              'Límite del Plan Gratuito',
+              textAlign: TextAlign.center,
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFF97316).withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    errorMsg,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF92400E),
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  'El Plan Pro te permite publicar herramientas ilimitadas y de cualquier valor catálogo.',
+                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFF97316),
+                ),
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  final toolProvider = context.read<ToolProvider>();
+                  final subOk = await toolProvider.subscribePro();
+                  if (!mounted) return;
+                  if (subOk) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('¡Plan Pro activado! Ahora puedes publicar tu herramienta 🎉'),
+                        backgroundColor: Color(0xFF10B981),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(toolProvider.error ?? 'Error al suscribirse'),
+                        backgroundColor: const Color(0xFFEF4444),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.bolt_rounded, size: 16),
+                label: const Text('Obtener Plan Pro'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(errorMsg),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ));
+      }
     }
   }
 

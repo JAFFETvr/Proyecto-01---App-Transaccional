@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../providers/register_provider.dart';
 import '../components/role_selector.dart';
 
 import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
+import '../../../../propietario/presentation/providers/tool_provider.dart';
+import '../../../../checkout/presentation/providers/rental_provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -50,6 +53,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     final provider = context.read<RegisterProvider>();
     if (provider.user == null) return;
+
+    // ━━ Limpiar datos de sesión anterior en todos los providers ━━
+    // Esto evita que los datos del usuario previo se muestren en la nueva sesión.
+    context.read<ToolProvider>().clearTools();
+    context.read<RentalProvider>().clearState();
+
+    // Limpiar la clave is_pro que no persiste en RegisterProvider
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('user_is_pro', provider.user!.isPro);
+
+    if (!mounted) return;
 
     final dest = provider.user!.isOwner
         ? const DashboardScreen()

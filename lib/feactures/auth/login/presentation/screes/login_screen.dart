@@ -9,6 +9,8 @@ import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
 import '../../../register/presentation/screes/register_screen.dart';
 import '../../../../../../shared/theme/app_colors.dart';
+import '../../../../propietario/presentation/providers/tool_provider.dart';
+import '../../../../checkout/presentation/providers/rental_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -29,6 +31,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final provider = context.read<LoginProvider>();
     if (provider.user == null) return;
+
+    // ━━ Limpiar datos de sesión anterior en todos los providers ━━
+    // Garantiza que no se muestren datos en memoria de otro usuario.
+    context.read<ToolProvider>().clearTools();
+    context.read<RentalProvider>().clearState();
 
     final dest = provider.user!.isOwner
         ? const DashboardScreen()

@@ -49,7 +49,7 @@ class ToolRemoteDatasource {
   Future<List<ToolEntity>> getTools() async {
     try {
       final res = await http.get(
-          Uri.parse('$_baseUrl/tools'), headers: await _authHeaders);
+          Uri.parse('$_baseUrl/owner/tools'), headers: await _authHeaders);
       _throwIfError(res);
       final list = json.decode(utf8.decode(res.bodyBytes)) as List;
       return list.map((e) => _fromJson(e as Map<String, dynamic>)).toList();

@@ -20,6 +20,7 @@ class CatalogProvider extends ChangeNotifier {
   String get filterCategory    => _filterCategory;
   bool get onlyAvailable       => _onlyAvailable;
   int get totalCount           => _all.length;
+  List<ToolEntity> get allTools => List.unmodifiable(_all);
 
   List<String> get categories {
     final cats = _all

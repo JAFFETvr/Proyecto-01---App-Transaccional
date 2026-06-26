@@ -19,16 +19,32 @@ class RentalTrackingRequesterScreen extends StatefulWidget {
 
 class _RentalTrackingRequesterScreenState
     extends State<RentalTrackingRequesterScreen> {
-  int _localPhase = 0; // 0: Funds secured (Introduction), 1: Main tracking
+  // 0 = intro (fondos retenidos), 1 = flujo principal de entrega/devolución
+  int _localPhase = 0;
   bool _loading = false;
   Timer? _pollTimer;
+  // Para notificar al usuario cuando la renta pasa de pending → active mientras estaba en el catálogo
+  bool _notifiedActive = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final initialRental = ModalRoute.of(context)?.settings.arguments as RentalEntity?;
+      final initialRental =
+          ModalRoute.of(context)?.settings.arguments as RentalEntity?;
       if (initialRental != null) {
+        // ━━ Auto-resume: inferir la fase a partir del estado real de la renta ━━
+        // Si el solicitante ya confirmó, o cualquiera confirmó, o está activa/finalizada
+        // → saltar la pantalla de introducción y ir directo al flujo principal.
+        final skipIntro = initialRental.requesterConfirmedDelivery ||
+            initialRental.ownerConfirmedDelivery ||
+            initialRental.isActive ||
+            initialRental.isCompleted ||
+            initialRental.isDisputed ||
+            initialRental.isCancelled;
+        if (skipIntro && mounted) {
+          setState(() => _localPhase = 1);
+        }
         context.read<RentalProvider>().fetchRental(initialRental.id);
         _startPolling(initialRental.id);
       }
@@ -190,6 +206,54 @@ class _RentalTrackingRequesterScreenState
     }
   }
 
+  /// Muestra un diálogo de confirmación antes de salir del seguimiento activo.
+  /// El polling se cancela y la renta queda en segundo plano (sin bloquear al usuario).
+  void _showBackConfirmation(BuildContext context, RentalEntity rental) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppColors.orange500.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.info_outline_rounded,
+              size: 30, color: AppColors.orange500),
+        ),
+        title: Text(
+          'Renta en progreso',
+          style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 17),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'Tu renta continúa activa. Puedes regresar al catálogo y volver a esta pantalla '
+          'desde el botón "Mi Renta" cuando quieras retomar el seguimiento.',
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Seguir aquí'),
+          ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.orange500,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.of(context).pushReplacementNamed('/solicitante');
+            },
+            icon: const Icon(Icons.home_outlined, size: 16),
+            label: const Text('Ir al Catálogo'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<RentalProvider>();
@@ -220,7 +284,19 @@ class _RentalTrackingRequesterScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.slate900),
-        automaticallyImplyLeading: rental.isCompleted || rental.isCancelled || rental.isDisputed,
+        // Siempre permitir retroceder — el proceso sigue en segundo plano
+        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            // Si la renta está activa/pendiente, ir al catálogo manteniendo la renta en curso
+            if (rental.isCompleted || rental.isCancelled || rental.isDisputed) {
+              Navigator.of(context).pushReplacementNamed('/solicitante');
+            } else {
+              _showBackConfirmation(context, rental);
+            }
+          },
+        ),
         title: Text(
           'Seguimiento de Renta',
           style: GoogleFonts.montserrat(
@@ -229,6 +305,18 @@ class _RentalTrackingRequesterScreenState
             color: AppColors.slate900,
           ),
         ),
+        actions: [
+          if (!rental.isCompleted && !rental.isCancelled && !rental.isDisputed)
+            TextButton.icon(
+              onPressed: () => _showBackConfirmation(context, rental),
+              icon: const Icon(Icons.home_outlined, size: 18),
+              label: const Text('Inicio'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.orange500,
+                textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
+              ),
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: const Color(0xFFE2E8F0)),
@@ -258,8 +346,14 @@ class _RentalTrackingRequesterScreenState
       return _buildCompletedWidget(rental);
     }
 
-    // Pending stage (Delivery)
+    // Estado pendiente: división clave del flujo de entrega
     if (rental.isPending) {
+      // Caso A: el solicitante YA confirmó, esperando que el propietario confirme
+      // → Pantalla bloqueada de solo lectura, sin botón de acción
+      if (rental.requesterConfirmedDelivery) {
+        return _WaitingOwnerConfirmWidget();
+      }
+      // Caso B: el solicitante aún NO ha confirmado → mostrar botón de confirmar
       return _Phase2RequesterWidget(
         loading: _loading,
         rental: rental,
@@ -267,7 +361,37 @@ class _RentalTrackingRequesterScreenState
       );
     }
 
-    // Active stage (Return)
+    // Estado activo (ambos confirmaron entrega): fase de devolución
+    // Si el usuario regresa y el propietario ya confirmó mientras estaba fuera,
+    // mostramos un aviso contextual antes de la pantalla de devolución.
+    if (!_notifiedActive && rental.isActive) {
+      // Programar la notificación tras el frame
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_notifiedActive) {
+          setState(() => _notifiedActive = true);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      '¡El propietario confirmó la entrega! La renta está activa.',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF10B981),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
+        }
+      });
+    }
+
     return _Phase3RequesterWidget(
       loading: _loading,
       rental: rental,
@@ -816,6 +940,191 @@ class _InfoTile extends StatelessWidget {
               )),
         ]),
       ),
+    ]);
+  }
+}
+
+/// Pantalla bloqueada de solo lectura: el solicitante YA confirmó la entrega,
+/// ahora DEBE esperar a que el propietario también confirme. No hay ningún
+/// botón de acción — el único avance es cuando el propietario confirma (polling).
+class _WaitingOwnerConfirmWidget extends StatelessWidget {
+  const _WaitingOwnerConfirmWidget();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Icono animado de espera
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0.92, end: 1.08),
+            duration: const Duration(milliseconds: 900),
+            curve: Curves.easeInOut,
+            builder: (ctx, scale, child) => Transform.scale(
+              scale: scale,
+              child: child,
+            ),
+            child: Container(
+              width: 100, height: 100,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF2FF),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withOpacity(0.25),
+                    blurRadius: 20,
+                    spreadRadius: 4,
+                  ),
+                ],
+              ),
+              child: const Icon(Icons.hourglass_top_rounded,
+                  size: 48, color: Color(0xFF4F46E5)),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Esperando al Propietario',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: AppColors.slate900,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Confirmaste la recepción física de la herramienta. ✓\n'
+            'Ahora el propietario debe confirmar desde su app para activar formalmente la renta.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: AppColors.slate600,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 28),
+          // Tarjeta informativa de estado
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEEF2FF),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.25)),
+            ),
+            child: Column(
+              children: [
+                _StatusRow(
+                  icon: Icons.check_circle_rounded,
+                  label: 'Tu confirmación de entrega',
+                  done: true,
+                ),
+                const SizedBox(height: 10),
+                const Divider(color: Color(0xFFE2E8F0), height: 1),
+                const SizedBox(height: 10),
+                _StatusRow(
+                  icon: Icons.radio_button_unchecked,
+                  label: 'Confirmación del propietario',
+                  done: false,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Aviso de bloqueo
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF7ED),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppColors.orange500.withOpacity(0.3)),
+            ),
+            child: Row(children: [
+              const Icon(Icons.lock_clock_rounded,
+                  size: 16, color: AppColors.orange500),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Esta pantalla se actualizará automáticamente cuando el propietario confirme.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF92400E),
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatusRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool done;
+
+  const _StatusRow({
+    required this.icon,
+    required this.label,
+    required this.done,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Icon(
+        icon,
+        size: 18,
+        color: done ? AppColors.success : AppColors.slate300,
+      ),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: done ? FontWeight.w700 : FontWeight.w500,
+            color: done ? AppColors.slate900 : AppColors.slate600,
+          ),
+        ),
+      ),
+      if (done)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: AppColors.successBg,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Hecho ✓',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: AppColors.success,
+            ),
+          ),
+        )
+      else
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF2FF),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            'Pendiente',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF4F46E5),
+            ),
+          ),
+        ),
     ]);
   }
 }

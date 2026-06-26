@@ -19,12 +19,20 @@ class LoginProvider extends ChangeNotifier {
   LoginProvider({required LoginUseCase loginUseCase})
       : _loginUseCase = loginUseCase;
 
+  void logout() {
+    _user = null;
+    _errorMessage = null;
+    _loading = false;
+    notifyListeners();
+  }
+
   Future<void> login({
     required String email,
     required String password,
   }) async {
     _loading = true;
     _errorMessage = null;
+    _user = null;
     notifyListeners();
 
     try {

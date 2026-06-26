@@ -7,8 +7,14 @@ import '../providers/catalog_provider.dart';
 import '../components/tool_card.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
+import '../../../auth/login/presentation/providers/login_provider.dart';
+import '../../../auth/register/presentation/providers/register_provider.dart';
+import '../../../propietario/presentation/providers/tool_provider.dart';
 import 'tool_detail_screen.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../checkout/presentation/providers/rental_provider.dart';
+import '../../../checkout/presentation/screes/rental_tracking_requester_screen.dart';
+import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -24,6 +30,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<CatalogProvider>().fetchTools();
+      context.read<RentalProvider>().fetchRentals();
     });
   }
 
@@ -31,6 +38,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     if (!mounted) return;
+    context.read<LoginProvider>().logout();
+    context.read<RegisterProvider>().logout();
+    context.read<ToolProvider>().clearTools();
+    context.read<RentalProvider>().clearState();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
@@ -50,16 +61,85 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget build(BuildContext context) {
     final provider = context.watch<CatalogProvider>();
     final tools = provider.filtered;
+    final rentalProvider = context.watch<RentalProvider>();
+    final activeRentals = rentalProvider.rentals
+        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
+        .toList();
+    final bool hasActiveRental = activeRentals.isNotEmpty;
+    final activeRental = activeRentals.firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: Drawer(
+        backgroundColor: AppColors.surface,
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.person_outline, size: 48, color: Colors.white),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Mi Perfil',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_rounded, color: AppColors.orange500),
+              title: Text(
+                'Mis Rentas',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slate900,
+                ),
+              ),
+              trailing: activeRentals.isNotEmpty
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: AppColors.orange500, borderRadius: BorderRadius.circular(12)),
+                      child: Text('${activeRentals.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    )
+                  : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.slate300),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
+              },
+            ),
+            const Spacer(),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
+              title: Text(
+                'Cerrar sesión',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.danger,
+                ),
+              ),
+              onTap: _logout,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
       body: CustomScrollView(
         slivers: [
           // ── AppBar premium ────────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
             floating: true,
-            expandedHeight: 0,
             backgroundColor: AppColors.surface,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
@@ -135,14 +215,95 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   ),
                 ),
               ),
-              // Logout
-              IconButton(
-                icon: const Icon(Icons.logout_rounded),
-                color: AppColors.slate600,
-                onPressed: _logout,
-              ),
             ],
           ),
+
+          // ── Banner de Renta Activa ─────────────────────────────────────────
+          if (hasActiveRental)
+            SliverToBoxAdapter(
+              child: GestureDetector(
+                onTap: () {
+                  if (activeRentals.length > 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MyRentalsScreen()),
+                    );
+                  } else if (activeRental != null) {
+                    rentalProvider.setCurrentRental(activeRental);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RentalTrackingRequesterScreen(),
+                        settings: RouteSettings(arguments: activeRental),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEA580C), Color(0xFFF97316)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.orange500.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white24,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.timer_outlined,
+                            color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activeRentals.length > 1
+                                  ? 'Tienes ${activeRentals.length} rentas en proceso'
+                                  : 'Tienes una renta activa',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              activeRentals.length > 1
+                                  ? 'Toca para ver la sección de tus rentas'
+                                  : (activeRental!.isPending
+                                      ? 'Pendiente de entrega — Toca para ver'
+                                      : 'En curso — Toca para ver el seguimiento'),
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // ── Barra de búsqueda ─────────────────────────────────────────────
           SliverToBoxAdapter(

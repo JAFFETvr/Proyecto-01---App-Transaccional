@@ -53,6 +53,11 @@ class RentalProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setCurrentRental(RentalEntity? rental) {
+    _currentRental = rental;
+    notifyListeners();
+  }
+
   Future<bool> createRental({
     required String toolId,
     required String startDate,

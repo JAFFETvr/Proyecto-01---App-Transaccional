@@ -189,6 +189,53 @@ class _RentalTrackingOwnerScreenState
     }
   }
 
+  /// Muestra diálogo de confirmación antes de salir del seguimiento activo.
+  void _showBackConfirmation(BuildContext ctx) {
+    showDialog(
+      context: ctx,
+      builder: (dialogCtx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        icon: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF4F46E5).withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.info_outline_rounded,
+              size: 30, color: Color(0xFF4F46E5)),
+        ),
+        title: Text(
+          'Renta en progreso',
+          style: GoogleFonts.montserrat(fontWeight: FontWeight.w700, fontSize: 17),
+          textAlign: TextAlign.center,
+        ),
+        content: Text(
+          'La renta continúa activa. Puedes volver a tu panel y retomar el seguimiento '
+          'desde el banner "Herramienta en renta" en cualquier momento.',
+          style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600, height: 1.5),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Seguir aquí'),
+          ),
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF4F46E5),
+            ),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              Navigator.of(ctx).pushReplacementNamed('/propietario');
+            },
+            icon: const Icon(Icons.dashboard_outlined, size: 16),
+            label: const Text('Ir a mi Panel'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<RentalProvider>();
@@ -217,6 +264,18 @@ class _RentalTrackingOwnerScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.slate900),
+        // Siempre permitir retroceder
+        automaticallyImplyLeading: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            if (rental.isCompleted || rental.isCancelled || rental.isDisputed) {
+              Navigator.of(context).pushReplacementNamed('/propietario');
+            } else {
+              _showBackConfirmation(context);
+            }
+          },
+        ),
         title: Text(
           'Panel del Propietario',
           style: GoogleFonts.montserrat(
@@ -225,6 +284,18 @@ class _RentalTrackingOwnerScreenState
             color: AppColors.slate900,
           ),
         ),
+        actions: [
+          if (!rental.isCompleted && !rental.isCancelled && !rental.isDisputed)
+            TextButton.icon(
+              onPressed: () => _showBackConfirmation(context),
+              icon: const Icon(Icons.dashboard_outlined, size: 18),
+              label: const Text('Mi Panel'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF4F46E5),
+                textStyle: GoogleFonts.inter(fontWeight: FontWeight.w600, fontSize: 12),
+              ),
+            ),
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(height: 1, color: const Color(0xFFE2E8F0)),

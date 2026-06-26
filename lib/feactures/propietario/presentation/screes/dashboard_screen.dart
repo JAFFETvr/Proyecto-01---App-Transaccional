@@ -7,7 +7,12 @@ import '../providers/tool_provider.dart';
 import '../components/tool_list_item.dart';
 import 'tool_form_screen.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
+import '../../../auth/login/presentation/providers/login_provider.dart';
+import '../../../auth/register/presentation/providers/register_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../checkout/presentation/providers/rental_provider.dart';
+import '../../../checkout/presentation/screes/rental_tracking_owner_screen.dart';
+import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -25,6 +30,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _loadUserName();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ToolProvider>().fetchTools();
+      context.read<RentalProvider>().fetchRentals();
     });
   }
 
@@ -79,7 +85,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     if (!mounted) return;
+    context.read<LoginProvider>().logout();
+    context.read<RegisterProvider>().logout();
     context.read<ToolProvider>().clearTools();
+    context.read<RentalProvider>().clearState();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (_) => false,
@@ -89,6 +98,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ToolProvider>();
+    final rentalProvider = context.watch<RentalProvider>();
+    final activeRentals = rentalProvider.rentals
+        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
+        .toList();
+    final bool hasActiveRental = activeRentals.isNotEmpty;
+    final activeRental = activeRentals.firstOrNull;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -151,6 +166,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ]),
             actions: [
+              IconButton(
+                icon: Badge(
+                  isLabelVisible: activeRentals.isNotEmpty,
+                  label: Text('${activeRentals.length}'),
+                  child: const Icon(Icons.assignment_rounded),
+                ),
+                color: AppColors.orange500,
+                tooltip: 'Mis Rentas',
+                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen())),
+              ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded),
                 color: AppColors.slate600,
@@ -330,6 +355,93 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
             ),
           ),
+
+          // ── Banner de Renta en Progreso (Propietario) ─────────────────────
+          if (hasActiveRental)
+            SliverToBoxAdapter(
+              child: GestureDetector(
+                onTap: () {
+                  if (activeRentals.length > 1) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MyRentalsScreen()),
+                    );
+                  } else if (activeRental != null) {
+                    rentalProvider.setCurrentRental(activeRental);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const RentalTrackingOwnerScreen(),
+                        settings: RouteSettings(arguments: activeRental),
+                      ),
+                    );
+                  }
+                },
+                child: Container(
+                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6366F1).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(
+                          color: Colors.white24,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.handshake_outlined,
+                            color: Colors.white, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              activeRentals.length > 1
+                                  ? '${activeRentals.length} rentas en progreso'
+                                  : 'Herramienta en renta',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Text(
+                              activeRentals.length > 1
+                                  ? 'Toca para gestionar todas tus rentas'
+                                  : (activeRental!.isPending
+                                      ? 'Pendiente de entrega — Toca para gestionar'
+                                      : 'Activa — Toca para ver el estado'),
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+            ),
 
           // ── Metric cards ──────────────────────────────────────────────────
           SliverToBoxAdapter(
