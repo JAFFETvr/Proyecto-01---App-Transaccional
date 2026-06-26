@@ -125,8 +125,17 @@ class ToolCard extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                         color: AppColors.slate900,
                       ),
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '\$${(tool.dailyRate > 0 ? tool.dailyRate : 350.0).toStringAsFixed(0)} MXN /día',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.orange500,
+                      ),
                     ),
                     const SizedBox(height: 6),
                     // Badge estado con fondo desvanecido al 10 %

@@ -19,4 +19,5 @@ class CheckoutDI {
   static ConfirmReturnUseCase provideConfirmReturn() => ConfirmReturnUseCase(_repository);
   static DisputeRentalUseCase provideDisputeRental() => DisputeRentalUseCase(_repository);
   static CancelRentalUseCase provideCancelRental() => CancelRentalUseCase(_repository);
+  static get repository => _repository;
 }

@@ -52,7 +52,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ToolDetailScreen(tool: tool, pricePerDay: 350.0),
+        builder: (_) => ToolDetailScreen(
+          tool: tool,
+          pricePerDay: tool.dailyRate > 0 ? tool.dailyRate : 350.0,
+        ),
       ),
     );
   }

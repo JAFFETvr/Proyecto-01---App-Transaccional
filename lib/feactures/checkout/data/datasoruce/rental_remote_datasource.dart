@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../shared/error/app_error.dart';
 import '../../../../../shared/config/api_config.dart';
 import '../../domain/entitie/rental_entity.dart';
+import '../../domain/entitie/message_entity.dart';
 
 class RentalRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
@@ -28,6 +29,7 @@ class RentalRemoteDatasource {
         dailyRate:                  (j['daily_rate'] as num?)?.toDouble() ?? 0.0,
         totalAmount:                (j['total_amount'] as num?)?.toDouble() ?? 0.0,
         status:                     j['status'] as String,
+        paymentMethod:              j['payment_method'] as String? ?? 'card',
         mpPaymentId:                j['mp_payment_id'] as String? ?? '',
         paymentStatus:              j['payment_status'] as String? ?? '',
         deductibleAmount:           (j['deductible_amount'] as num?)?.toDouble() ?? 0.0,
@@ -56,6 +58,7 @@ class RentalRemoteDatasource {
     required String toolId,
     required String startDate,
     required String endDate,
+    String paymentMethod = 'card',
     String? cardToken,
     String? payerEmail,
   }) async {
@@ -65,6 +68,7 @@ class RentalRemoteDatasource {
         'tool_id': toolId,
         'start_date': startDate,
         'end_date': endDate,
+        'payment_method': paymentMethod,
       };
       if (cardToken != null) {
         body['card_token'] = cardToken;
@@ -162,6 +166,31 @@ class RentalRemoteDatasource {
         headers: headers,
       );
       _throwIfError(res);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<List<MessageEntity>> getMessages(String rentalId) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.get(Uri.parse('$_baseUrl/rentals/$rentalId/messages'), headers: headers);
+      _throwIfError(res);
+      final list = json.decode(utf8.decode(res.bodyBytes)) as List;
+      return list.map((e) => MessageEntity.fromJson(e as Map<String, dynamic>)).toList();
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<MessageEntity> sendMessage(String rentalId, String message) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.post(
+        Uri.parse('$_baseUrl/rentals/$rentalId/messages'),
+        headers: headers,
+        body: json.encode({'message': message}),
+      );
+      _throwIfError(res);
+      return MessageEntity.fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }

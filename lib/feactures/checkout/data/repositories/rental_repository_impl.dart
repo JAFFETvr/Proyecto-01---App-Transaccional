@@ -1,4 +1,5 @@
 import '../../domain/entitie/rental_entity.dart';
+import '../../domain/entitie/message_entity.dart';
 import '../../domain/repositories/rental_repository.dart';
 import '../datasoruce/rental_remote_datasource.dart';
 
@@ -12,6 +13,7 @@ class RentalRepositoryImpl implements RentalRepository {
     required String toolId,
     required String startDate,
     required String endDate,
+    String paymentMethod = 'card',
     String? cardToken,
     String? payerEmail,
   }) =>
@@ -19,6 +21,7 @@ class RentalRepositoryImpl implements RentalRepository {
         toolId: toolId,
         startDate: startDate,
         endDate: endDate,
+        paymentMethod: paymentMethod,
         cardToken: cardToken,
         payerEmail: payerEmail,
       );
@@ -46,4 +49,10 @@ class RentalRepositoryImpl implements RentalRepository {
 
   @override
   Future<void> cancelRental(String id) => _datasource.cancelRental(id);
+
+  @override
+  Future<List<MessageEntity>> getMessages(String rentalId) => _datasource.getMessages(rentalId);
+
+  @override
+  Future<MessageEntity> sendMessage(String rentalId, String message) => _datasource.sendMessage(rentalId, message);
 }

@@ -21,7 +21,8 @@ class ToolDetailScreen extends StatefulWidget {
 class _ToolDetailScreenState extends State<ToolDetailScreen> {
   int _days = 1;
 
-  double get _subtotal => widget.pricePerDay * _days;
+  double get _effectiveRate => widget.tool.dailyRate > 0 ? widget.tool.dailyRate : widget.pricePerDay;
+  double get _subtotal => _effectiveRate * _days;
   double get _deposit  => _subtotal * 0.10;
   double get _total    => _subtotal + _deposit;
 
@@ -240,7 +241,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     _InfoChip(
                       icon: Icons.calendar_today_outlined,
                       label: 'Precio/día',
-                      value: '\$${widget.pricePerDay.toStringAsFixed(0)} MXN',
+                      value: '\$${_effectiveRate.toStringAsFixed(0)} MXN',
                       color: AppColors.orange500,
                     ),
                   ]),
@@ -410,7 +411,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     arguments: {
                       'tool': tool,
                       'days': _days,
-                      'pricePerDay': widget.pricePerDay,
+                      'pricePerDay': _effectiveRate,
                       'total': _total,
                       'deposit': _deposit,
                     },

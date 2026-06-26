@@ -11,6 +11,7 @@ import './feactures/auth/register/presentation/providers/register_provider.dart'
 import './feactures/propietario/presentation/providers/tool_provider.dart';
 import './feactures/solicitante/presentation/providers/catalog_provider.dart';
 import './feactures/checkout/presentation/providers/rental_provider.dart';
+import './feactures/checkout/presentation/providers/chat_provider.dart';
 
 import './feactures/auth/login/data/di/login_di.dart';
 import './feactures/auth/register/data/di/register_di.dart';
@@ -87,6 +88,10 @@ class MyApp extends StatelessWidget {
             disputeRental:   CheckoutDI.provideDisputeRental(),
             cancelRental:    CheckoutDI.provideCancelRental(),
           ),
+        ),
+
+        ChangeNotifierProvider<ChatProvider>(
+          create: (_) => ChatProvider(CheckoutDI.repository),
         ),
       ],
 

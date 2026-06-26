@@ -62,6 +62,7 @@ class RentalProvider extends ChangeNotifier {
     required String toolId,
     required String startDate,
     required String endDate,
+    String paymentMethod = 'card',
     String? cardToken,
     String? payerEmail,
   }) async {
@@ -74,6 +75,7 @@ class RentalProvider extends ChangeNotifier {
         toolId: toolId,
         startDate: startDate,
         endDate: endDate,
+        paymentMethod: paymentMethod,
         cardToken: cardToken,
         payerEmail: payerEmail,
       );

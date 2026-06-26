@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/tool_provider.dart';
@@ -32,7 +31,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   File? _pickedImage;
   double? _latitude;
   double? _longitude;
-  bool _locationLoading = false;
   bool _imageLoading = false;
 
   double _suggestedPrice = 100.0;
@@ -188,53 +186,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     }
   }
 
-  Future<void> _captureLocation() async {
-    setState(() => _locationLoading = true);
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Activa el GPS del dispositivo')),
-          );
-        }
-        return;
-      }
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-      if (permission == LocationPermission.deniedForever) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permiso de ubicación denegado. Actívalo en Ajustes.')),
-          );
-        }
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-      setState(() {
-        _latitude  = pos.latitude;
-        _longitude = pos.longitude;
-      });
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo obtener la ubicación')),
-        );
-      }
-    } finally {
-      setState(() => _locationLoading = false);
-    }
-  }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
@@ -603,48 +555,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               ),
               const SizedBox(height: 24),
 
-              _SectionTitle('Ubicación de la herramienta'),
-              const SizedBox(height: 12),
-              OutlinedButton.icon(
-                onPressed: _locationLoading ? null : _captureLocation,
-                icon: _locationLoading
-                    ? SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: cs.primary))
-                    : Icon(
-                        _latitude != null
-                            ? Icons.location_on
-                            : Icons.my_location_rounded),
-                label: Text(_latitude != null
-                    ? 'Ubicación capturada ✓'
-                    : 'Capturar mi ubicación GPS'),
-              ),
-              if (_latitude != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16A34A).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                        color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
-                  ),
-                  child: Row(children: [
-                    const Icon(Icons.location_on,
-                        size: 16, color: Color(0xFF16A34A)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Lat: ${_latitude!.toStringAsFixed(6)} | '
-                      'Lng: ${_longitude!.toStringAsFixed(6)}',
-                      style: tt.bodySmall?.copyWith(
-                          color: const Color(0xFF16A34A),
-                          fontWeight: FontWeight.w600),
-                    ),
-                  ]),
-                ),
-              ],
-              const SizedBox(height: 24),
+
 
               _SectionTitle('Precio de renta'),
               const SizedBox(height: 12),

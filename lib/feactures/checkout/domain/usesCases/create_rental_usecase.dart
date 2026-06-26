@@ -9,6 +9,7 @@ class CreateRentalUseCase {
     required String toolId,
     required String startDate,
     required String endDate,
+    String paymentMethod = 'card',
     String? cardToken,
     String? payerEmail,
   }) {
@@ -16,6 +17,7 @@ class CreateRentalUseCase {
       toolId: toolId,
       startDate: startDate,
       endDate: endDate,
+      paymentMethod: paymentMethod,
       cardToken: cardToken,
       payerEmail: payerEmail,
     );

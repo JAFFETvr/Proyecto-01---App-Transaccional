@@ -1,10 +1,12 @@
 import '../entitie/rental_entity.dart';
+import '../entitie/message_entity.dart';
 
 abstract class RentalRepository {
   Future<RentalEntity> createRental({
     required String toolId,
     required String startDate,
     required String endDate,
+    String paymentMethod = 'card',
     String? cardToken,
     String? payerEmail,
   });
@@ -24,4 +26,8 @@ abstract class RentalRepository {
   Future<RentalEntity> disputeRental(String id, String reason);
 
   Future<void> cancelRental(String id);
+
+  Future<List<MessageEntity>> getMessages(String rentalId);
+
+  Future<MessageEntity> sendMessage(String rentalId, String message);
 }

@@ -19,6 +19,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _webViewReady = false;
   late final WebViewController _webViewController;
   bool _processingPayment = false;
+  String _selectedPayment = 'card'; // 'card' | 'cash'
 
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
@@ -162,7 +163,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  'Solo se capturan los fondos al confirmar la entrega física.',
+                  _selectedPayment == 'card'
+                      ? 'Solo se capturan los fondos al confirmar la entrega física.'
+                      : 'Pago directo en efectivo al momento de recibir la herramienta.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: AppColors.slate600,
@@ -173,54 +176,170 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 12),
 
-          // ── WebView de pago ─────────────────────────────────────────────
-          Expanded(
-            child: Stack(
+          // Selector de Método de Pago
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
               children: [
-                Container(
-                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(16),
-                    border: const Border.fromBorderSide(
-                        BorderSide(color: Color(0xFFE2E8F0))),
-                    boxShadow: AppColors.cardShadow,
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedPayment = 'card'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedPayment == 'card' ? AppColors.orange500 : AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedPayment == 'card' ? AppColors.orange500 : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Tarjeta',
+                            style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  clipBehavior: Clip.antiAlias,
-                  child: WebViewWidget(controller: _webViewController),
                 ),
-                if (!_webViewReady)
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedPayment = 'cash'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedPayment == 'cash' ? AppColors.orange500 : AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedPayment == 'cash' ? AppColors.orange500 : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Efectivo',
+                            style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ── WebView de pago o Tarjeta de Advertencia en Efectivo ────────
+          if (_selectedPayment == 'card')
+            Expanded(
+              child: Stack(
+                children: [
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
+                      border: const Border.fromBorderSide(
+                          BorderSide(color: Color(0xFFE2E8F0))),
+                      boxShadow: AppColors.cardShadow,
                     ),
+                    clipBehavior: Clip.antiAlias,
+                    child: WebViewWidget(controller: _webViewController),
+                  ),
+                  if (!_webViewReady)
+                    Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.network(
+                            'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large@2x.png',
+                            height: 40,
+                            errorBuilder: (_, __, ___) => Icon(
+                                Icons.payment_outlined,
+                                size: 48,
+                                color: AppColors.slate300),
+                          ),
+                          const SizedBox(height: 16),
+                          const CircularProgressIndicator(),
+                          const SizedBox(height: 12),
+                          Text('Cargando pasarela de pago…',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                color: AppColors.slate600,
+                              )),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            )
+          else
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
+                  boxShadow: AppColors.cardShadow,
+                ),
+                child: Center(
+                  child: SingleChildScrollView(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Image.network(
-                          'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large@2x.png',
-                          height: 40,
-                          errorBuilder: (_, __, ___) => Icon(
-                              Icons.payment_outlined,
-                              size: 48,
-                              color: AppColors.slate300),
-                        ),
-                        const SizedBox(height: 16),
-                        const CircularProgressIndicator(),
+                        const Icon(Icons.gpp_maybe_rounded, size: 48, color: Color(0xFFD97706)),
                         const SizedBox(height: 12),
-                        Text('Cargando pasarela de pago…',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: AppColors.slate600,
-                            )),
+                        Text(
+                          '⚠️ Advertencia Legal y de Seguro',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF92400E),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Al elegir pago en efectivo, la transacción y acuerdo económico se realizan directamente con el propietario.\n\n'
+                          'ToolShare no retiene fondos en garantía y NO nos hacemos responsables ni cubrimos seguro alguno en caso de robos, extravíos o daños a la herramienta.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: const Color(0xFF78350F),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ],
                     ),
                   ),
-              ],
+                ),
+              ),
             ),
-          ),
         ],
       ),
 
@@ -250,7 +369,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           toolId: tool.id as String,
                           startDate: startDateStr,
                           endDate: endDateStr,
-                          cardToken: 'TEST-card-token', // Sandbox token
+                          paymentMethod: _selectedPayment,
+                          cardToken: _selectedPayment == 'card' ? 'TEST-card-token' : null,
                           payerEmail: 'solicitante@ejemplo.com',
                         );
 

@@ -8,6 +8,7 @@ import '../providers/rental_provider.dart';
 import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
+import '../components/rental_chat_sheet.dart';
 
 class RentalTrackingOwnerScreen extends StatefulWidget {
   const RentalTrackingOwnerScreen({super.key});
@@ -285,6 +286,16 @@ class _RentalTrackingOwnerScreenState
           ),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.orange500),
+            tooltip: 'Chat con solicitante',
+            onPressed: () => RentalChatSheet.show(
+              context,
+              rentalId: rental.id,
+              currentUserId: rental.ownerId,
+              title: 'Chat de Renta',
+            ),
+          ),
           if (!rental.isCompleted && !rental.isCancelled && !rental.isDisputed)
             TextButton.icon(
               onPressed: () => _showBackConfirmation(context),

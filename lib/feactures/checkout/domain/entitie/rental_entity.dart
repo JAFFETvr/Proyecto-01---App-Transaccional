@@ -8,6 +8,7 @@ class RentalEntity {
   final double dailyRate;
   final double totalAmount;
   final String status; // 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed'
+  final String paymentMethod; // 'card' | 'cash'
 
   // Payment
   final String mpPaymentId;
@@ -44,6 +45,7 @@ class RentalEntity {
     required this.dailyRate,
     required this.totalAmount,
     required this.status,
+    this.paymentMethod = 'card',
     this.mpPaymentId = '',
     this.paymentStatus = '',
     this.deductibleAmount = 0.0,
@@ -65,4 +67,5 @@ class RentalEntity {
   bool get isDisputed => status == 'disputed';
   bool get isCancelled => status == 'cancelled';
   bool get isPending => status == 'pending';
+  bool get isCash => paymentMethod == 'cash';
 }
