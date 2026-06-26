@@ -144,6 +144,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.logout_rounded),
+              color: AppColors.slate600,
+              onPressed: _logout,
+            ),
             // Borde inferior sutil
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(0),

@@ -401,7 +401,7 @@ class _RentalTrackingRequesterScreenState
   }
 
   Widget _buildDisputedWidget(RentalEntity rental) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -450,7 +450,7 @@ class _RentalTrackingRequesterScreenState
                 ),
               ),
             ),
-          const Spacer(),
+          const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pushReplacementNamed('/solicitante'),
             child: const Text('Volver al Catálogo'),
@@ -461,7 +461,7 @@ class _RentalTrackingRequesterScreenState
   }
 
   Widget _buildCompletedWidget(RentalEntity rental) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -494,7 +494,7 @@ class _RentalTrackingRequesterScreenState
             ),
             textAlign: TextAlign.center,
           ),
-          const Spacer(),
+          const SizedBox(height: 32),
           PrimaryGradientButton(
             label: 'Volver al Catálogo',
             onPressed: () => Navigator.of(context).pushReplacementNamed('/solicitante'),
@@ -511,7 +511,7 @@ class _Phase1Widget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -571,7 +571,7 @@ class _Phase1Widget extends StatelessWidget {
               ),
             ]),
           ),
-          const Spacer(),
+          const SizedBox(height: 32),
           PrimaryGradientButton(
             label: 'Listo para confirmar entrega',
             icon: Icons.navigate_next,
@@ -597,7 +597,7 @@ class _Phase2RequesterWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -658,7 +658,7 @@ class _Phase2RequesterWidget extends StatelessWidget {
               ),
             ]),
           ),
-          const Spacer(),
+          const SizedBox(height: 32),
           loading
               ? const CircularProgressIndicator()
               : PrimaryGradientButton(
@@ -952,7 +952,7 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
