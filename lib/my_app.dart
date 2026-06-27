@@ -26,6 +26,8 @@ import './feactures/solicitante/presentation/screes/catalog_screen.dart';
 import './feactures/checkout/presentation/screes/checkout_screen.dart';
 import './feactures/checkout/presentation/screes/rental_tracking_requester_screen.dart';
 import './feactures/checkout/presentation/screes/rental_tracking_owner_screen.dart';
+import './feactures/admin/presentation/providers/admin_provider.dart';
+import './feactures/admin/presentation/screes/admin_dashboard_screen.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -36,6 +38,7 @@ class MyApp extends StatelessWidget {
     final role  = prefs.getString('user_role') ?? '';
 
     if (token == null) return const LoginScreen();
+    if (role == 'admin') return const AdminDashboardScreen();
     if (role == 'owner') return const DashboardScreen();
     return const CatalogScreen();
   }
@@ -92,6 +95,10 @@ class MyApp extends StatelessWidget {
 
         ChangeNotifierProvider<ChatProvider>(
           create: (_) => ChatProvider(CheckoutDI.repository),
+        ),
+
+        ChangeNotifierProvider<AdminProvider>(
+          create: (_) => AdminProvider(),
         ),
       ],
 

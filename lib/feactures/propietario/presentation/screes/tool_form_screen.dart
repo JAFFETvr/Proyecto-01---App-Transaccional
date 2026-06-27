@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import 'package:latlong2/latlong.dart';
 
+import '../../../../shared/components/location_picker_modal.dart';
 import '../providers/tool_provider.dart';
 import '../../domain/entitie/tool_entity.dart';
 
@@ -653,6 +655,40 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                     color: _isAvailable ? const Color(0xFF16A34A) : cs.error,
                   ),
                   activeColor: const Color(0xFF16A34A),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              _SectionTitle('Geolocalización (Mapa Cercano)'),
+              const SizedBox(height: 12),
+              Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: const Icon(Icons.map_rounded, color: Color(0xFFEA580C), size: 32),
+                  title: const Text('Ubicación en Suchiapa', style: TextStyle(fontWeight: FontWeight.w700)),
+                  subtitle: Text(
+                    (_latitude != null && _longitude != null && _latitude != 0.0)
+                        ? 'Coordenadas: ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}'
+                        : 'No seleccionada (se usará centro por defecto)',
+                    style: TextStyle(fontSize: 12, color: (_latitude != null && _latitude != 0.0) ? const Color(0xFF16A34A) : cs.onSurfaceVariant),
+                  ),
+                  trailing: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFEA580C), foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                    child: const Text('Abrir Mapa'),
+                    onPressed: () async {
+                      final LatLng? res = await showDialog<LatLng>(
+                        context: context,
+                        builder: (_) => LocationPickerModal(initialLat: _latitude, initialLng: _longitude),
+                      );
+                      if (res != null) {
+                        setState(() {
+                          _latitude = res.latitude;
+                          _longitude = res.longitude;
+                        });
+                      }
+                    },
+                  ),
                 ),
               ),
               const SizedBox(height: 28),

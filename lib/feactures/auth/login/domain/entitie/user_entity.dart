@@ -21,4 +21,5 @@ class UserEntity {
   });
 
   bool get isOwner => role == 'owner';
+  bool get isAdmin => role == 'admin';
 }

@@ -15,6 +15,7 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
 import '../../../checkout/presentation/screes/rental_tracking_requester_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
+import 'catalog_map_screen.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -307,6 +308,62 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 ),
               ),
             ),
+
+          // ── Sección Prominente del Mapa Interactivo ─────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+              child: GestureDetector(
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CatalogMapScreen())),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: AppColors.primaryButtonShadow,
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.22),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Icon(Icons.map_rounded, color: Colors.white, size: 28),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Explorar Mapa Interactivo',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              'Encuentra herramientas cerca de tu ubicación actual',
+                              style: GoogleFonts.inter(
+                                color: Colors.white.withValues(alpha: 0.92),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
 
           // ── Barra de búsqueda ─────────────────────────────────────────────
           SliverToBoxAdapter(

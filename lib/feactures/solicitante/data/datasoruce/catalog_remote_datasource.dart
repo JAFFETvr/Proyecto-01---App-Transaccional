@@ -29,6 +29,8 @@ class CatalogRemoteDatasource {
             estimatedValue: (j['estimated_value'] as num?)?.toDouble() ?? 0.0,
             dailyRate:      (j['daily_rate']      as num?)?.toDouble() ?? 0.0,
             suggestedMinDailyRate: (j['suggested_min_daily_rate'] as num?)?.toDouble() ?? 0.0,
+            latitude:       (j['latitude']        as num?)?.toDouble() ?? 0.0,
+            longitude:      (j['longitude']       as num?)?.toDouble() ?? 0.0,
             isAvailable: j['is_available'] as bool,
             createdAt:   j['created_at']  as String,
             updatedAt:   j['updated_at']  as String,

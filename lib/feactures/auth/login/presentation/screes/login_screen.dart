@@ -7,6 +7,7 @@ import '../components/login_form.dart';
 
 import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
+import '../../../../admin/presentation/screes/admin_dashboard_screen.dart';
 import '../../../register/presentation/screes/register_screen.dart';
 import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../propietario/presentation/providers/tool_provider.dart';
@@ -37,9 +38,11 @@ class _LoginScreenState extends State<LoginScreen> {
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();
 
-    final dest = provider.user!.isOwner
-        ? const DashboardScreen()
-        : const CatalogScreen();
+    final dest = provider.user!.isAdmin
+        ? const AdminDashboardScreen()
+        : provider.user!.isOwner
+            ? const DashboardScreen()
+            : const CatalogScreen();
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => dest),

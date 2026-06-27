@@ -107,6 +107,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      drawer: Drawer(
+        backgroundColor: AppColors.surface,
+        child: Column(
+          children: [
+            DrawerHeader(
+              decoration: const BoxDecoration(
+                gradient: AppColors.primaryGradient,
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.handyman_rounded, size: 48, color: Colors.white),
+                    const SizedBox(height: 10),
+                    Text(
+                      'Panel Propietario',
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.assignment_rounded, color: AppColors.orange500),
+              title: Text(
+                'Mis Rentas',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.slate900,
+                ),
+              ),
+              trailing: activeRentals.isNotEmpty
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(color: AppColors.orange500, borderRadius: BorderRadius.circular(12)),
+                      child: Text('${activeRentals.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    )
+                  : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.slate300),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
+              },
+            ),
+            const Spacer(),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
+              title: Text(
+                'Cerrar sesión',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.danger,
+                ),
+              ),
+              onTap: _logout,
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
       // ── FAB con degradado naranja ─────────────────────────────────────────
       floatingActionButton: Container(
         decoration: BoxDecoration(
@@ -175,11 +239,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppColors.orange500,
                 tooltip: 'Mis Rentas',
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen())),
-              ),
-              IconButton(
-                icon: const Icon(Icons.logout_rounded),
-                color: AppColors.slate600,
-                onPressed: _logout,
               ),
             ],
           ),
