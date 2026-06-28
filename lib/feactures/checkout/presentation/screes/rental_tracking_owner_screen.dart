@@ -422,83 +422,85 @@ class _OwnerPhase0 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 90, height: 90,
-          decoration: BoxDecoration(
-            color: AppColors.orange500.withOpacity(0.1),
-            shape: BoxShape.circle,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90, height: 90,
+            decoration: BoxDecoration(
+              color: AppColors.orange500.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.construction_outlined,
+                size: 44, color: AppColors.orange500),
           ),
-          child: const Icon(Icons.construction_outlined,
-              size: 44, color: AppColors.orange500),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Entregar Herramienta',
-          style: GoogleFonts.montserrat(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.slate900,
+          const SizedBox(height: 24),
+          Text(
+            'Entregar Herramienta',
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.slate900,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Reúnete con el solicitante en el lugar acordado. Al entregar la herramienta física, presiona Confirmar Entrega.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: AppColors.slate600,
-            height: 1.5,
+          const SizedBox(height: 10),
+          Text(
+            'Reúnete con el solicitante en el lugar acordado. Al entregar la herramienta física, presiona Confirmar Entrega.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.slate600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0F172A).withOpacity(0.04),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Column(children: [
-            Row(children: [
-              const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  rental.ownerConfirmedDelivery
-                      ? 'Confirmaste la entrega ✓'
-                      : 'Falta tu confirmación de entrega',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F172A).withOpacity(0.04),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(children: [
+              Row(children: [
+                const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    rental.ownerConfirmedDelivery
+                        ? 'Confirmaste la entrega ✓'
+                        : 'Falta tu confirmación de entrega',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-            ]),
-            const SizedBox(height: 8),
-            Row(children: [
-              const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  rental.requesterConfirmedDelivery
-                      ? 'El solicitante confirmó la entrega ✓'
-                      : 'Falta confirmación de entrega del solicitante',
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+              ]),
+              const SizedBox(height: 8),
+              Row(children: [
+                const Icon(Icons.check_circle_outline, size: 16, color: AppColors.success),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    rental.requesterConfirmedDelivery
+                        ? 'El solicitante confirmó la entrega ✓'
+                        : 'Falta confirmación de entrega del solicitante',
+                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
+              ]),
             ]),
-          ]),
-        ),
-        const Spacer(),
-        loading
-            ? const CircularProgressIndicator()
-            : PrimaryGradientButton(
-                label: rental.ownerConfirmedDelivery ? 'Esperando Solicitante...' : 'Confirmar Entrega',
-                icon: Icons.check_outlined,
-                height: 52,
-                onPressed: rental.ownerConfirmedDelivery ? null : onConfirm,
-              ),
-      ],
+          ),
+          const SizedBox(height: 24),
+          loading
+              ? const CircularProgressIndicator()
+              : PrimaryGradientButton(
+                  label: rental.ownerConfirmedDelivery ? 'Esperando Solicitante...' : 'Confirmar Entrega',
+                  icon: Icons.check_outlined,
+                  height: 52,
+                  onPressed: rental.ownerConfirmedDelivery ? null : onConfirm,
+                ),
+        ],
+      ),
     );
   }
 }
@@ -509,60 +511,62 @@ class _OwnerPhase1 extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 90, height: 90,
-          decoration: const BoxDecoration(
-            color: Color(0xFFE0E7FF),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.timer_outlined, size: 44, color: Color(0xFF4F46E5)),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Herramienta en Renta',
-          style: GoogleFonts.montserrat(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.slate900,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'El solicitante posee la herramienta física. Los fondos están garantizados e inmutables bajo contrato digital.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: AppColors.slate600,
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 20),
-        if (rental.contractHash.isNotEmpty)
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.successBg,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.success.withOpacity(0.3)),
+            width: 90, height: 90,
+            decoration: const BoxDecoration(
+              color: Color(0xFFE0E7FF),
+              shape: BoxShape.circle,
             ),
-            child: Column(children: [
-              Text(
-                'Contrato Digital Activo',
-                style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.success, fontSize: 13),
-              ),
-              const SizedBox(height: 4),
-              SelectableText(
-                rental.contractHash,
-                style: GoogleFonts.inter(fontSize: 11, color: AppColors.slate700, fontWeight: FontWeight.w600),
-                textAlign: TextAlign.center,
-              ),
-            ]),
+            child: const Icon(Icons.timer_outlined, size: 44, color: Color(0xFF4F46E5)),
           ),
-        const Spacer(),
-      ],
+          const SizedBox(height: 24),
+          Text(
+            'Herramienta en Renta',
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.slate900,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'El solicitante posee la herramienta física. Los fondos están garantizados e inmutables bajo contrato digital.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.slate600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 20),
+          if (rental.contractHash.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.successBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.success.withOpacity(0.3)),
+              ),
+              child: Column(children: [
+                Text(
+                  'Contrato Digital Activo',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.success, fontSize: 13),
+                ),
+                const SizedBox(height: 4),
+                SelectableText(
+                  rental.contractHash,
+                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.slate700, fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.center,
+                ),
+              ]),
+            ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 }
@@ -570,43 +574,45 @@ class _OwnerPhase1 extends StatelessWidget {
 class _OwnerPhase2Accepted extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 90, height: 90,
-          decoration: const BoxDecoration(
-            color: AppColors.successBg,
-            shape: BoxShape.circle,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90, height: 90,
+            decoration: const BoxDecoration(
+              color: AppColors.successBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_rounded,
+                size: 46, color: AppColors.success),
           ),
-          child: const Icon(Icons.check_circle_rounded,
-              size: 46, color: AppColors.success),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Devolución Completada',
-          style: GoogleFonts.montserrat(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.success,
+          const SizedBox(height: 24),
+          Text(
+            'Devolución Completada',
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.success,
+            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Has confirmado la devolución física. Los fondos se han transferido a tu saldo y el depósito de garantía ha sido devuelto al solicitante.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: AppColors.slate600,
-            height: 1.5,
+          const SizedBox(height: 10),
+          Text(
+            'Has confirmado la devolución física. Los fondos se han transferido a tu saldo y el depósito de garantía ha sido devuelto al solicitante.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.slate600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
           ),
-          textAlign: TextAlign.center,
-        ),
-        const Spacer(),
-        PrimaryGradientButton(
-          label: 'Volver a mi Panel',
-          onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),
-        ),
-      ],
+          const SizedBox(height: 24),
+          PrimaryGradientButton(
+            label: 'Volver a mi Panel',
+            onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -617,58 +623,60 @@ class _OwnerPhase2Rejected extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          width: 90, height: 90,
-          decoration: BoxDecoration(
-            color: AppColors.dangerBg,
-            shape: BoxShape.circle,
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 90, height: 90,
+            decoration: BoxDecoration(
+              color: AppColors.dangerBg,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.gavel_rounded, size: 44, color: AppColors.danger),
           ),
-          child: const Icon(Icons.gavel_rounded, size: 44, color: AppColors.danger),
-        ),
-        const SizedBox(height: 24),
-        Text(
-          'Renta Reportada en Disputa',
-          style: GoogleFonts.montserrat(
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
-            color: AppColors.danger,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          'Se ha abierto un reporte de disputa sobre este contrato. El soporte de ToolShare evaluará la situación y el depósito en garantía.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: AppColors.slate600,
-            height: 1.5,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        if (rental.disputeReason.isNotEmpty)
-          Card(
-            color: AppColors.dangerBg.withOpacity(0.4),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Detalle del reporte:', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.danger)),
-                  const SizedBox(height: 6),
-                  Text(rental.disputeReason, style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate700)),
-                ],
-              ),
+          const SizedBox(height: 24),
+          Text(
+            'Renta Reportada en Disputa',
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: AppColors.danger,
             ),
           ),
-        const Spacer(),
-        PrimaryGradientButton(
-          label: 'Volver a mi Panel',
-          onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),
-        ),
-      ],
+          const SizedBox(height: 10),
+          Text(
+            'Se ha abierto un reporte de disputa sobre este contrato. El soporte de ToolShare evaluará la situación y el depósito en garantía.',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: AppColors.slate600,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          if (rental.disputeReason.isNotEmpty)
+            Card(
+              color: AppColors.dangerBg.withOpacity(0.4),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Detalle del reporte:', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.danger)),
+                    const SizedBox(height: 6),
+                    Text(rental.disputeReason, style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate700)),
+                  ],
+                ),
+              ),
+            ),
+          const SizedBox(height: 24),
+          PrimaryGradientButton(
+            label: 'Volver a mi Panel',
+            onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),
+          ),
+        ],
+      ),
     );
   }
 }

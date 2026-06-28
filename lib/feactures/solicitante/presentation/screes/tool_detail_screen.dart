@@ -526,15 +526,18 @@ class _CostRow extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight:
-                labelBold ? FontWeight.w700 : FontWeight.w500,
-            color: labelColor ?? AppColors.slate900,
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              fontWeight:
+                  labelBold ? FontWeight.w700 : FontWeight.w500,
+              color: labelColor ?? AppColors.slate900,
+            ),
           ),
         ),
+        const SizedBox(width: 8),
         Text(
           value,
           style: GoogleFonts.montserrat(
