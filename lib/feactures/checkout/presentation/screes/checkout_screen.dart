@@ -417,7 +417,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.slate800,
+                            color: AppColors.slate900,
                           ),
                         ),
                         const SizedBox(height: 14),
