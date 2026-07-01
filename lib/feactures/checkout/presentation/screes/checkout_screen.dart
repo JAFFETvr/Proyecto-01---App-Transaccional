@@ -16,8 +16,6 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
-  bool _webViewReady = false;
-  late final WebViewController _webViewController;
   bool _processingPayment = false;
   String _selectedPayment = 'card'; // 'card' | 'cash'
 
@@ -27,14 +25,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) => setState(() => _webViewReady = true),
-      ))
-      ..loadRequest(Uri.parse(
-        'https://www.mercadopago.com.mx/checkout/v1/redirect?pref_id=DEMO',
-      ));
   }
 
   @override
@@ -250,50 +240,139 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           // ── WebView de pago o Tarjeta de Advertencia en Efectivo ────────
           if (_selectedPayment == 'card')
             Expanded(
-              child: Stack(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: const Border.fromBorderSide(
-                          BorderSide(color: Color(0xFFE2E8F0))),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: WebViewWidget(controller: _webViewController),
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  if (!_webViewReady)
-                    Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Image.network(
-                            'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large@2x.png',
-                            height: 40,
-                            errorBuilder: (_, __, ___) => Icon(
-                                Icons.payment_outlined,
-                                size: 48,
-                                color: AppColors.slate300),
-                          ),
-                          const SizedBox(height: 16),
-                          const CircularProgressIndicator(),
-                          const SizedBox(height: 12),
-                          Text('Cargando pasarela de pago…',
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 10,
+                      offset: const Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'STRIPE TEST MODE ACTIVE',
+                              style: GoogleFonts.montserrat(
+                                color: AppColors.orange500,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Tarjeta de Débito / Crédito',
                               style: GoogleFonts.inter(
-                                fontSize: 13,
-                                color: AppColors.slate600,
-                              )),
-                        ],
+                                color: Colors.white70,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Icon(
+                          Icons.nfc_rounded,
+                          color: Colors.white54,
+                          size: 28,
+                        ),
+                      ],
+                    ),
+                    Text(
+                      '4242  4242  4242  4242',
+                      style: GoogleFonts.shareTechMono(
+                        color: Colors.white,
+                        fontSize: 22,
+                        letterSpacing: 2,
                       ),
                     ),
-                ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'TITULAR',
+                              style: GoogleFonts.inter(
+                                color: Colors.white38,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'TEST USER',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'VENCE',
+                              style: GoogleFonts.inter(
+                                color: Colors.white38,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '12/29',
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Image.network(
+                          'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Logo.svg/2560px-Visa_Logo.svg.png',
+                          height: 18,
+                          errorBuilder: (_, __, ___) => const Icon(
+                            Icons.credit_card,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Colors.white10),
+                    Text(
+                      'Esta transacción se procesa de forma segura a través del Sandbox de Stripe. Puedes ver los detalles en tiempo real en tu dashboard de Stripe.',
+                      style: GoogleFonts.inter(
+                        color: Colors.white38,
+                        fontSize: 9,
+                        height: 1.4,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             )
           else
@@ -370,7 +449,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           startDate: startDateStr,
                           endDate: endDateStr,
                           paymentMethod: _selectedPayment,
-                          cardToken: _selectedPayment == 'card' ? 'TEST-card-token' : null,
+                          cardToken: _selectedPayment == 'card' ? 'tok_visa' : null,
                           payerEmail: 'solicitante@ejemplo.com',
                         );
 
