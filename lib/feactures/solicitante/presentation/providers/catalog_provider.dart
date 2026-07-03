@@ -33,14 +33,11 @@ class CatalogProvider extends ChangeNotifier {
   }
 
   List<ToolEntity> get filtered => _all.where((t) {
-        final matchSearch = _search.isEmpty ||
-            t.name.toLowerCase().contains(_search.toLowerCase()) ||
-            t.category.toLowerCase().contains(_search.toLowerCase());
         final matchCategory = _filterCategory == 'Todos' ||
             t.category == _filterCategory;
         final matchAvailable = !_onlyAvailable || t.isAvailable;
 
-        return matchSearch && matchCategory && matchAvailable;
+        return matchCategory && matchAvailable;
       }).toList();
 
   CatalogProvider({required GetCatalogUseCase getCatalog})
@@ -52,7 +49,10 @@ class CatalogProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _all = await _getCatalog.execute();
+      _all = await _getCatalog.execute(
+        onlyAvailable: _onlyAvailable,
+        search: _search,
+      );
     } on AppError catch (e) {
       _error = e.userMessage;
     } catch (_) {
@@ -66,6 +66,7 @@ class CatalogProvider extends ChangeNotifier {
   void setSearch(String value) {
     _search = value;
     notifyListeners();
+    fetchTools();
   }
 
   void setCategory(String value) {
@@ -76,5 +77,6 @@ class CatalogProvider extends ChangeNotifier {
   void setOnlyAvailable(bool value) {
     _onlyAvailable = value;
     notifyListeners();
+    fetchTools();
   }
 }

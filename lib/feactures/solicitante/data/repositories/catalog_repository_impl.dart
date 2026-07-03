@@ -7,6 +7,6 @@ class CatalogRepositoryImpl implements CatalogRepository {
   const CatalogRepositoryImpl(this._datasource);
 
   @override
-  Future<List<ToolEntity>> getTools({bool onlyAvailable = false}) =>
-      _datasource.getTools(onlyAvailable: onlyAvailable);
+  Future<List<ToolEntity>> getTools({bool onlyAvailable = false, String search = ''}) =>
+      _datasource.getTools(onlyAvailable: onlyAvailable, search: search);
 }

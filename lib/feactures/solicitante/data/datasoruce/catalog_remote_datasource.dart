@@ -7,10 +7,14 @@ import '../../domain/entitie/tool_entity.dart';
 class CatalogRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
-  Future<List<ToolEntity>> getTools({bool onlyAvailable = false}) async {
+  Future<List<ToolEntity>> getTools({bool onlyAvailable = false, String search = ''}) async {
     try {
+      final queryParams = <String, String>{};
+      if (onlyAvailable) queryParams['available'] = 'true';
+      if (search.isNotEmpty) queryParams['search'] = search;
+
       final uri = Uri.parse('$_baseUrl/tools').replace(
-        queryParameters: onlyAvailable ? {'available': 'true'} : null,
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
       final res = await http.get(uri,
           headers: {'Content-Type': 'application/json'});
