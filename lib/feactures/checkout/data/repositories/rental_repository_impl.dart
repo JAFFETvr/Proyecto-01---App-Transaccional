@@ -55,4 +55,8 @@ class RentalRepositoryImpl implements RentalRepository {
 
   @override
   Future<MessageEntity> sendMessage(String rentalId, String message) => _datasource.sendMessage(rentalId, message);
+
+  @override
+  Future<String> getPreference(String rentalId, String payerEmail) =>
+      _datasource.getPreference(rentalId, payerEmail);
 }

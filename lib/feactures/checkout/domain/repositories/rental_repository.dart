@@ -30,4 +30,6 @@ abstract class RentalRepository {
   Future<List<MessageEntity>> getMessages(String rentalId);
 
   Future<MessageEntity> sendMessage(String rentalId, String message);
+
+  Future<String> getPreference(String rentalId, String payerEmail);
 }

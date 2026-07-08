@@ -9,6 +9,7 @@ import '../../domain/usesCases/confirm_delivery_usecase.dart';
 import '../../domain/usesCases/confirm_return_usecase.dart';
 import '../../domain/usesCases/dispute_rental_usecase.dart';
 import '../../domain/usesCases/cancel_rental_usecase.dart';
+import '../../domain/usesCases/get_preference_usecase.dart';
 
 class RentalProvider extends ChangeNotifier {
   final CreateRentalUseCase _createRental;
@@ -18,6 +19,7 @@ class RentalProvider extends ChangeNotifier {
   final ConfirmReturnUseCase _confirmReturn;
   final DisputeRentalUseCase _disputeRental;
   final CancelRentalUseCase _cancelRental;
+  final GetPreferenceUseCase _getPreference;
 
   List<RentalEntity> _rentals = [];
   RentalEntity? _currentRental;
@@ -37,13 +39,15 @@ class RentalProvider extends ChangeNotifier {
     required ConfirmReturnUseCase confirmReturn,
     required DisputeRentalUseCase disputeRental,
     required CancelRentalUseCase cancelRental,
+    required GetPreferenceUseCase getPreference,
   })  : _createRental = createRental,
         _getRentals = getRentals,
         _getRental = getRental,
         _confirmDelivery = confirmDelivery,
         _confirmReturn = confirmReturn,
         _disputeRental = disputeRental,
-        _cancelRental = cancelRental;
+        _cancelRental = cancelRental,
+        _getPreference = getPreference;
 
   void clearState() {
     _rentals = [];
@@ -209,6 +213,24 @@ class RentalProvider extends ChangeNotifier {
     } catch (_) {
       _error = 'Sin conexión al servidor.';
       return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> fetchPreference(String rentalId, String payerEmail) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      return await _getPreference.execute(rentalId, payerEmail);
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al servidor.';
+      return null;
     } finally {
       _loading = false;
       notifyListeners();

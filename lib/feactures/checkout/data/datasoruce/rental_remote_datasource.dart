@@ -194,4 +194,19 @@ class RentalRemoteDatasource {
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
+
+  Future<String> getPreference(String rentalId, String payerEmail) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.post(
+        Uri.parse('$_baseUrl/rentals/$rentalId/preference'),
+        headers: headers,
+        body: json.encode({'payer_email': payerEmail}),
+      );
+      _throwIfError(res);
+      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      return body['init_point'] as String;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
 }

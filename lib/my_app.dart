@@ -90,6 +90,7 @@ class MyApp extends StatelessWidget {
             confirmReturn:   CheckoutDI.provideConfirmReturn(),
             disputeRental:   CheckoutDI.provideDisputeRental(),
             cancelRental:    CheckoutDI.provideCancelRental(),
+            getPreference:   CheckoutDI.provideGetPreference(),
           ),
         ),
 

@@ -7,6 +7,7 @@ import '../../domain/usesCases/confirm_delivery_usecase.dart';
 import '../../domain/usesCases/confirm_return_usecase.dart';
 import '../../domain/usesCases/dispute_rental_usecase.dart';
 import '../../domain/usesCases/cancel_rental_usecase.dart';
+import '../../domain/usesCases/get_preference_usecase.dart';
 
 class CheckoutDI {
   static final _datasource = RentalRemoteDatasource();
@@ -19,5 +20,6 @@ class CheckoutDI {
   static ConfirmReturnUseCase provideConfirmReturn() => ConfirmReturnUseCase(_repository);
   static DisputeRentalUseCase provideDisputeRental() => DisputeRentalUseCase(_repository);
   static CancelRentalUseCase provideCancelRental() => CancelRentalUseCase(_repository);
+  static GetPreferenceUseCase provideGetPreference() => GetPreferenceUseCase(_repository);
   static get repository => _repository;
 }

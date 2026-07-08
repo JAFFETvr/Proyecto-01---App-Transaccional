@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'rental_tracking_requester_screen.dart';
 import '../providers/rental_provider.dart';
@@ -16,44 +17,42 @@ class CheckoutScreen extends StatefulWidget {
 }
 
 class _CheckoutScreenState extends State<CheckoutScreen> {
+  bool _webViewReady = false;
+  late final WebViewController _webViewController;
   bool _processingPayment = false;
   String _selectedPayment = 'card'; // 'card' | 'cash'
-
-  final _cardNumberController = TextEditingController();
-  final _cardHolderController = TextEditingController();
-  final _cardExpiryController = TextEditingController();
-  final _cardCvvController = TextEditingController();
+  bool _showWebView = false;
 
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
 
+  void _navigateToTracking() {
+    final rental = context.read<RentalProvider>().currentRental;
+    if (!mounted || rental == null) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const RentalTrackingRequesterScreen(),
+        settings: RouteSettings(arguments: rental),
+      ),
+      (_) => false,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-    // Escuchar cambios para re-renderizar la tarjeta en tiempo real
-    _cardNumberController.addListener(() => setState(() {}));
-    _cardHolderController.addListener(() => setState(() {}));
-    _cardExpiryController.addListener(() => setState(() {}));
-  }
-
-  @override
-  void dispose() {
-    _cardNumberController.dispose();
-    _cardHolderController.dispose();
-    _cardExpiryController.dispose();
-    _cardCvvController.dispose();
-    super.dispose();
-  }
-
-  String _getCardTokenFromNumber(String number) {
-    final clean = number.replaceAll(' ', '');
-    if (clean.startsWith('4000')) {
-      return 'tok_chargeDeclined';
-    }
-    if (clean.startsWith('4224')) {
-      return 'tok_chargeDeclinedInsufficientFunds';
-    }
-    return 'tok_visa';
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageFinished: (_) => setState(() => _webViewReady = true),
+        onNavigationRequest: (req) {
+          if (req.url.startsWith('toolshare://')) {
+            _navigateToTracking();
+            return NavigationDecision.prevent;
+          }
+          return NavigationDecision.navigate;
+        },
+      ));
   }
 
   @override
@@ -110,427 +109,241 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
 
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ── Resumen ─────────────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Resumen del pedido',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.slate900,
-                    ),
+      body: Column(
+        children: [
+          // ── Resumen ─────────────────────────────────────────────────────
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: AppColors.cardShadow,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Resumen del pedido',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.slate900,
                   ),
-                  const SizedBox(height: 14),
-                  _SummaryRow(
-                      icon: Icons.handyman_outlined,
-                      label: toolName,
-                      value: ''),
-                  _SummaryRow(
-                      icon: Icons.calendar_today_outlined,
-                      label: '$days día${days > 1 ? 's' : ''}',
-                      value:
-                          '\$${(priceDay * days).toStringAsFixed(0)} MXN'),
-                  _SummaryRow(
-                      icon: Icons.security_outlined,
-                      label: 'Depósito (10%)',
-                      value:
-                          '\$${(deposit as double).toStringAsFixed(0)} MXN'),
-                  const SizedBox(height: 10),
-                  const Divider(color: Color(0xFFE2E8F0)),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Total:',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.slate900,
-                          )),
-                      Text(
-                        '\$${(total as double).toStringAsFixed(0)} MXN',
+                ),
+                const SizedBox(height: 14),
+                _SummaryRow(
+                    icon: Icons.handyman_outlined,
+                    label: toolName,
+                    value: ''),
+                _SummaryRow(
+                    icon: Icons.calendar_today_outlined,
+                    label: '$days día${days > 1 ? 's' : ''}',
+                    value:
+                        '\$${(priceDay * days).toStringAsFixed(0)} MXN'),
+                _SummaryRow(
+                    icon: Icons.security_outlined,
+                    label: 'Depósito (10%)',
+                    value:
+                        '\$${(deposit as double).toStringAsFixed(0)} MXN'),
+                const SizedBox(height: 10),
+                const Divider(color: Color(0xFFE2E8F0)),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total:',
                         style: GoogleFonts.montserrat(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.orange500,
+                          color: AppColors.slate900,
+                        )),
+                    Text(
+                      '\$${(total as double).toStringAsFixed(0)} MXN',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.orange500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Aviso
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(children: [
+              Icon(Icons.info_outline, size: 14, color: AppColors.slate600),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  _selectedPayment == 'card'
+                      ? 'Solo se capturan los fondos al confirmar la entrega física.'
+                      : 'Pago directo en efectivo al momento de recibir la herramienta.',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: AppColors.slate600,
+                  ),
+                ),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 12),
+
+          // Selector de Método de Pago
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedPayment = 'card'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedPayment == 'card' ? AppColors.orange500 : AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedPayment == 'card' ? AppColors.orange500 : const Color(0xFFCBD5E1),
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-  
-            // Aviso
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(children: [
-                Icon(Icons.info_outline, size: 14, color: AppColors.slate600),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    _selectedPayment == 'card'
-                        ? 'Solo se capturan los fondos al confirmar la entrega física.'
-                        : 'Pago directo en efectivo al momento de recibir la herramienta.',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      color: AppColors.slate600,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Tarjeta',
+                            style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _selectedPayment = 'cash'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _selectedPayment == 'cash' ? AppColors.orange500 : AppColors.surface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _selectedPayment == 'cash' ? AppColors.orange500 : const Color(0xFFCBD5E1),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Efectivo',
+                            style: GoogleFonts.montserrat(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                              color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 12),
-  
-            // Selector de Método de Pago
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedPayment = 'card'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedPayment == 'card' ? AppColors.orange500 : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _selectedPayment == 'card' ? AppColors.orange500 : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Tarjeta',
-                              style: GoogleFonts.montserrat(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _selectedPayment = 'cash'),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _selectedPayment == 'cash' ? AppColors.orange500 : AppColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: _selectedPayment == 'cash' ? AppColors.orange500 : const Color(0xFFCBD5E1),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Efectivo',
-                              style: GoogleFonts.montserrat(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-  
-            // ── WebView de pago o Tarjeta de Advertencia en Efectivo ────────
-            if (_selectedPayment == 'card')
-              Column(
-                children: [
-                  // Ilustración de Tarjeta
-                  Container(
-                    height: 200,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        )
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ),
+          const SizedBox(height: 16),
+
+          // ── WebView de pago o Tarjeta de Advertencia en Efectivo ────────
+          if (_selectedPayment == 'card')
+            Expanded(
+              child: _showWebView
+                  ? Stack(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'STRIPE TEST MODE ACTIVE',
-                                  style: GoogleFonts.montserrat(
-                                    color: AppColors.orange500,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.5,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Tarjeta de Débito / Crédito',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Icon(
-                              Icons.nfc_rounded,
-                              color: Colors.white54,
-                              size: 28,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          _cardNumberController.text.isEmpty ? '4242  4242  4242  4242' : _cardNumberController.text,
-                          style: GoogleFonts.shareTechMono(
-                            color: Colors.white,
-                            fontSize: 22,
-                            letterSpacing: 2,
+                        Container(
+                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: const Border.fromBorderSide(
+                                BorderSide(color: Color(0xFFE2E8F0))),
+                            boxShadow: AppColors.cardShadow,
                           ),
+                          clipBehavior: Clip.antiAlias,
+                          child: WebViewWidget(controller: _webViewController),
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        if (!_webViewReady)
+                          Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Text(
-                                  'TITULAR',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                Image.network(
+                                  'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large@2x.png',
+                                  height: 40,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                      Icons.payment_outlined,
+                                      size: 48,
+                                      color: AppColors.slate300),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _cardHolderController.text.isEmpty ? 'TEST USER' : _cardHolderController.text.toUpperCase(),
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
+                                const SizedBox(height: 16),
+                                const CircularProgressIndicator(),
+                                const SizedBox(height: 12),
+                                Text('Cargando pasarela de pago…',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: AppColors.slate600,
+                                    )),
                               ],
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'VENCE',
-                                  style: GoogleFonts.inter(
-                                    color: Colors.white38,
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  _cardExpiryController.text.isEmpty ? '12/29' : _cardExpiryController.text,
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Logo.svg/2560px-Visa_Logo.svg.png',
-                              height: 18,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.credit_card,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ],
-                        ),
+                          ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Formulario de Tarjeta Estilo SHEIN
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: AppColors.cardShadow,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Detalles de la tarjeta',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.slate900,
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-                        TextField(
-                          controller: _cardNumberController,
-                          keyboardType: TextInputType.number,
-                          decoration: InputDecoration(
-                            labelText: 'Número de tarjeta',
-                            hintText: '4242 4242 4242 4242',
-                            prefixIcon: const Icon(Icons.credit_card),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                          onChanged: (v) {
-                            String text = v.replaceAll(' ', '');
-                            if (text.length > 16) {
-                              text = text.substring(0, 16);
-                            }
-                            String formatted = '';
-                            for (int i = 0; i < text.length; i++) {
-                              if (i > 0 && i % 4 == 0) {
-                                formatted += ' ';
-                              }
-                              formatted += text[i];
-                            }
-                            if (formatted != v) {
-                              _cardNumberController.value = TextEditingValue(
-                                text: formatted,
-                                selection: TextSelection.collapsed(offset: formatted.length),
-                              );
-                            }
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        TextField(
-                          controller: _cardHolderController,
-                          keyboardType: TextInputType.name,
-                          textCapitalization: TextCapitalization.characters,
-                          decoration: InputDecoration(
-                            labelText: 'Nombre del titular',
-                            hintText: 'JUAN PEREZ',
-                            prefixIcon: const Icon(Icons.person_outline),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(
-                              flex: 2,
-                              child: TextField(
-                                controller: _cardExpiryController,
-                                keyboardType: TextInputType.number,
-                                decoration: InputDecoration(
-                                  labelText: 'Vence',
-                                  hintText: 'MM/YY',
-                                  prefixIcon: const Icon(Icons.calendar_today_outlined),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                                onChanged: (v) {
-                                  String text = v.replaceAll('/', '');
-                                  if (text.length > 4) {
-                                    text = text.substring(0, 4);
-                                  }
-                                  String formatted = '';
-                                  for (int i = 0; i < text.length; i++) {
-                                    if (i == 2) {
-                                      formatted += '/';
-                                    }
-                                    formatted += text[i];
-                                  }
-                                  if (formatted != v) {
-                                    _cardExpiryController.value = TextEditingValue(
-                                      text: formatted,
-                                      selection: TextSelection.collapsed(offset: formatted.length),
-                                    );
-                                  }
-                                },
-                              ),
+                    )
+                  : Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: const Border.fromBorderSide(
+                            BorderSide(color: Color(0xFFE2E8F0))),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.credit_card_rounded,
+                              size: 48, color: AppColors.slate300),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Presiona "Confirmar" para\niniciar el pago seguro',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              color: AppColors.slate600,
                             ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 1,
-                              child: TextField(
-                                controller: _cardCvvController,
-                                keyboardType: TextInputType.number,
-                                obscureText: true,
-                                decoration: InputDecoration(
-                                  labelText: 'CVV',
-                                  hintText: '***',
-                                  prefixIcon: const Icon(Icons.lock_outline_rounded),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'ℹ️ Para probar éxito usa tarjeta 4242. Para simular declinado usa tarjeta 4000.',
-                          style: GoogleFonts.inter(
-                            fontSize: 10.5,
-                            color: AppColors.slate500,
-                            fontStyle: FontStyle.italic,
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              )
-            else
-              Container(
+            )
+          else
+            Expanded(
+              child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -540,37 +353,39 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   boxShadow: AppColors.cardShadow,
                 ),
                 child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.gpp_maybe_rounded, size: 48, color: Color(0xFFD97706)),
-                      const SizedBox(height: 12),
-                      Text(
-                        '⚠️ Advertencia Legal y de Seguro',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF92400E),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.gpp_maybe_rounded, size: 48, color: Color(0xFFD97706)),
+                        const SizedBox(height: 12),
+                        Text(
+                          '⚠️ Advertencia Legal y de Seguro',
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF92400E),
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Al elegir pago en efectivo, la transacción y acuerdo económico se realizan directamente con el propietario.\n\n'
-                        'ToolShare no retiene fondos en garantía y NO nos hacemos responsables ni cubrimos seguro alguno en caso de robos, extravíos o daños a la herramienta.',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: const Color(0xFF78350F),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Al elegir pago en efectivo, la transacción y acuerdo económico se realizan directamente con el propietario.\n\n'
+                          'ToolShare no retiene fondos en garantía y NO nos hacemos responsables ni cubrimos seguro alguno en caso de robos, extravíos o daños a la herramienta.',
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            height: 1.4,
+                            color: const Color(0xFF78350F),
+                          ),
+                          textAlign: TextAlign.center,
                         ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
 
       // ── Botón de acción con degradado naranja ────────────────────────────
@@ -583,32 +398,47 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   child: Center(child: CircularProgressIndicator()),
                 )
               : PrimaryGradientButton(
-                  label:
-                      'Confirmar — \$${(total is double ? total : (total as num).toDouble()).toStringAsFixed(0)} MXN',
+                  label: _showWebView
+                      ? 'Esperando pago en MercadoPago…'
+                      : 'Confirmar — \$${(total is double ? total : (total as num).toDouble()).toStringAsFixed(0)} MXN',
                   icon: Icons.lock_outline,
                   height: 55,
-                  onPressed: () async {
+                  onPressed: _showWebView ? null : () async {
                     if (tool == null) return;
                     setState(() => _processingPayment = true);
 
-                    // Formato ISO8601 UTC
+                    final prefs = await SharedPreferences.getInstance();
+                    final payerEmail = prefs.getString('user_email') ?? '';
+
                     final startDateStr = DateTime.now().toUtc().toIso8601String();
                     final endDateStr = DateTime.now().add(Duration(days: days)).toUtc().toIso8601String();
 
-                    final success = await context.read<RentalProvider>().createRental(
-                          toolId: tool.id as String,
-                          startDate: startDateStr,
-                          endDate: endDateStr,
-                          paymentMethod: _selectedPayment,
-                          cardToken: _selectedPayment == 'card' ? _getCardTokenFromNumber(_cardNumberController.text) : null,
-                          payerEmail: 'solicitante@ejemplo.com',
-                        );
+                    final rentalProv = context.read<RentalProvider>();
 
-                    setState(() => _processingPayment = false);
+                    final success = await rentalProv.createRental(
+                      toolId: tool.id as String,
+                      startDate: startDateStr,
+                      endDate: endDateStr,
+                      paymentMethod: _selectedPayment,
+                    );
 
                     if (!mounted) return;
 
-                    if (success) {
+                    if (!success) {
+                      setState(() => _processingPayment = false);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(rentalProv.error ?? 'Error al registrar la renta'),
+                          backgroundColor: AppColors.danger,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Pago en efectivo: navegar directo al seguimiento
+                    if (_selectedPayment == 'cash') {
+                      setState(() => _processingPayment = false);
                       showDialog(
                         context: context,
                         barrierDismissible: false,
@@ -617,12 +447,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               borderRadius: BorderRadius.circular(20)),
                           icon: const Icon(Icons.check_circle_outline,
                               size: 52, color: AppColors.success),
-                          title: Text('¡Pago procesado!',
+                          title: Text('¡Renta creada!',
                               style: GoogleFonts.montserrat(
                                   fontWeight: FontWeight.w800)),
                           content: Text(
-                            'Los fondos han sido retenidos de forma segura. '
-                            'Ahora coordina el encuentro con el propietario.',
+                            'Coordina el encuentro con el propietario y realiza el pago en efectivo al recibir la herramienta.',
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               color: AppColors.slate600,
@@ -633,31 +462,37 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             FilledButton(
                               onPressed: () {
                                 Navigator.pop(ctx);
-                                Navigator.of(context).pushAndRemoveUntil(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        const RentalTrackingRequesterScreen(),
-                                    settings: RouteSettings(
-                                      arguments: rentalProvider.currentRental,
-                                    ),
-                                  ),
-                                  (_) => false,
-                                );
+                                _navigateToTracking();
                               },
                               child: const Text('Ver seguimiento'),
                             ),
                           ],
                         ),
                       );
-                    } else {
+                      return;
+                    }
+
+                    // Pago con tarjeta: obtener init_point real
+                    final rentalId = rentalProv.currentRental!.id;
+                    final initPoint = await rentalProv.fetchPreference(rentalId, payerEmail);
+
+                    setState(() => _processingPayment = false);
+
+                    if (!mounted) return;
+
+                    if (initPoint == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(rentalProvider.error ?? 'Error al procesar el pago y registrar la renta'),
+                          content: Text(rentalProv.error ?? 'Error al crear la preferencia de pago'),
                           backgroundColor: AppColors.danger,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
+                      return;
                     }
+
+                    _webViewController.loadRequest(Uri.parse(initPoint));
+                    setState(() => _showWebView = true);
                   },
                 ),
         ),
