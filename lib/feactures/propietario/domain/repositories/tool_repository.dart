@@ -38,5 +38,7 @@ abstract class ToolRepository {
     required String category,
     required String brand,
   });
-  Future<bool> subscribe();
+  Future<String> getSubscriptionPreference();
+  Future<bool> confirmSubscriptionPayment(String paymentId);
+  Future<bool> refreshIsPro();
 }

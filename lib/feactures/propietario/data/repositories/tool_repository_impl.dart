@@ -60,5 +60,7 @@ class ToolRepositoryImpl implements ToolRepository {
         category: category,
         brand: brand);
 
-  @override Future<bool> subscribe() => _datasource.subscribe();
+  @override Future<String> getSubscriptionPreference() => _datasource.getSubscriptionPreference();
+  @override Future<bool> confirmSubscriptionPayment(String paymentId) => _datasource.confirmSubscriptionPayment(paymentId);
+  @override Future<bool> refreshIsPro() => _datasource.refreshIsPro();
 }

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/tool_provider.dart';
 import '../components/tool_list_item.dart';
 import 'tool_form_screen.dart';
+import 'pro_subscription_checkout_screen.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../auth/login/presentation/providers/login_provider.dart';
 import '../../../auth/register/presentation/providers/register_provider.dart';
@@ -376,28 +377,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: FilledButton.icon(
                               onPressed: provider.loading
                                   ? null
-                                  : () async {
-                                      final ok = await provider.subscribePro();
-                                      if (mounted) {
-                                        if (ok) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(
-                                              content: Text('¡Suscripción Pro activada exitosamente! 🎉'),
-                                              backgroundColor: Color(0xFF10B981),
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(provider.error ?? 'Error al procesar suscripción'),
-                                              backgroundColor: AppColors.danger,
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-                                        }
-                                      }
-                                    },
+                                  : () => openProSubscriptionCheckout(context),
                               icon: const Icon(Icons.bolt_rounded, size: 16),
                               label: const Text('Adquirir Plan Pro (\$69/mes)'),
                               style: FilledButton.styleFrom(

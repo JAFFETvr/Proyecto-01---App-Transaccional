@@ -21,7 +21,9 @@ class ToolProvider extends ChangeNotifier {
   final GetPricingSuggestionUseCase _getPricingSuggestion;
   final PredictConditionUseCase _predictCondition;
   final AutoValuateUseCase _autoValuate;
-  final SubscribeUseCase _subscribe;
+  final GetSubscriptionPreferenceUseCase _getSubscriptionPreference;
+  final ConfirmSubscriptionPaymentUseCase _confirmSubscriptionPayment;
+  final RefreshIsProUseCase _refreshIsPro;
 
   List<ToolEntity> _tools = [];
   bool _loading = false;
@@ -53,7 +55,9 @@ class ToolProvider extends ChangeNotifier {
     required GetPricingSuggestionUseCase getPricingSuggestion,
     required PredictConditionUseCase predictCondition,
     required AutoValuateUseCase autoValuate,
-    required SubscribeUseCase subscribe,
+    required GetSubscriptionPreferenceUseCase getSubscriptionPreference,
+    required ConfirmSubscriptionPaymentUseCase confirmSubscriptionPayment,
+    required RefreshIsProUseCase refreshIsPro,
   })  : _getTools = getTools,
         _createTool = createTool,
         _updateTool = updateTool,
@@ -61,7 +65,9 @@ class ToolProvider extends ChangeNotifier {
         _getPricingSuggestion = getPricingSuggestion,
         _predictCondition = predictCondition,
         _autoValuate = autoValuate,
-        _subscribe = subscribe;
+        _getSubscriptionPreference = getSubscriptionPreference,
+        _confirmSubscriptionPayment = confirmSubscriptionPayment,
+        _refreshIsPro = refreshIsPro;
 
   Future<void> checkSubscriptionStatus() async {
     final prefs = await SharedPreferences.getInstance();
@@ -207,26 +213,51 @@ class ToolProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> subscribePro() async {
+  /// Pide al backend el init_point de Checkout Pro de Mercado Pago para
+  /// pagar la suscripción. Null si falló (ver [error]).
+  Future<String?> getSubscriptionPreference() async {
     _loading = true;
     _error = null;
     notifyListeners();
 
     try {
-      final success = await _subscribe.execute();
-      if (success) {
-        _isPro = true;
-      }
-      return success;
+      return await _getSubscriptionPreference.execute();
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al servidor.';
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Confirma un pago de suscripción directamente contra MP usando el payment_id
+  /// devuelto en la URL de retorno del checkout (no depende del webhook).
+  Future<bool> confirmSubscriptionPayment(String paymentId) async {
+    try {
+      _isPro = await _confirmSubscriptionPayment.execute(paymentId);
+      notifyListeners();
+      return _isPro;
     } on AppError catch (e) {
       _error = e.userMessage;
       return false;
     } catch (_) {
       _error = 'Sin conexión al servidor.';
       return false;
-    } finally {
-      _loading = false;
+    }
+  }
+
+  /// Refresca is_pro desde el backend (el webhook de MP lo activa de forma asíncrona).
+  Future<bool> refreshProStatus() async {
+    try {
+      _isPro = await _refreshIsPro.execute();
       notifyListeners();
+      return _isPro;
+    } catch (_) {
+      return _isPro;
     }
   }
 

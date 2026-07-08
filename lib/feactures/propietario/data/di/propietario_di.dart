@@ -24,5 +24,10 @@ class PropietarioDI {
       PredictConditionUseCase(_repository);
   static AutoValuateUseCase provideAutoValuate() =>
       AutoValuateUseCase(_repository);
-  static SubscribeUseCase provideSubscribe() => SubscribeUseCase(_repository);
+  static GetSubscriptionPreferenceUseCase provideGetSubscriptionPreference() =>
+      GetSubscriptionPreferenceUseCase(_repository);
+  static ConfirmSubscriptionPaymentUseCase provideConfirmSubscriptionPayment() =>
+      ConfirmSubscriptionPaymentUseCase(_repository);
+  static RefreshIsProUseCase provideRefreshIsPro() =>
+      RefreshIsProUseCase(_repository);
 }

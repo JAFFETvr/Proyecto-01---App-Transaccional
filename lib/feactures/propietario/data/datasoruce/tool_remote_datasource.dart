@@ -142,10 +142,40 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
-  Future<bool> subscribe() async {
+  Future<String> getSubscriptionPreference() async {
     try {
       final res = await http.post(
-        Uri.parse('$_baseUrl/auth/subscribe'),
+        Uri.parse('$_baseUrl/auth/subscribe/preference'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      return body['init_point'] as String;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<bool> confirmSubscriptionPayment(String paymentId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/auth/subscribe/confirm'),
+        headers: await _authHeaders,
+        body: json.encode({'payment_id': paymentId}),
+      );
+      _throwIfError(res);
+      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      final isPro = body['is_pro'] as bool? ?? false;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('user_is_pro', isPro);
+      return isPro;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<bool> refreshIsPro() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_baseUrl/auth/me'),
         headers: await _authHeaders,
       );
       _throwIfError(res);

@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../shared/components/location_picker_modal.dart';
 import '../providers/tool_provider.dart';
 import '../../domain/entitie/tool_entity.dart';
+import 'pro_subscription_checkout_screen.dart';
 
 class ToolFormScreen extends StatefulWidget {
   final ToolEntity? tool;
@@ -193,6 +194,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_latitude == null || _longitude == null || _latitude == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selecciona la ubicación real de la herramienta en el mapa antes de publicar.'),
+          backgroundColor: Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     final provider = context.read<ToolProvider>();
     final estVal = double.tryParse(_estValCtrl.text.trim()) ?? 0.0;
     bool ok;
@@ -301,26 +313,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 ),
                 onPressed: () async {
                   Navigator.pop(ctx);
-                  final toolProvider = context.read<ToolProvider>();
-                  final subOk = await toolProvider.subscribePro();
-                  if (!mounted) return;
-                  if (subOk) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('¡Plan Pro activado! Ahora puedes publicar tu herramienta 🎉'),
-                        backgroundColor: Color(0xFF10B981),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(toolProvider.error ?? 'Error al suscribirse'),
-                        backgroundColor: const Color(0xFFEF4444),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
+                  await openProSubscriptionCheckout(context);
                 },
                 icon: const Icon(Icons.bolt_rounded, size: 16),
                 label: const Text('Obtener Plan Pro'),
@@ -666,11 +659,16 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 child: ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   leading: const Icon(Icons.map_rounded, color: Color(0xFFEA580C), size: 32),
-                  title: const Text('Ubicación en Suchiapa', style: TextStyle(fontWeight: FontWeight.w700)),
+                  title: Text(
+                    (_latitude != null && _longitude != null && _latitude != 0.0)
+                        ? 'Ubicación seleccionada'
+                        : 'Ubicación no establecida',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   subtitle: Text(
                     (_latitude != null && _longitude != null && _latitude != 0.0)
                         ? 'Coordenadas: ${_latitude!.toStringAsFixed(4)}, ${_longitude!.toStringAsFixed(4)}'
-                        : 'No seleccionada (se usará centro por defecto)',
+                        : 'No seleccionada — obligatoria para publicar',
                     style: TextStyle(fontSize: 12, color: (_latitude != null && _latitude != 0.0) ? const Color(0xFF16A34A) : cs.onSurfaceVariant),
                   ),
                   trailing: ElevatedButton(

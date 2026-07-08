@@ -71,7 +71,9 @@ class MyApp extends StatelessWidget {
             getPricingSuggestion: PropietarioDI.provideGetPricingSuggestion(),
             predictCondition: PropietarioDI.providePredictCondition(),
             autoValuate: PropietarioDI.provideAutoValuate(),
-            subscribe: PropietarioDI.provideSubscribe(),
+            getSubscriptionPreference: PropietarioDI.provideGetSubscriptionPreference(),
+            confirmSubscriptionPayment: PropietarioDI.provideConfirmSubscriptionPayment(),
+            refreshIsPro: PropietarioDI.provideRefreshIsPro(),
           ),
         ),
 
