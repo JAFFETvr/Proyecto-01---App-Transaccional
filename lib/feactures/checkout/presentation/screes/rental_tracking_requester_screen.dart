@@ -9,6 +9,8 @@ import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
+import '../../../../../shared/components/contract_verification_widget.dart';
+import '../../../../../shared/services/biometric_service.dart';
 
 class RentalTrackingRequesterScreen extends StatefulWidget {
   const RentalTrackingRequesterScreen({super.key});
@@ -19,21 +21,24 @@ class RentalTrackingRequesterScreen extends StatefulWidget {
 }
 
 class _RentalTrackingRequesterScreenState
-    extends State<RentalTrackingRequesterScreen> {
+    extends State<RentalTrackingRequesterScreen> with WidgetsBindingObserver {
   // 0 = intro (fondos retenidos), 1 = flujo principal de entrega/devolución
   int _localPhase = 0;
   bool _loading = false;
   Timer? _pollTimer;
+  String? _rentalId;
   // Para notificar al usuario cuando la renta pasa de pending → active mientras estaba en el catálogo
   bool _notifiedActive = false;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final initialRental =
           ModalRoute.of(context)?.settings.arguments as RentalEntity?;
       if (initialRental != null) {
+        _rentalId = initialRental.id;
         // ━━ Auto-resume: inferir la fase a partir del estado real de la renta ━━
         // Si el solicitante ya confirmó, o cualquiera confirmó, o está activa/finalizada
         // → saltar la pantalla de introducción y ir directo al flujo principal.
@@ -46,32 +51,46 @@ class _RentalTrackingRequesterScreenState
         if (skipIntro && mounted) {
           setState(() => _localPhase = 1);
         }
-        context.read<RentalProvider>().fetchRental(initialRental.id);
-        _startPolling(initialRental.id);
-      }
-    });
-  }
-
-  void _startPolling(String rentalId) {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (!mounted) return;
-      final provider = context.read<RentalProvider>();
-      provider.fetchRental(rentalId);
-      final rental = provider.currentRental;
-      if (rental != null && (rental.isCompleted || rental.isCancelled || rental.isDisputed)) {
-        timer.cancel();
+        context.read<RentalProvider>().listenToRental(initialRental.id);
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      context.read<RentalProvider>().stopListeningRental();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_rentalId != null) {
+        context.read<RentalProvider>().listenToRental(_rentalId!);
+      }
+    }
+  }
+
+  @override
   void dispose() {
-    _pollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    context.read<RentalProvider>().stopListeningRental();
     super.dispose();
   }
 
   Future<void> _confirmDelivery(String rentalId) async {
+    if (_loading) return;
+
+    final authenticated = await BiometricService.authenticateSignature();
+    if (!authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Firma cancelada o autenticación fallida. ✕'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _loading = true);
     double? latitude;
     double? longitude;
@@ -100,9 +119,10 @@ class _RentalTrackingRequesterScreenState
     setState(() => _loading = false);
     if (!mounted) return;
     if (ok) {
+      setState(() => _localPhase = 1);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('¡Entrega física confirmada por ti! ✓'),
+          content: Text('¡Entrega confirmada por ti! ✓'),
           backgroundColor: Color(0xFF10B981),
           behavior: SnackBarBehavior.floating,
         ),
@@ -120,6 +140,22 @@ class _RentalTrackingRequesterScreenState
   }
 
   Future<void> _confirmReturn(String rentalId) async {
+    if (_loading) return;
+
+    final authenticated = await BiometricService.authenticateSignature();
+    if (!authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Firma cancelada o autenticación fallida. ✕'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().confirmReturn(rentalId);
     setState(() => _loading = false);
@@ -706,47 +742,8 @@ class _Phase3RequesterWidget extends StatelessWidget {
         children: [
           // Contrato digital
           if (rental.contractHash.isNotEmpty) ...[
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.successBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: AppColors.success.withOpacity(0.3)),
-              ),
-              child: Column(children: [
-                const Icon(Icons.verified_outlined,
-                    color: AppColors.success, size: 28),
-                const SizedBox(height: 6),
-                Text(
-                  'Contrato digital inmutable generado',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.success,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                SelectableText(
-                  rental.contractHash,
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    color: AppColors.slate700,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (rental.deliveryLat != 0) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Coordenadas de encuentro: ${rental.deliveryLat.toStringAsFixed(5)}, ${rental.deliveryLng.toStringAsFixed(5)}',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: AppColors.slate600,
-                    ),
-                  ),
-                ],
-              ]),
+            ContractVerificationWidget(
+              rental: rental,
             ),
             const SizedBox(height: 20),
           ],

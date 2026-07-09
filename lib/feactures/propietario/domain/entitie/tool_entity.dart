@@ -11,6 +11,12 @@ class ToolEntity {
   final double latitude;
   final double longitude;
   final bool isAvailable;
+  final double conditionScore;
+  final String brand;
+  final int ageMonths;
+  final String city;
+  final String state;
+  final String priceSource;
   final String createdAt;
   final String updatedAt;
 
@@ -27,6 +33,12 @@ class ToolEntity {
     this.latitude = 0.0,
     this.longitude = 0.0,
     required this.isAvailable,
+    this.conditionScore = 0.70,
+    this.brand = 'Generico',
+    this.ageMonths = 12,
+    this.city = 'Guadalajara',
+    this.state = 'Jalisco',
+    this.priceSource = 'catalogo_semilla',
     required this.createdAt,
     required this.updatedAt,
   });

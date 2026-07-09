@@ -13,9 +13,15 @@ class RentalRemoteDatasource {
   Future<Map<String, String>> get _authHeaders async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token') ?? '';
+    var deviceId = prefs.getString('device_id') ?? '';
+    if (deviceId.isEmpty) {
+      deviceId = 'dev-${DateTime.now().millisecondsSinceEpoch}';
+      await prefs.setString('device_id', deviceId);
+    }
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
+      'X-Device-ID': deviceId,
     };
   }
 
@@ -24,6 +30,8 @@ class RentalRemoteDatasource {
         toolId:                     j['tool_id'] as String,
         requesterId:                j['requester_id'] as String,
         ownerId:                    j['owner_id'] as String,
+        ownerName:                  j['owner_name'] as String? ?? '',
+        requesterName:              j['requester_name'] as String? ?? '',
         startDate:                  j['start_date'] as String,
         endDate:                    j['end_date'] as String,
         dailyRate:                  (j['daily_rate'] as num?)?.toDouble() ?? 0.0,
@@ -107,6 +115,39 @@ class RentalRemoteDatasource {
       return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Stream<RentalEntity> streamRental(String id) async* {
+    final client = http.Client();
+    try {
+      final headers = await _authHeaders;
+      final request = http.Request('GET', Uri.parse('$_baseUrl/rentals/$id/stream'));
+      request.headers.addAll(headers);
+
+      final response = await client.send(request);
+      if (response.statusCode >= 400) {
+        throw const AppError(statusCode: 0, message: 'Error de conexión con el stream.');
+      }
+
+      final streamLines = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      await for (final line in streamLines) {
+        if (line.startsWith('data: ')) {
+          final dataStr = line.substring(6).trim();
+          if (dataStr.isNotEmpty && dataStr != 'keep-alive') {
+            final data = json.decode(dataStr) as Map<String, dynamic>;
+            yield _fromJson(data);
+          }
+        }
+      }
+    } catch (_) {
+      client.close();
+      throw const AppError(statusCode: 0, message: 'Sin conexión.');
+    } finally {
+      client.close();
+    }
   }
 
   Future<RentalEntity> confirmDelivery(
@@ -206,6 +247,19 @@ class RentalRemoteDatasource {
       _throwIfError(res);
       final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
       return body['init_point'] as String;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<Map<String, dynamic>> verifyContract(String id) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.get(
+        Uri.parse('$_baseUrl/rentals/$id/verify-contract'),
+        headers: headers,
+      );
+      _throwIfError(res);
+      return json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }

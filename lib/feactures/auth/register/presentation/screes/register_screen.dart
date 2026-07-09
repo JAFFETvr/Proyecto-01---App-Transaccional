@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -38,8 +40,172 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    final nameValid = _nameCtrl.text.trim().isNotEmpty;
+    final emailValid = _emailCtrl.text.trim().isNotEmpty && _emailCtrl.text.contains('@');
+    final passValid = _passwordCtrl.text.length >= 8;
+    final phoneValid = _phoneCtrl.text.trim().isNotEmpty;
 
+    if (!nameValid || !emailValid || !passValid || !phoneValid) {
+      _formKey.currentState!.validate();
+      return;
+    }
+
+    if (_ineCtrl.text.trim().isEmpty) {
+      await _showKYCDialog();
+    } else {
+      if (_formKey.currentState!.validate()) {
+        _registerAfterKYC();
+      }
+    }
+  }
+
+  Future<void> _showKYCDialog() async {
+    final picker = ImagePicker();
+    String? inePath;
+    String? selfiePath;
+    bool kycLoading = false;
+    String? kycError;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final cs = Theme.of(context).colorScheme;
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: Row(
+              children: [
+                const Icon(Icons.shield_outlined, color: Colors.blue, size: 24),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Verificación KYC Obligatoria',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: cs.onSurface),
+                  ),
+                ),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Para garantizar la trazabilidad de los contratos digitales, necesitamos escanear tu INE y validar tu rostro biométricamente.',
+                    style: TextStyle(fontSize: 12.5),
+                  ),
+                  const SizedBox(height: 16),
+                  if (kycError != null) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: cs.errorContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        kycError!,
+                        style: TextStyle(color: cs.error, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: inePath != null ? Colors.green : cs.outlineVariant),
+                    ),
+                    leading: Icon(
+                      inePath != null ? Icons.check_circle : Icons.badge_outlined,
+                      color: inePath != null ? Colors.green : cs.primary,
+                    ),
+                    title: const Text('Fotografía del INE (Frente)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: Text(
+                      inePath != null ? 'Capturada ✓' : 'Presiona para tomar foto',
+                      style: TextStyle(fontSize: 11, color: inePath != null ? Colors.green : cs.onSurfaceVariant),
+                    ),
+                    onTap: kycLoading
+                        ? null
+                        : () async {
+                            final file = await picker.pickImage(source: ImageSource.camera);
+                            if (file != null) {
+                              setDialogState(() => inePath = file.path);
+                            }
+                          },
+                  ),
+                  const SizedBox(height: 12),
+                  ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: BorderSide(color: selfiePath != null ? Colors.green : cs.outlineVariant),
+                    ),
+                    leading: Icon(
+                      selfiePath != null ? Icons.check_circle : Icons.face_outlined,
+                      color: selfiePath != null ? Colors.green : cs.primary,
+                    ),
+                    title: const Text('Selfie Biométrica (Rostro)', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+                    subtitle: Text(
+                      selfiePath != null ? 'Capturada ✓' : 'Presiona para tomar foto',
+                      style: TextStyle(fontSize: 11, color: selfiePath != null ? Colors.green : cs.onSurfaceVariant),
+                    ),
+                    onTap: kycLoading
+                        ? null
+                        : () async {
+                            final file = await picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
+                            if (file != null) {
+                              setDialogState(() => selfiePath = file.path);
+                            }
+                          },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: kycLoading ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: (inePath == null || selfiePath == null || kycLoading)
+                    ? null
+                    : () async {
+                        setDialogState(() {
+                          kycLoading = true;
+                          kycError = null;
+                        });
+                        final provider = context.read<RegisterProvider>();
+                        final res = await provider.verifyKyc(inePath: inePath!, selfiePath: selfiePath!);
+                        if (res != null) {
+                          setDialogState(() {
+                            kycLoading = false;
+                          });
+                          final extractedIne = res['clave_elector_ine'] as String? ?? '';
+                          _ineCtrl.text = extractedIne;
+                          Navigator.pop(ctx);
+                          _registerAfterKYC();
+                        } else {
+                          setDialogState(() {
+                            kycError = provider.errorMessage ?? 'Falló la validación biométrica.';
+                            kycLoading = false;
+                          });
+                        }
+                      },
+                child: kycLoading
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : const Text('Verificar KYC'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _registerAfterKYC() async {
     await context.read<RegisterProvider>().register(
       name:     _nameCtrl.text.trim(),
       email:    _emailCtrl.text.trim(),
@@ -54,12 +220,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final provider = context.read<RegisterProvider>();
     if (provider.user == null) return;
 
-    // ━━ Limpiar datos de sesión anterior en todos los providers ━━
-    // Esto evita que los datos del usuario previo se muestren en la nueva sesión.
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();
 
-    // Limpiar la clave is_pro que no persiste en RegisterProvider
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('user_is_pro', provider.user!.isPro);
 
@@ -194,16 +357,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 8),
                 TextFormField(
                   controller: _ineCtrl,
-                  textCapitalization: TextCapitalization.characters,
-                  textInputAction: TextInputAction.done,
-                  decoration: const InputDecoration(
-                    hintText: 'Ej. PRRLSS85010212H700',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                    helperText: 'Encontrarás este dato en el reverso de tu INE',
+                  readOnly: true,
+                  onTap: _handleRegister,
+                  decoration: InputDecoration(
+                    hintText: 'Presiona para escanear tu INE',
+                    prefixIcon: const Icon(Icons.badge_outlined),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.camera_alt_outlined, color: Colors.blue),
+                      onPressed: _handleRegister,
+                    ),
+                    helperText: 'Este campo se llena automáticamente al escanear tu INE',
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Campo requerido';
-                    if (v.trim().length < 10) return 'Clave de elector inválida';
+                    if (v == null || v.trim().isEmpty) {
+                      return 'Debes completar la verificación KYC';
+                    }
                     return null;
                   },
                 ),

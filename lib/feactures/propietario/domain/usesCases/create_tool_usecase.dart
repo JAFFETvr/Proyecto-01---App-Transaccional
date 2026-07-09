@@ -14,6 +14,9 @@ class CreateToolUseCase {
     required double dailyRate,
     double? latitude,
     double? longitude,
+    String brand = 'Generico',
+    int ageMonths = 12,
+    double conditionScore = 0.70,
   }) {
     return _repository.createTool(
       name: name,
@@ -24,6 +27,9 @@ class CreateToolUseCase {
       dailyRate: dailyRate,
       latitude: latitude,
       longitude: longitude,
+      brand: brand,
+      ageMonths: ageMonths,
+      conditionScore: conditionScore,
     );
   }
 }

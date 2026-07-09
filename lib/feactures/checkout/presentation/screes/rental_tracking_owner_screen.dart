@@ -9,6 +9,8 @@ import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
+import '../../../../../shared/components/contract_verification_widget.dart';
+import '../../../../../shared/services/biometric_service.dart';
 
 class RentalTrackingOwnerScreen extends StatefulWidget {
   const RentalTrackingOwnerScreen({super.key});
@@ -19,42 +21,59 @@ class RentalTrackingOwnerScreen extends StatefulWidget {
 }
 
 class _RentalTrackingOwnerScreenState
-    extends State<RentalTrackingOwnerScreen> {
+    extends State<RentalTrackingOwnerScreen> with WidgetsBindingObserver {
   bool _loading = false;
   Timer? _pollTimer;
+  String? _rentalId;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final initialRental = ModalRoute.of(context)?.settings.arguments as RentalEntity?;
       if (initialRental != null) {
-        context.read<RentalProvider>().fetchRental(initialRental.id);
-        _startPolling(initialRental.id);
-      }
-    });
-  }
-
-  void _startPolling(String rentalId) {
-    _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
-      if (!mounted) return;
-      final provider = context.read<RentalProvider>();
-      provider.fetchRental(rentalId);
-      final rental = provider.currentRental;
-      if (rental != null && (rental.isCompleted || rental.isCancelled || rental.isDisputed)) {
-        timer.cancel();
+        _rentalId = initialRental.id;
+        context.read<RentalProvider>().listenToRental(initialRental.id);
       }
     });
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      context.read<RentalProvider>().stopListeningRental();
+    } else if (state == AppLifecycleState.resumed) {
+      if (_rentalId != null) {
+        context.read<RentalProvider>().listenToRental(_rentalId!);
+      }
+    }
+  }
+
+  @override
   void dispose() {
-    _pollTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    context.read<RentalProvider>().stopListeningRental();
     super.dispose();
   }
 
   Future<void> _confirmDelivery(String rentalId) async {
+    if (_loading) return;
+
+    final authenticated = await BiometricService.authenticateSignature();
+    if (!authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Firma cancelada o autenticación fallida. ✕'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _loading = true);
     double? latitude;
     double? longitude;
@@ -103,6 +122,22 @@ class _RentalTrackingOwnerScreenState
   }
 
   Future<void> _confirmReturn(String rentalId) async {
+    if (_loading) return;
+
+    final authenticated = await BiometricService.authenticateSignature();
+    if (!authenticated) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Firma cancelada o autenticación fallida. ✕'),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().confirmReturn(rentalId);
     setState(() => _loading = false);
@@ -544,25 +579,8 @@ class _OwnerPhase1 extends StatelessWidget {
           ),
           const SizedBox(height: 20),
           if (rental.contractHash.isNotEmpty)
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.successBg,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.success.withOpacity(0.3)),
-              ),
-              child: Column(children: [
-                Text(
-                  'Contrato Digital Activo',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, color: AppColors.success, fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                SelectableText(
-                  rental.contractHash,
-                  style: GoogleFonts.inter(fontSize: 11, color: AppColors.slate700, fontWeight: FontWeight.w600),
-                  textAlign: TextAlign.center,
-                ),
-              ]),
+            ContractVerificationWidget(
+              rental: rental,
             ),
           const SizedBox(height: 24),
         ],

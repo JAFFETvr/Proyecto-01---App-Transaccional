@@ -9,12 +9,14 @@ class AutoValuateUseCase {
     required double scoreCondicion,
     required String category,
     required String brand,
+    int? ageMonths,
   }) {
     return _repository.autoValuate(
       name: name,
       scoreCondicion: scoreCondicion,
       category: category,
       brand: brand,
+      ageMonths: ageMonths,
     );
   }
 }

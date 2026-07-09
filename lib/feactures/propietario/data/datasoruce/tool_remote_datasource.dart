@@ -34,6 +34,12 @@ class ToolRemoteDatasource {
         latitude:       (j['latitude']        as num?)?.toDouble() ?? 0.0,
         longitude:      (j['longitude']       as num?)?.toDouble() ?? 0.0,
         isAvailable: j['is_available'] as bool,
+        conditionScore: (j['condition_score'] as num?)?.toDouble() ?? 0.70,
+        brand:          j['brand']          as String? ?? 'Generico',
+        ageMonths:      j['age_months']      as int? ?? 12,
+        city:           j['city']           as String? ?? 'Guadalajara',
+        state:          j['state']          as String? ?? 'Jalisco',
+        priceSource:    j['price_source']    as String? ?? 'catalogo_semilla',
         createdAt:   j['created_at']  as String,
         updatedAt:   j['updated_at']  as String,
       );
@@ -62,6 +68,9 @@ class ToolRemoteDatasource {
     required String category, required bool isAvailable,
     required double estimatedValue, required double dailyRate,
     double? latitude, double? longitude,
+    String brand = 'Generico', int ageMonths = 12,
+    String city = 'Guadalajara', String state = 'Jalisco',
+    double conditionScore = 0.70,
   }) async {
     try {
       final res = await http.post(
@@ -72,6 +81,11 @@ class ToolRemoteDatasource {
           'category': category, 'is_available': isAvailable,
           'estimated_value': estimatedValue, 'daily_rate': dailyRate,
           'latitude': latitude ?? 0.0, 'longitude': longitude ?? 0.0,
+          'brand': brand,
+          'age_months': ageMonths,
+          'city': city,
+          'state': state,
+          'condition_score': conditionScore,
         }),
       );
       _throwIfError(res);
@@ -113,16 +127,22 @@ class ToolRemoteDatasource {
     required double scoreCondicion,
     required String category,
     required String brand,
+    String? name,
+    int? ageMonths,
   }) async {
     try {
       final token = await _authHeaders;
+      final queryParams = {
+        'estimated_value': estimatedValue.toString(),
+        'score_condicion': scoreCondicion.toString(),
+        'category': category,
+        'brand': brand,
+      };
+      if (name != null) queryParams['name'] = name;
+      if (ageMonths != null) queryParams['age_months'] = ageMonths.toString();
+
       final uri = Uri.parse('$_baseUrl/pricing').replace(
-        queryParameters: {
-          'estimated_value': estimatedValue.toString(),
-          'score_condicion': scoreCondicion.toString(),
-          'category': category,
-          'brand': brand,
-        },
+        queryParameters: queryParams,
       );
       final res = await http.get(uri, headers: token);
       _throwIfError(res);
@@ -219,15 +239,19 @@ class ToolRemoteDatasource {
     required double scoreCondicion,
     required String category,
     required String brand,
+    int? ageMonths,
   }) async {
     try {
+      final queryParams = {
+        'name': name,
+        'score_condicion': scoreCondicion.toString(),
+        'category': category,
+        'brand': brand,
+      };
+      if (ageMonths != null) queryParams['age_months'] = ageMonths.toString();
+
       final uri = Uri.parse('$_baseUrl/tools/auto-valuate').replace(
-        queryParameters: {
-          'name': name,
-          'score_condicion': scoreCondicion.toString(),
-          'category': category,
-          'brand': brand,
-        },
+        queryParameters: queryParams,
       );
       final res = await http.get(uri, headers: await _authHeaders);
       _throwIfError(res);

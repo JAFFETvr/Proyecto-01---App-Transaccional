@@ -15,11 +15,15 @@ class ToolRepositoryImpl implements ToolRepository {
     required String category, required bool isAvailable,
     required double estimatedValue, required double dailyRate,
     double? latitude, double? longitude,
+    String brand = 'Generico', int ageMonths = 12,
+    double conditionScore = 0.70,
   }) => _datasource.createTool(
         name: name, description: description,
         category: category, isAvailable: isAvailable,
         estimatedValue: estimatedValue, dailyRate: dailyRate,
-        latitude: latitude, longitude: longitude);
+        latitude: latitude, longitude: longitude,
+        brand: brand, ageMonths: ageMonths,
+        conditionScore: conditionScore);
 
   @override Future<ToolEntity> updateTool({
     required String id, String? name, String? description,
@@ -54,11 +58,13 @@ class ToolRepositoryImpl implements ToolRepository {
     required double scoreCondicion,
     required String category,
     required String brand,
+    int? ageMonths,
   }) => _datasource.autoValuate(
         name: name,
         scoreCondicion: scoreCondicion,
         category: category,
-        brand: brand);
+        brand: brand,
+        ageMonths: ageMonths);
 
   @override Future<String> getSubscriptionPreference() => _datasource.getSubscriptionPreference();
   @override Future<bool> confirmSubscriptionPayment(String paymentId) => _datasource.confirmSubscriptionPayment(paymentId);

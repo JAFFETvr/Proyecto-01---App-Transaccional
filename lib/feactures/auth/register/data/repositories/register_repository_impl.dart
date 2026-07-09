@@ -24,4 +24,11 @@ class RegisterRepositoryImpl implements RegisterRepository {
       ine: ine,
     );
   }
+
+  @override
+  Future<Map<String, dynamic>> verifyKyc({
+    required String inePath,
+    required String selfiePath,
+  }) =>
+      _datasource.verifyKyc(inePath: inePath, selfiePath: selfiePath);
 }

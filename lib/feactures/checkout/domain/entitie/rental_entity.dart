@@ -3,6 +3,8 @@ class RentalEntity {
   final String toolId;
   final String requesterId;
   final String ownerId;
+  final String ownerName;
+  final String requesterName;
   final String startDate;
   final String endDate;
   final double dailyRate;
@@ -40,6 +42,8 @@ class RentalEntity {
     required this.toolId,
     required this.requesterId,
     required this.ownerId,
+    this.ownerName = '',
+    this.requesterName = '',
     required this.startDate,
     required this.endDate,
     required this.dailyRate,

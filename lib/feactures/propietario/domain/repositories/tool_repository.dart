@@ -12,6 +12,9 @@ abstract class ToolRepository {
     required double dailyRate,
     double? latitude,
     double? longitude,
+    String brand = 'Generico',
+    int ageMonths = 12,
+    double conditionScore = 0.70,
   });
   Future<ToolEntity> updateTool({
     required String id,
@@ -37,6 +40,7 @@ abstract class ToolRepository {
     required double scoreCondicion,
     required String category,
     required String brand,
+    int? ageMonths,
   });
   Future<String> getSubscriptionPreference();
   Future<bool> confirmSubscriptionPayment(String paymentId);

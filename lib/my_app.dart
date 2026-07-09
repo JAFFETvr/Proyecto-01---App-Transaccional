@@ -58,7 +58,8 @@ class MyApp extends StatelessWidget {
 
         ChangeNotifierProvider<RegisterProvider>(
           create: (_) => RegisterProvider(
-            registerUseCase: RegisterDI.provideRegisterUseCase(),
+            registerUseCase:  RegisterDI.provideRegisterUseCase(),
+            verifyKycUseCase: RegisterDI.provideVerifyKycUseCase(),
           ),
         ),
 
@@ -92,7 +93,9 @@ class MyApp extends StatelessWidget {
             confirmReturn:   CheckoutDI.provideConfirmReturn(),
             disputeRental:   CheckoutDI.provideDisputeRental(),
             cancelRental:    CheckoutDI.provideCancelRental(),
+            verifyContract:  CheckoutDI.provideVerifyContract(),
             getPreference:   CheckoutDI.provideGetPreference(),
+            streamRental:    CheckoutDI.provideStreamRental(),
           ),
         ),
 

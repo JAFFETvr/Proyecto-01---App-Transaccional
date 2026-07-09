@@ -25,6 +25,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   late final TextEditingController _nameCtrl;
   late final TextEditingController _brandCtrl;
   late final TextEditingController _modelCtrl;
+  late final TextEditingController _ageCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _catCtrl;
   late final TextEditingController _estValCtrl;
@@ -57,8 +58,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     super.initState();
     final t = widget.tool;
     _nameCtrl  = TextEditingController(text: t?.name ?? '');
-    _brandCtrl = TextEditingController();
+    _brandCtrl = TextEditingController(text: t?.brand ?? '');
     _modelCtrl = TextEditingController();
+    _ageCtrl   = TextEditingController(text: t != null ? t.ageMonths.toString() : '12');
     _descCtrl  = TextEditingController(text: t?.description ?? '');
     _catCtrl   = TextEditingController(text: t?.category ?? '');
     _estValCtrl = TextEditingController(
@@ -83,6 +85,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     _nameCtrl.dispose();
     _brandCtrl.dispose();
     _modelCtrl.dispose();
+    _ageCtrl.dispose();
     _descCtrl.dispose();
     _catCtrl.dispose();
     _estValCtrl.dispose();
@@ -119,7 +122,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         name: name,
         scoreCondicion: score,
         category: _catCtrl.text.trim(),
-        brand: _brandCtrl.text.trim(),
+        brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+        ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
       );
       if (res != null && mounted) {
         setState(() {
@@ -164,7 +168,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         });
 
         if (mounted) {
-          final pred = await context.read<ToolProvider>().predictCondition(file);
+          final provider = context.read<ToolProvider>();
+          final pred = await provider.predictCondition(file);
           if (pred != null && mounted) {
             final clase = pred['clase_predicha'] as String?;
             String mappedLevel = _wearLevel;
@@ -179,6 +184,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               _wearLevel = mappedLevel;
             });
             await _updatePricingSuggestion();
+          } else if (mounted) {
+            // Rechazado por la IA: limpiamos la foto y mostramos alerta
+            setState(() {
+              _pickedImage = null;
+            });
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(provider.error ?? 'La imagen no corresponde a una herramienta de construcción válida.'),
+              backgroundColor: const Color(0xFFEF4444),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ));
           }
         }
       }
@@ -222,6 +238,14 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         longitude: _longitude,
       );
     } else {
+      double score = 0.7;
+      if (_wearLevel == 'Nuevo') {
+        score = 1.0;
+      } else if (_wearLevel == 'Buen Estado') {
+        score = 0.8;
+      } else if (_wearLevel == 'Desgastado') {
+        score = 0.5;
+      }
       ok = await provider.createTool(
         name:        _nameCtrl.text.trim(),
         description: _descCtrl.text.trim(),
@@ -231,6 +255,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         dailyRate: _finalPrice,
         latitude: _latitude,
         longitude: _longitude,
+        brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+        ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
+        conditionScore: score,
       );
     }
 
@@ -458,6 +485,21 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               const SizedBox(height: 14),
 
               TextFormField(
+                controller: _ageCtrl,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Antigüedad (Meses) *',
+                  hintText: 'Ej. 12',
+                  prefixIcon: Icon(Icons.calendar_today_outlined),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Campo requerido' : null,
+                onChanged: (_) => _onFieldChanged(),
+              ),
+              const SizedBox(height: 14),
+
+              TextFormField(
                 controller: _catCtrl,
                 textInputAction: TextInputAction.next,
                 decoration: InputDecoration(
@@ -488,6 +530,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                   hintText: 'Ej. 2500',
                   prefixIcon: Icon(Icons.attach_money_outlined),
                 ),
+                onChanged: (_) => _onFieldChanged(),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Campo requerido';
                   final val = double.tryParse(v);

@@ -33,6 +33,9 @@ class RentalRepositoryImpl implements RentalRepository {
   Future<RentalEntity> getRental(String id) => _datasource.getRental(id);
 
   @override
+  Stream<RentalEntity> streamRental(String id) => _datasource.streamRental(id);
+
+  @override
   Future<RentalEntity> confirmDelivery(
     String id, {
     double? latitude,
@@ -55,6 +58,9 @@ class RentalRepositoryImpl implements RentalRepository {
 
   @override
   Future<MessageEntity> sendMessage(String rentalId, String message) => _datasource.sendMessage(rentalId, message);
+
+  @override
+  Future<Map<String, dynamic>> verifyContract(String id) => _datasource.verifyContract(id);
 
   @override
   Future<String> getPreference(String rentalId, String payerEmail) =>

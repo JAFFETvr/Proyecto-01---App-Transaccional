@@ -14,6 +14,7 @@ abstract class RentalRepository {
   Future<List<RentalEntity>> getRentals();
 
   Future<RentalEntity> getRental(String id);
+  Stream<RentalEntity> streamRental(String id);
 
   Future<RentalEntity> confirmDelivery(
     String id, {
@@ -32,4 +33,5 @@ abstract class RentalRepository {
   Future<MessageEntity> sendMessage(String rentalId, String message);
 
   Future<String> getPreference(String rentalId, String payerEmail);
+  Future<Map<String, dynamic>> verifyContract(String id);
 }

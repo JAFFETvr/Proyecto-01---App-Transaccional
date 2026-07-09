@@ -57,4 +57,36 @@ class RegisterRemoteDatasource {
           statusCode: 0, message: 'Sin conexión al servidor.');
     }
   }
+
+  Future<Map<String, dynamic>> verifyKyc({
+    required String inePath,
+    required String selfiePath,
+  }) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/auth/verify-kyc');
+      final req = http.MultipartRequest('POST', uri);
+      req.files.add(await http.MultipartFile.fromPath('ine_image', inePath));
+      req.files.add(await http.MultipartFile.fromPath('selfie_image', selfiePath));
+
+      final streamedRes = await req.send();
+      final res = await http.Response.fromStream(streamedRes);
+
+      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      if (res.statusCode == 200) {
+        return body;
+      }
+
+      throw AppError(
+        statusCode: res.statusCode,
+        message: body['error'] as String? ?? 'La validación KYC fue rechazada.',
+      );
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError(
+        statusCode: 0,
+        message: 'Sin conexión al servidor de visión KYC.',
+      );
+    }
+  }
 }

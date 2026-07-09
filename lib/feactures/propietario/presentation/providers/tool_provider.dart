@@ -102,6 +102,9 @@ class ToolProvider extends ChangeNotifier {
     required double dailyRate,
     double? latitude,
     double? longitude,
+    String brand = 'Generico',
+    int ageMonths = 12,
+    double conditionScore = 0.70,
   }) async {
     _loading = true;
     _error = null;
@@ -117,6 +120,9 @@ class ToolProvider extends ChangeNotifier {
         dailyRate: dailyRate,
         latitude: latitude,
         longitude: longitude,
+        brand: brand,
+        ageMonths: ageMonths,
+        conditionScore: conditionScore,
       );
       _tools.add(tool);
       return true;
@@ -284,6 +290,7 @@ class ToolProvider extends ChangeNotifier {
     required double scoreCondicion,
     required String category,
     required String brand,
+    int? ageMonths,
   }) async {
     _loading = true;
     _error = null;
@@ -294,6 +301,7 @@ class ToolProvider extends ChangeNotifier {
         scoreCondicion: scoreCondicion,
         category: category,
         brand: brand,
+        ageMonths: ageMonths,
       );
     } on AppError catch (e) {
       _error = e.userMessage;

@@ -4,9 +4,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../shared/error/app_error.dart';
 import '../../domain/entitie/user_entity.dart';
 import '../../domain/usesCases/register_usecase.dart';
+import '../../domain/usesCases/verify_kyc_usecase.dart';
 
 class RegisterProvider extends ChangeNotifier {
   final RegisterUseCase _registerUseCase;
+  final VerifyKycUseCase _verifyKycUseCase;
 
   bool _loading = false;
   String? _errorMessage;
@@ -16,14 +18,43 @@ class RegisterProvider extends ChangeNotifier {
   String? get errorMessage   => _errorMessage;
   UserEntity? get user       => _user;
 
-  RegisterProvider({required RegisterUseCase registerUseCase})
-      : _registerUseCase = registerUseCase;
+  RegisterProvider({
+    required RegisterUseCase registerUseCase,
+    required VerifyKycUseCase verifyKycUseCase,
+  })  : _registerUseCase = registerUseCase,
+        _verifyKycUseCase = verifyKycUseCase;
 
   void logout() {
     _user = null;
     _errorMessage = null;
     _loading = false;
     notifyListeners();
+  }
+
+  Future<Map<String, dynamic>?> verifyKyc({
+    required String inePath,
+    required String selfiePath,
+  }) async {
+    _loading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final res = await _verifyKycUseCase.execute(
+        inePath: inePath,
+        selfiePath: selfiePath,
+      );
+      return res;
+    } on AppError catch (e) {
+      _errorMessage = e.userMessage;
+      return null;
+    } catch (_) {
+      _errorMessage = 'Sin conexión al servidor de visión KYC.';
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
   }
 
   Future<void> register({

@@ -9,4 +9,9 @@ abstract class RegisterRepository {
     required String phone,
     required String ine,
   });
+
+  Future<Map<String, dynamic>> verifyKyc({
+    required String inePath,
+    required String selfiePath,
+  });
 }
