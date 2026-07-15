@@ -13,7 +13,7 @@ import '../../domain/usesCases/subscribe_usecase.dart';
 import '../../domain/usesCases/predict_condition_usecase.dart';
 import '../../domain/usesCases/auto_valuate_usecase.dart';
 
-class ToolProvider extends ChangeNotifier {
+class ToolProvider extends ChangeNotifier {//
   final GetToolsUseCase _getTools;
   final CreateToolUseCase _createTool;
   final UpdateToolUseCase _updateTool;

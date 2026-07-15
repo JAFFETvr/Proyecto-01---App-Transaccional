@@ -54,7 +54,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   static const _wearOptions = ['Nuevo', 'Buen Estado', 'Desgastado'];
 
   @override
-  void initState() {
+  void initState() { //
     super.initState();
     final t = widget.tool;
     _nameCtrl  = TextEditingController(text: t?.name ?? '');
