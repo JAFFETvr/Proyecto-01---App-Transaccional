@@ -5,13 +5,9 @@ import 'package:provider/provider.dart';
 import '../providers/review_provider.dart';
 import 'review_stars.dart';
 
-/// Hoja inferior para calificar una renta completada (POST /rentals/{id}/review).
-/// El backend detecta automáticamente a quién califica el autor autenticado
-/// (propietario → solicitante, solicitante → herramienta); aquí solo se pide
-/// el rating y un comentario opcional.
 class SubmitReviewSheet extends StatefulWidget {
   final String rentalId;
-  final String role; // 'owner' | 'requester' — distingue las 2 reseñas de una misma renta
+  final String role;
   final String title;
   final String subtitle;
 

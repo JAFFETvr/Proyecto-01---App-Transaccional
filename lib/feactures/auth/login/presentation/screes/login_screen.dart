@@ -34,8 +34,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final provider = context.read<LoginProvider>();
     if (provider.user == null) return;
 
-    // ━━ Limpiar datos de sesión anterior en todos los providers ━━
-    // Garantiza que no se muestren datos en memoria de otro usuario.
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();
 
@@ -64,7 +62,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── Logo ─────────────────────────────────────────────────
                 Center(
                   child: Column(
                     children: [
@@ -99,7 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                // ── Títulos ─────────────────────────────────────────────
                 Text(
                   'Bienvenido',
                   style: GoogleFonts.montserrat(
@@ -118,7 +114,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // ── Formulario ───────────────────────────────────────────
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
@@ -134,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Crear cuenta ─────────────────────────────────────────
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.push(

@@ -16,7 +16,7 @@ class AdminDashboardScreen extends StatefulWidget {
 }
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
-  String _currentFilter = 'disputed'; // 'disputed' o ''
+  String _currentFilter = 'disputed';
 
   @override
   void initState() {
@@ -52,7 +52,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Encabezado Judicial ──────────────────────────────────────────
             Row(
               children: [
                 Container(
@@ -89,7 +88,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── Evidencia reportada ──────────────────────────────────────────
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -145,7 +143,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ── Campo de notas judiciales ────────────────────────────────────
             Text(
               'Justificación Judicial del Dictamen:',
               style: GoogleFonts.inter(
@@ -176,7 +173,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             const SizedBox(height: 24),
 
-            // ── Botones de Ejecución ─────────────────────────────────────────
             Row(
               children: [
                 Expanded(
@@ -261,7 +257,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
-          // ── AppBar limpia estilo Fintech Industrial ────────────────────────
           SliverAppBar(
             pinned: true,
             backgroundColor: context.surface,
@@ -316,7 +311,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ],
           ),
 
-          // ── Subtítulo de bienvenida ────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
@@ -345,7 +339,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
 
-          // ── Cuadrícula de Métricas ─────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -399,7 +392,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
 
-          // ── Selector de Filtros (Chips) ────────────────────────────────────
           SliverToBoxAdapter(
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -422,7 +414,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
 
-          // ── Lista de Alquileres ────────────────────────────────────────────
           if (provider.loading)
             const SliverFillRemaining(
               hasScrollBody: false,
@@ -595,7 +586,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 }
 
-// ── Tarjeta de Métrica Elegante ──────────────────────────────────────────────
 class _MetricCard extends StatelessWidget {
   final String title;
   final String value;
@@ -665,7 +655,6 @@ class _MetricCard extends StatelessWidget {
   }
 }
 
-// ── Chip de Filtro Interactivo ───────────────────────────────────────────────
 class _FilterChip extends StatelessWidget {
   final String label;
   final bool isSelected;
@@ -706,7 +695,6 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ── Medalla de Estado Semántico ──────────────────────────────────────────────
 class _StatusBadge extends StatelessWidget {
   final String status;
 

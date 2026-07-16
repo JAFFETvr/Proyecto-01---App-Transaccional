@@ -25,12 +25,10 @@ class RentalTrackingRequesterScreen extends StatefulWidget {
 
 class _RentalTrackingRequesterScreenState
     extends State<RentalTrackingRequesterScreen> with WidgetsBindingObserver {
-  // 0 = intro (fondos retenidos), 1 = flujo principal de entrega/devolución
   int _localPhase = 0;
   bool _loading = false;
   Timer? _pollTimer;
   String? _rentalId;
-  // Para notificar al usuario cuando la renta pasa de pending → active mientras estaba en el catálogo
   bool _notifiedActive = false;
 
   @override
@@ -42,9 +40,6 @@ class _RentalTrackingRequesterScreenState
           ModalRoute.of(context)?.settings.arguments as RentalEntity?;
       if (initialRental != null) {
         _rentalId = initialRental.id;
-        // ━━ Auto-resume: inferir la fase a partir del estado real de la renta ━━
-        // Si el solicitante ya confirmó, o cualquiera confirmó, o está activa/finalizada
-        // → saltar la pantalla de introducción y ir directo al flujo principal.
         final skipIntro = initialRental.requesterConfirmedDelivery ||
             initialRental.ownerConfirmedDelivery ||
             initialRental.isActive ||
@@ -246,8 +241,6 @@ class _RentalTrackingRequesterScreenState
     }
   }
 
-  /// Muestra un diálogo de confirmación antes de salir del seguimiento activo.
-  /// El polling se cancela y la renta queda en segundo plano (sin bloquear al usuario).
   void _showBackConfirmation(BuildContext context, RentalEntity rental) {
     showDialog(
       context: context,
@@ -305,10 +298,6 @@ class _RentalTrackingRequesterScreenState
       );
     }
 
-    // Determine current index for PhaseIndicator
-    // 0: Retención (Status: pending, both unconfirmed)
-    // 1: Entrega (Status: pending, requester or owner confirmed, but not both)
-    // 2: Devolución (Status: active or completed)
     int phaseIndicatorIndex = 0;
     if (rental.ownerConfirmedDelivery || rental.requesterConfirmedDelivery) {
       phaseIndicatorIndex = 1;
@@ -324,12 +313,10 @@ class _RentalTrackingRequesterScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: context.textPrimary),
-        // Siempre permitir retroceder — el proceso sigue en segundo plano
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
-            // Si la renta está activa/pendiente, ir al catálogo manteniendo la renta en curso
             if (rental.isCompleted || rental.isCancelled || rental.isDisputed) {
               Navigator.of(context).pushReplacementNamed('/solicitante');
             } else {
@@ -396,14 +383,10 @@ class _RentalTrackingRequesterScreenState
       return _buildCompletedWidget(rental);
     }
 
-    // Estado pendiente: división clave del flujo de entrega
     if (rental.isPending) {
-      // Caso A: el solicitante YA confirmó, esperando que el propietario confirme
-      // → Pantalla bloqueada de solo lectura, sin botón de acción
       if (rental.requesterConfirmedDelivery) {
         return _WaitingOwnerConfirmWidget();
       }
-      // Caso B: el solicitante aún NO ha confirmado → mostrar botón de confirmar
       return _Phase2RequesterWidget(
         loading: _loading,
         rental: rental,
@@ -411,11 +394,7 @@ class _RentalTrackingRequesterScreenState
       );
     }
 
-    // Estado activo (ambos confirmaron entrega): fase de devolución
-    // Si el usuario regresa y el propietario ya confirmó mientras estaba fuera,
-    // mostramos un aviso contextual antes de la pantalla de devolución.
     if (!_notifiedActive && rental.isActive) {
-      // Programar la notificación tras el frame
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_notifiedActive) {
           setState(() => _notifiedActive = true);
@@ -760,7 +739,6 @@ class _Phase3RequesterWidget extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          // Contrato digital
           if (rental.contractHash.isNotEmpty) ...[
             ContractVerificationWidget(
               rental: rental,
@@ -972,9 +950,6 @@ class _InfoTile extends StatelessWidget {
   }
 }
 
-/// Pantalla bloqueada de solo lectura: el solicitante YA confirmó la entrega,
-/// ahora DEBE esperar a que el propietario también confirme. No hay ningún
-/// botón de acción — el único avance es cuando el propietario confirma (polling).
 class _WaitingOwnerConfirmWidget extends StatelessWidget {
   const _WaitingOwnerConfirmWidget();
 
@@ -985,7 +960,6 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icono animado de espera
           TweenAnimationBuilder<double>(
             tween: Tween(begin: 0.92, end: 1.08),
             duration: const Duration(milliseconds: 900),
@@ -1033,7 +1007,6 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
-          // Tarjeta informativa de estado
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
@@ -1061,7 +1034,6 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-          // Aviso de bloqueo
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(

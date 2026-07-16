@@ -2,40 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
-// ────────────────────────────────────────────────────────────────────────────
-// ToolShare – ThemeData "Fintech Industrial"
-// ────────────────────────────────────────────────────────────────────────────
 
 class MaterialTheme {
   final TextTheme textTheme;
   const MaterialTheme(this.textTheme);
 
-  // ── Esquemas de color ─────────────────────────────────────────────────────
 
   static ColorScheme lightScheme() {
     return const ColorScheme(
       brightness: Brightness.light,
-      // Primario = naranja ToolShare
       primary: AppColors.orange500,
       onPrimary: Colors.white,
       primaryContainer: Color(0xFFFFEDD5),
       onPrimaryContainer: Color(0xFF7C2D12),
-      // Secundario = Slate medium
       secondary: AppColors.slate600,
       onSecondary: Colors.white,
       secondaryContainer: AppColors.slate100,
       onSecondaryContainer: AppColors.slate900,
-      // Terciario = Success verde
       tertiary: AppColors.success,
       onTertiary: Colors.white,
       tertiaryContainer: AppColors.successBg,
       onTertiaryContainer: Color(0xFF064E3B),
-      // Error = Danger rojo
       error: AppColors.danger,
       onError: Colors.white,
       errorContainer: AppColors.dangerBg,
       onErrorContainer: Color(0xFF7F1D1D),
-      // Superficie
       surface: AppColors.surface,
       onSurface: AppColors.slate900,
       onSurfaceVariant: AppColors.slate600,
@@ -45,7 +36,6 @@ class MaterialTheme {
       scrim: Colors.black,
       inverseSurface: AppColors.slate900,
       inversePrimary: AppColors.orange500,
-      // Surface containers
       surfaceTint: AppColors.orange500,
       surfaceDim: Color(0xFFE2E8F0),
       surfaceBright: AppColors.surface,
@@ -96,19 +86,16 @@ class MaterialTheme {
     );
   }
 
-  // ── Fábrica de ThemeData ──────────────────────────────────────────────────
 
   ThemeData light() => _buildTheme(lightScheme());
   ThemeData dark()  => _buildTheme(darkScheme());
 
   ThemeData _buildTheme(ColorScheme cs) {
-    // Tipografía: Montserrat para display/títulos · Inter para cuerpo/labels
     final base = textTheme;
     final displayFont = GoogleFonts.montserratTextTheme(base);
     final bodyFont    = GoogleFonts.interTextTheme(base);
 
     final mergedText = displayFont.copyWith(
-      // Títulos grandes → Montserrat Bold
       displayLarge:  displayFont.displayLarge?.copyWith(fontWeight: FontWeight.w700),
       displayMedium: displayFont.displayMedium?.copyWith(fontWeight: FontWeight.w700),
       displaySmall:  displayFont.displaySmall?.copyWith(fontWeight: FontWeight.w700),
@@ -118,7 +105,6 @@ class MaterialTheme {
       titleLarge:    displayFont.titleLarge?.copyWith(fontWeight: FontWeight.w700),
       titleMedium:   displayFont.titleMedium?.copyWith(fontWeight: FontWeight.w600),
       titleSmall:    displayFont.titleSmall?.copyWith(fontWeight: FontWeight.w600),
-      // Cuerpo y labels → Inter Regular/Medium
       bodyLarge:   bodyFont.bodyLarge,
       bodyMedium:  bodyFont.bodyMedium,
       bodySmall:   bodyFont.bodySmall,
@@ -136,12 +122,10 @@ class MaterialTheme {
       colorScheme: cs,
       textTheme: mergedText,
 
-      // ── Scaffold ──────────────────────────────────────────────────────────
       scaffoldBackgroundColor: cs.brightness == Brightness.light
           ? AppColors.background
           : const Color(0xFF0F172A),
 
-      // ── AppBar ────────────────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
         backgroundColor: cs.brightness == Brightness.light
             ? AppColors.surface
@@ -161,7 +145,6 @@ class MaterialTheme {
         ),
       ),
 
-      // ── Card ──────────────────────────────────────────────────────────────
       cardTheme: CardThemeData(
         elevation: 0,
         color: cs.brightness == Brightness.light
@@ -170,13 +153,9 @@ class MaterialTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
-        // La sombra se añade manualmente en cada Card para mayor control.
         clipBehavior: Clip.antiAlias,
       ),
 
-      // ── FilledButton (no se usa directo en botones principales) ───────────
-      // Los botones primarios usan Container+Gradient; FilledButton se reserva
-      // para acciones secundarias: success verde, etc.
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           backgroundColor: cs.primary,
@@ -192,7 +171,6 @@ class MaterialTheme {
         ),
       ),
 
-      // ── OutlinedButton ────────────────────────────────────────────────────
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(double.infinity, 52),
@@ -204,7 +182,6 @@ class MaterialTheme {
         ),
       ),
 
-      // ── TextButton ────────────────────────────────────────────────────────
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.orange500,
@@ -212,7 +189,6 @@ class MaterialTheme {
         ),
       ),
 
-      // ── InputDecoration ───────────────────────────────────────────────────
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: cs.brightness == Brightness.light
@@ -248,7 +224,6 @@ class MaterialTheme {
         prefixIconColor: AppColors.slate600,
       ),
 
-      // ── Chip ──────────────────────────────────────────────────────────────
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.slate100,
         selectedColor: AppColors.orange500.withOpacity(0.12),
@@ -260,14 +235,12 @@ class MaterialTheme {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       ),
 
-      // ── Divider ───────────────────────────────────────────────────────────
       dividerTheme: const DividerThemeData(
         color: Color(0xFFE2E8F0),
         thickness: 1,
         space: 1,
       ),
 
-      // ── SnackBar ──────────────────────────────────────────────────────────
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -275,7 +248,6 @@ class MaterialTheme {
         contentTextStyle: GoogleFonts.inter(color: Colors.white, fontSize: 14),
       ),
 
-      // ── FloatingActionButton ──────────────────────────────────────────────
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: AppColors.orange500,
         foregroundColor: Colors.white,
@@ -285,7 +257,6 @@ class MaterialTheme {
         elevation: 4,
       ),
 
-      // ── ListTile ──────────────────────────────────────────────────────────
       listTileTheme: ListTileThemeData(
         tileColor: Colors.transparent,
         shape: RoundedRectangleBorder(
@@ -295,7 +266,6 @@ class MaterialTheme {
     );
   }
 
-  // Métodos de compatibilidad (no se usan en el MVP pero los conservamos)
   ThemeData lightMediumContrast() => light();
   ThemeData lightHighContrast()   => light();
   ThemeData darkMediumContrast()  => dark();
@@ -304,9 +274,6 @@ class MaterialTheme {
   List<ExtendedColor> get extendedColors => [];
 }
 
-// ────────────────────────────────────────────────────────────────────────────
-// Clases auxiliares (se mantienen por compatibilidad con código existente)
-// ────────────────────────────────────────────────────────────────────────────
 
 class ExtendedColor {
   final Color seed, value;

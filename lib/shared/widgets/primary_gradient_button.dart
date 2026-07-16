@@ -2,16 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../shared/theme/app_colors.dart';
 
-/// Botón principal de acción con degradado naranja ToolShare.
-///
-/// Uso:
-/// ```dart
-/// PrimaryGradientButton(
-///   label: 'Reservar',
-///   icon: Icons.lock_outline,
-///   onPressed: () {},
-/// )
-/// ```
 class PrimaryGradientButton extends StatelessWidget {
   final String label;
   final IconData? icon;
@@ -78,7 +68,6 @@ class PrimaryGradientButton extends StatelessWidget {
   }
 }
 
-/// Botón de carga (spinner) con degradado naranja.
 class PrimaryGradientButtonLoading extends StatelessWidget {
   final double height;
 

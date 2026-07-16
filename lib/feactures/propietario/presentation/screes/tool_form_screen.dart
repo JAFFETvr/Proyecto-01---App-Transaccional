@@ -55,7 +55,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   static const _wearOptions = ['Nuevo', 'Buen Estado', 'Desgastado'];
 
   @override
-  void initState() { //
+  void initState() {
     super.initState();
     final t = widget.tool;
     _nameCtrl  = TextEditingController(text: t?.name ?? '');
@@ -145,7 +145,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         });
       }
     } catch (_) {
-      // Keep existing values on transient errors
     } finally {
       if (mounted) {
         setState(() => _fetchingPricing = false);
@@ -224,7 +223,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
             });
             await _updatePricingSuggestion();
           } else if (mounted) {
-            // Rechazado por la IA: limpiamos la foto y mostramos alerta
             setState(() {
               _pickedImage = null;
             });
@@ -330,7 +328,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       Navigator.pop(context);
     } else {
       final errorMsg = provider.error ?? 'Error al guardar';
-      // Detectar si el error es por límite del plan gratuito
       final bool isPlanError = errorMsg.toLowerCase().contains('plan') ||
           errorMsg.toLowerCase().contains('limit') ||
           errorMsg.toLowerCase().contains('máximo') ||
@@ -867,10 +864,6 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-/// "Respaldo ToolShare": presenta el seguro por herramienta (independiente
-/// del plan de suscripción Pro/Gratuito) — la prima mensual se calcula como
-/// un % del valor tasado por IA. Por ahora es informativo: el switch expresa
-/// la intención de contratar, sin disparar un cobro real todavía.
 class _ToolShareBackupCard extends StatefulWidget {
   final double estimatedValue;
   final bool isAvailable;
@@ -971,7 +964,6 @@ class _ToolShareBackupCardState extends State<_ToolShareBackupCard> {
               style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
             ),
             const SizedBox(height: 14),
-            // Seguro por herramienta (independiente del plan Pro/Gratuito)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

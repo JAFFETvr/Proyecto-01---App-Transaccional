@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-// Componente visual para elegir Propietario o Solicitante.
 class RoleSelector extends StatelessWidget {
   final String selectedRole;
   final ValueChanged<String> onChanged;

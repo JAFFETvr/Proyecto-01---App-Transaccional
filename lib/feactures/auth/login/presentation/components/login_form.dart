@@ -5,8 +5,6 @@ import '../../../../../../shared/theme/app_colors.dart';
 import '../../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../../shared/widgets/primary_gradient_button.dart';
 
-/// Componente puro de UI: solo renderiza el formulario,
-/// las acciones las recibe por callback.
 class LoginForm extends StatefulWidget {
   final void Function(String email, String password) onSubmit;
   final bool isLoading;
@@ -48,7 +46,6 @@ class _LoginFormState extends State<LoginForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Banner de error
           if (widget.errorMessage != null) ...[
             Container(
               width: double.infinity,
@@ -77,7 +74,6 @@ class _LoginFormState extends State<LoginForm> {
             const SizedBox(height: 16),
           ],
 
-          // Label correo
           Text(
             'Correo electrónico',
             style: GoogleFonts.inter(
@@ -105,7 +101,6 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 18),
 
-          // Label contraseña
           Text(
             'Contraseña',
             style: GoogleFonts.inter(
@@ -137,7 +132,6 @@ class _LoginFormState extends State<LoginForm> {
           ),
           const SizedBox(height: 28),
 
-          // Botón con degradado naranja
           widget.isLoading
               ? const PrimaryGradientButtonLoading(height: 52)
               : PrimaryGradientButton(

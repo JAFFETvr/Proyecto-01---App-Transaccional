@@ -9,7 +9,6 @@ import '../../domain/entitie/tool_entity.dart';
 class ToolRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
-  // Lee el JWT guardado y lo pone en el header
   Future<Map<String, String>> get _authHeaders async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwt_token') ?? '';
@@ -234,7 +233,6 @@ class ToolRemoteDatasource {
       final request = http.MultipartRequest('POST', uri);
 
       final headers = await _authHeaders;
-      // We must remove Content-Type from headers because MultipartRequest will calculate it with boundary automatically.
       headers.remove('Content-Type');
       request.headers.addAll(headers);
 

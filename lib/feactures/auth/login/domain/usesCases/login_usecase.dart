@@ -1,8 +1,6 @@
 import '../entitie/user_entity.dart';
 import '../repositories/login_repository.dart';
 
-// Caso de uso: orquesta la lógica de login.
-// Aquí iría validación de negocio extra si la hubiera.
 class LoginUseCase {
   final LoginRepository _repository;
 

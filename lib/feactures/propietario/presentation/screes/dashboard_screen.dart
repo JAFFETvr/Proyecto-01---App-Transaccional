@@ -173,7 +173,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-      // ── FAB con degradado naranja ─────────────────────────────────────────
       floatingActionButton: Container(
         decoration: BoxDecoration(
           gradient: AppColors.primaryGradient,
@@ -200,7 +199,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          // ── AppBar ────────────────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
             backgroundColor: context.surface,
@@ -245,7 +243,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
 
-          // ── Saludo ────────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -273,7 +270,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // ── Tarjeta Plan Suscripción ─────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -396,7 +392,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // ── Banner de Renta en Progreso (Propietario) ─────────────────────
           if (hasActiveRental)
             SliverToBoxAdapter(
               child: GestureDetector(
@@ -483,7 +478,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-          // ── Metric cards ──────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -512,7 +506,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // ── Encabezado lista ──────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
@@ -527,7 +520,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ),
 
-          // ── Lista ─────────────────────────────────────────────────────────
           if (provider.loading)
             const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()))
@@ -593,7 +585,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ── _MetricCard ─────────────────────────────────────────────────────────────
 
 class _MetricCard extends StatelessWidget {
   final String label, value;

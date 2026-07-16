@@ -21,7 +21,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _webViewReady = false;
   late final WebViewController _webViewController;
   bool _processingPayment = false;
-  String _selectedPayment = 'card'; // 'card' | 'cash'
+  String _selectedPayment = 'card';
   bool _showWebView = false;
 
   Map<String, dynamic> get _args =>
@@ -112,7 +112,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
       body: Column(
         children: [
-          // ── Resumen ─────────────────────────────────────────────────────
           Container(
             width: double.infinity,
             margin: const EdgeInsets.all(16),
@@ -176,7 +175,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           ),
 
-          // Aviso
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(children: [
@@ -197,7 +195,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Selector de Método de Pago
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
@@ -268,7 +265,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           ),
           const SizedBox(height: 16),
 
-          // ── WebView de pago o Tarjeta de Advertencia en Efectivo ────────
           if (_selectedPayment == 'card')
             Expanded(
               child: _showWebView
@@ -391,7 +387,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         ],
       ),
 
-      // ── Botón de acción con degradado naranja ────────────────────────────
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
@@ -439,7 +434,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       return;
                     }
 
-                    // Pago en efectivo: navegar directo al seguimiento
                     if (_selectedPayment == 'cash') {
                       setState(() => _processingPayment = false);
                       showDialog(
@@ -475,7 +469,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       return;
                     }
 
-                    // Pago con tarjeta: obtener init_point real
                     final rentalId = rentalProv.currentRental!.id;
                     final initPoint = await rentalProv.fetchPreference(rentalId, payerEmail);
 

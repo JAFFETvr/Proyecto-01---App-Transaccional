@@ -1,5 +1,3 @@
-// Misma entidad que en login — puedes importarla desde login
-// o tenerla aquí si prefieres que cada feature sea 100% independiente.
 class UserEntity {
   final String id;
   final String name;

@@ -19,7 +19,7 @@ class CatalogMapScreen extends StatefulWidget {
 }
 
 class _CatalogMapScreenState extends State<CatalogMapScreen> {
-  static const _defaultCenter = LatLng(16.6264, -93.0911); // Suchiapa, Chiapas
+  static const _defaultCenter = LatLng(16.6264, -93.0911);
   final MapController _mapController = MapController();
   ToolEntity? _selectedTool;
   bool _locating = false;
@@ -72,7 +72,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Mapa principal
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -94,7 +93,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                 markers: tools.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final t = entry.value;
-                  // Si no tiene coordenadas reales, poner cerca del centro con pequeño desfase visual
                   double lat = t.latitude != 0.0 ? t.latitude : _defaultCenter.latitude + (idx % 5 - 2) * 0.0025;
                   double lng = t.longitude != 0.0 ? t.longitude : _defaultCenter.longitude + (idx ~/ 5 - 2) * 0.0025;
                   final isSelected = _selectedTool?.id == t.id;
@@ -129,7 +127,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
             ],
           ),
 
-          // Píldora superior de Navegación / Título
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -170,7 +167,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
             ),
           ),
 
-          // Botones de zoom + centrar en mi ubicación real
           Positioned(
             right: 16,
             bottom: _selectedTool != null ? 220 : 24,
@@ -208,7 +204,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
             ),
           ),
 
-          // Tarjeta emergente inferior de Herramienta seleccionada
           if (_selectedTool != null)
             Positioned(
               left: 16,

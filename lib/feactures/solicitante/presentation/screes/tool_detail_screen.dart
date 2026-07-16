@@ -67,7 +67,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
       backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
-          // ── Hero AppBar ─────────────────────────────────────────────────
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
@@ -78,7 +77,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  // Fondo industrial oscuro con degradado
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -91,7 +89,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                       ),
                     ),
                     child: Stack(children: [
-                      // Textura de herramienta grande semitransparente
                       Center(
                         child: Icon(
                           Icons.handyman_outlined,
@@ -122,7 +119,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                       ),
                     ]),
                   ),
-                  // Overlay inferior para transición suave
                   Positioned(
                     bottom: 0, left: 0, right: 0,
                     child: Container(
@@ -139,7 +135,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                       ),
                     ),
                   ),
-                  // Badge categoría
                   if (tool.category.isNotEmpty)
                     Positioned(
                       top: 56, right: 16,
@@ -167,14 +162,12 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
             ),
           ),
 
-          // ── Contenido ───────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nombre + badge disponibilidad
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -214,7 +207,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Ubicación + rating
                   Row(children: [
                     Icon(Icons.location_on_outlined,
                         size: 14, color: context.textSecondary),
@@ -256,11 +248,9 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   ],
                   const SizedBox(height: 20),
 
-                  // Divider sutil
                   Divider(color: context.borderColor),
                   const SizedBox(height: 16),
 
-                  // Descripción
                   Text(
                     'Descripción',
                     style: GoogleFonts.montserrat(
@@ -282,7 +272,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Reseñas
                   if (reviewsResult.reviewCount > 0) ...[
                     Row(children: [
                       Text(
@@ -328,7 +317,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     const SizedBox(height: 10),
                   ],
 
-                  // Info chips
                   Row(children: [
                     _InfoChip(
                       icon: Icons.build_circle_outlined,
@@ -346,7 +334,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   ]),
                   const SizedBox(height: 28),
 
-                  // ── Calculadora de renta ─────────────────────────────────
                   Text(
                     'Calcular costo de renta',
                     style: GoogleFonts.montserrat(
@@ -366,7 +353,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Selector de días
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -429,7 +415,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Comisión de servicio (pago con tarjeta)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -478,7 +463,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Banner de confianza
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
@@ -511,7 +495,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
         ],
       ),
 
-      // ── Botón principal con degradado naranja ────────────────────────────
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
@@ -542,7 +525,6 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
   }
 }
 
-// ── Widgets internos ────────────────────────────────────────────────────────
 
 class _DayButton extends StatelessWidget {
   final IconData icon;

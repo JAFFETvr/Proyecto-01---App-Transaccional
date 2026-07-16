@@ -14,7 +14,7 @@ import '../../domain/usesCases/predict_condition_usecase.dart';
 import '../../domain/usesCases/auto_valuate_usecase.dart';
 import '../../domain/usesCases/upload_tool_photo_usecase.dart';
 
-class ToolProvider extends ChangeNotifier {//
+class ToolProvider extends ChangeNotifier {
   final GetToolsUseCase _getTools;
   final CreateToolUseCase _createTool;
   final UpdateToolUseCase _updateTool;
@@ -184,10 +184,6 @@ class ToolProvider extends ChangeNotifier {//
     }
   }
 
-  /// Sube la foto tomada/elegida en el formulario hacia el backend
-  /// (POST /tools/{id}/photo) y actualiza la entidad local con la
-  /// photo_url resultante. No lanza: si falla, deja el error en [error]
-  /// y retorna false, para no bloquear el guardado de la herramienta.
   Future<bool> uploadPhoto(String toolId, File photo) async {
     try {
       final updated = await _uploadToolPhoto.execute(toolId, photo);
@@ -243,8 +239,6 @@ class ToolProvider extends ChangeNotifier {//
     }
   }
 
-  /// Pide al backend el init_point de Checkout Pro de Mercado Pago para
-  /// pagar la suscripción. Null si falló (ver [error]).
   Future<String?> getSubscriptionPreference() async {
     _loading = true;
     _error = null;
@@ -264,8 +258,6 @@ class ToolProvider extends ChangeNotifier {//
     }
   }
 
-  /// Confirma un pago de suscripción directamente contra MP usando el payment_id
-  /// devuelto en la URL de retorno del checkout (no depende del webhook).
   Future<bool> confirmSubscriptionPayment(String paymentId) async {
     try {
       _isPro = await _confirmSubscriptionPayment.execute(paymentId);
@@ -280,7 +272,6 @@ class ToolProvider extends ChangeNotifier {//
     }
   }
 
-  /// Refresca is_pro desde el backend (el webhook de MP lo activa de forma asíncrona).
   Future<bool> refreshProStatus() async {
     try {
       _isPro = await _refreshIsPro.execute();

@@ -9,29 +9,24 @@ class RentalEntity {
   final String endDate;
   final double dailyRate;
   final double totalAmount;
-  final String status; // 'pending' | 'active' | 'completed' | 'cancelled' | 'disputed'
-  final String paymentMethod; // 'card' | 'cash'
+  final String status;
+  final String paymentMethod;
 
-  // Payment
   final String mpPaymentId;
   final String paymentStatus;
   final double deductibleAmount;
 
-  // Handshake: Delivery
   final bool ownerConfirmedDelivery;
   final bool requesterConfirmedDelivery;
 
-  // Digital contract
   final String contractHash;
   final double deliveryLat;
   final double deliveryLng;
   final String deliveryAt;
 
-  // Handshake: Return
   final bool requesterConfirmedReturn;
   final bool ownerConfirmedReturn;
 
-  // Dispute
   final String disputeReason;
 
   final String createdAt;

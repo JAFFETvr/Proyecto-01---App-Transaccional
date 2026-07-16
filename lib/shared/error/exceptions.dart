@@ -5,5 +5,4 @@ class ServerException implements Exception {
   ServerException({required this.message});
 }
 
-/// Excepción para cuando el teléfono no tiene internet o no alcanza al servidor.
 class NetworkException implements Exception {}

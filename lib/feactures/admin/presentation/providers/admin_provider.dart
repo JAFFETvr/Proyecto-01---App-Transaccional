@@ -108,7 +108,7 @@ class AdminProvider extends ChangeNotifier {
 
   Future<bool> resolveDispute({
     required String rentalId,
-    required String action, // "capture" o "refund"
+    required String action,
     required String notes,
   }) async {
     _loading = true;

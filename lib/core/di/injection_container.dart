@@ -17,12 +17,6 @@ import '../../feactures/solicitante/data/di/solicitante_di.dart';
 import '../../feactures/checkout/data/di/checkout_di.dart';
 import '../../feactures/review/data/di/review_di.dart';
 
-/// Contenedor de inyección de dependencias global.
-///
-/// Agrega los `ChangeNotifierProvider` de cada feature (construidos con las
-/// factories `*DI` que ya existían en cada feature) en una sola lista lista
-/// para pasarle a `MultiProvider`. No reemplaza el DI por-feature: solo
-/// centraliza el punto donde se ensamblan para la raíz de la app.
 class InjectionContainer {
   static List<SingleChildWidget> get providers => [
         ChangeNotifierProvider<LoginProvider>(

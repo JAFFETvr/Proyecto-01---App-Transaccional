@@ -4,8 +4,6 @@ import '../../domain/entitie/tool_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 
-/// Prima mensual del seguro por herramienta: 5% del valor tasado por IA.
-/// Es un producto independiente del plan de suscripción (Pro/Gratuito).
 const double kInsuranceMonthlyRate = 0.05;
 
 class ToolListItem extends StatelessWidget {

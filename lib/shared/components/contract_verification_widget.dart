@@ -67,7 +67,6 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
           ),
           child: Column(
             children: [
-              // Encabezado
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: const BoxDecoration(
@@ -97,14 +96,12 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                   ],
                 ),
               ),
-              // Cuerpo del contrato
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Encabezado legal
                       Center(
                         child: Column(
                           children: [
@@ -148,7 +145,6 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                       
                       const SizedBox(height: 14),
                       
-                      // Tabla de Metadatos
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -180,7 +176,6 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                       ),
                       const SizedBox(height: 20),
                       
-                      // Firmas
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -263,7 +258,6 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                   ),
                 ),
               ),
-              // Botón de cierre
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: SizedBox(

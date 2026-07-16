@@ -141,7 +141,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
       body: CustomScrollView(
         slivers: [
-          // ── AppBar premium ────────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
             floating: true,
@@ -154,7 +153,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
               color: context.textSecondary,
               onPressed: _logout,
             ),
-            // Borde inferior sutil
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(0),
               child: Container(
@@ -164,7 +162,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
             title: Row(
               children: [
-                // Logo/Icono ToolShare
                 Container(
                   width: 34, height: 34,
                   decoration: BoxDecoration(
@@ -198,7 +195,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ],
             ),
             actions: [
-              // Filtro disponibles
               Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: FilterChip(
@@ -228,7 +224,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ],
           ),
 
-          // ── Banner de Renta Activa ─────────────────────────────────────────
           if (hasActiveRental)
             SliverToBoxAdapter(
               child: GestureDetector(
@@ -315,7 +310,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ),
 
-          // ── Sección Prominente del Mapa Interactivo ─────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
@@ -371,7 +365,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // ── Barra de búsqueda ─────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
@@ -409,7 +402,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // ── Chips de categoría ────────────────────────────────────────────
           SliverToBoxAdapter(
             child: SizedBox(
               height: 44,
@@ -448,7 +440,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // ── Contador de resultados ────────────────────────────────────────
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
@@ -464,7 +455,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
           ),
 
-          // ── Contenido ─────────────────────────────────────────────────────
           if (provider.loading)
             const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()))

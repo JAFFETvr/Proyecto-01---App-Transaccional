@@ -27,19 +27,16 @@ class ToolCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.surface,
             borderRadius: BorderRadius.circular(16),
-            // Sombra flotante premium
             boxShadow: AppColors.cardShadow,
           ),
           clipBehavior: Clip.antiAlias,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Hero imagen / placeholder ─────────────────────────────────
               Expanded(
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    // Fondo con degradado industrial
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -57,7 +54,6 @@ class ToolCard extends StatelessWidget {
                         color: Colors.white.withOpacity(0.15),
                       ),
                     ),
-                    // Overlay inferior para legibilidad
                     Positioned(
                       bottom: 0, left: 0, right: 0,
                       child: Container(
@@ -74,7 +70,6 @@ class ToolCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    // Badge categoría
                     if (tool.category.isNotEmpty)
                       Positioned(
                         top: 10, left: 10,
@@ -95,7 +90,6 @@ class ToolCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                    // Indicador disponibilidad
                     Positioned(
                       top: 10, right: 10,
                       child: Container(
@@ -113,7 +107,6 @@ class ToolCard extends StatelessWidget {
                 ),
               ),
 
-              // ── Info ──────────────────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
                 child: Column(
@@ -158,7 +151,6 @@ class ToolCard extends StatelessWidget {
                       ]),
                     ],
                     const SizedBox(height: 6),
-                    // Badge estado con fondo desvanecido al 10 %
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -180,7 +172,6 @@ class ToolCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 5),
-                    // Zona
                     Row(children: [
                       Icon(Icons.location_on_outlined,
                           size: 11, color: context.textSecondary),

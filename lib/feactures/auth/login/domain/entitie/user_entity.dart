@@ -1,9 +1,8 @@
-// Entidad pura — no depende de JSON ni de Flutter.
 class UserEntity {
   final String id;
   final String name;
   final String email;
-  final String role; // 'owner' | 'requester'
+  final String role;
   final String token;
   final bool isPro;
   final String phone;

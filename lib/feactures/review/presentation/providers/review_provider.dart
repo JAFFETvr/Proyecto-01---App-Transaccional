@@ -24,11 +24,6 @@ class ReviewProvider extends ChangeNotifier {
   String? _error;
   ReviewsResultEntity _toolReviews = ReviewsResultEntity.empty;
 
-  // Marcadas como calificadas en esta sesión (por confirmación del backend:
-  // 201 al enviar, o 409 porque ya se había calificado antes). Se indexan
-  // por "rentalId:role" porque una misma renta admite DOS reseñas
-  // independientes (el propietario califica al solicitante y viceversa) —
-  // usar solo el rentalId ocultaría el botón del otro lado por error.
   final Set<String> _reviewedKeys = {};
   String _key(String rentalId, String role) => '$rentalId:$role';
 
@@ -45,7 +40,6 @@ class ReviewProvider extends ChangeNotifier {
     try {
       _toolReviews = await _getToolReviews.execute(toolId);
     } catch (_) {
-      // Silencioso: no debe bloquear la vista de detalle si falla.
     } finally {
       _loading = false;
       notifyListeners();
@@ -58,7 +52,6 @@ class ReviewProvider extends ChangeNotifier {
     try {
       await _getUserReviews.execute(userId);
     } catch (_) {
-      // Silencioso, mismo criterio que fetchToolReviews.
     } finally {
       _loading = false;
       notifyListeners();

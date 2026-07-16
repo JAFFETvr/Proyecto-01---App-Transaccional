@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
 
-/// Muestra una calificación (puede ser fraccionaria, ej. 4.5) como estrellas.
 class ReviewStars extends StatelessWidget {
   final double rating;
   final double size;
@@ -28,7 +27,6 @@ class ReviewStars extends StatelessWidget {
   }
 }
 
-/// Selector de calificación (1-5 estrellas) para que el usuario elija.
 class ReviewStarsInput extends StatelessWidget {
   final int rating;
   final ValueChanged<int> onChanged;

@@ -18,7 +18,6 @@ class LocationPickerModal extends StatefulWidget {
 }
 
 class _LocationPickerModalState extends State<LocationPickerModal> {
-  // Centro por defecto: Suchiapa, Chiapas
   static const _defaultSuchiapa = LatLng(16.6264, -93.0911);
   late LatLng _currentLocation;
   final MapController _mapController = MapController();
@@ -32,7 +31,6 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
       _currentLocation = LatLng(widget.initialLat!, widget.initialLng!);
     } else {
       _currentLocation = _defaultSuchiapa;
-      // Herramienta nueva sin ubicación previa: centramos en la posición real del usuario.
       WidgetsBinding.instance.addPostFrameCallback((_) => _goToMyLocation(silent: true));
     }
   }
@@ -93,7 +91,6 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
           height: 520,
           child: Column(
             children: [
-              // Barra superior
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 color: AppColors.slate900,
@@ -118,7 +115,6 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
                 ),
               ),
 
-              // Mapa
               Expanded(
                 child: Stack(
                   children: [
@@ -193,7 +189,6 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
                 ),
               ),
 
-              // Pie de Confirmación
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(color: context.surface, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))]),

@@ -70,7 +70,6 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
       ),
       child: Column(
         children: [
-          // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             decoration: BoxDecoration(
@@ -99,7 +98,6 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
             ),
           ),
 
-          // Messages List
           Expanded(
             child: chat.loading && chat.messages.isEmpty
                 ? const Center(child: CircularProgressIndicator())
@@ -148,7 +146,6 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                       ),
           ),
 
-          // Input Bar
           Container(
             padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).viewInsets.bottom + 16),
             decoration: BoxDecoration(

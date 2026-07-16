@@ -33,7 +33,6 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
     final rentalProvider = context.watch<RentalProvider>();
     final rentals = rentalProvider.rentals;
 
-    // Ordenar: activas/pendientes primero, luego historial
     final sortedRentals = List<RentalEntity>.from(rentals)
       ..sort((a, b) {
         final aOngoing = !a.isCompleted && !a.isCancelled;

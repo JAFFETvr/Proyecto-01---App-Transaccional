@@ -2,7 +2,7 @@ class ReviewEntity {
   final String id;
   final String rentalId;
   final String authorId;
-  final String targetType; // 'tool' | 'user'
+  final String targetType;
   final String targetId;
   final int rating;
   final String comment;

@@ -228,7 +228,6 @@ class _RentalTrackingOwnerScreenState
     }
   }
 
-  /// Muestra diálogo de confirmación antes de salir del seguimiento activo.
   void _showBackConfirmation(BuildContext ctx) {
     showDialog(
       context: ctx,
@@ -286,11 +285,6 @@ class _RentalTrackingOwnerScreenState
       );
     }
 
-    // Determine current index for OwnerPhaseIndicator
-    // 0: Confirmar Entrega (Status: pending)
-    // 1: Herramienta Rentada (Status: active)
-    // 2: Devolución Aceptada (Status: completed)
-    // 3: Dispute (Status: disputed)
     int phaseIndex = 0;
     if (rental.isActive) phaseIndex = 1;
     if (rental.isCompleted) phaseIndex = 2;
@@ -303,7 +297,6 @@ class _RentalTrackingOwnerScreenState
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         iconTheme: IconThemeData(color: context.textPrimary),
-        // Siempre permitir retroceder
         automaticallyImplyLeading: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),

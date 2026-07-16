@@ -7,9 +7,6 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../providers/tool_provider.dart';
 
-/// Pide la preferencia de pago del plan Pro al backend y abre el Checkout Pro
-/// de Mercado Pago en un WebView. Si el usuario completa el pago, refresca
-/// is_pro (activado de forma asíncrona por el webhook) y avisa con un snackbar.
 Future<void> openProSubscriptionCheckout(BuildContext context) async {
   final toolProvider = context.read<ToolProvider>();
   final initPoint = await toolProvider.getSubscriptionPreference();

@@ -4,7 +4,6 @@ import '../../../../../shared/error/app_error.dart';
 import '../../../../../shared/config/api_config.dart';
 import '../../domain/entitie/user_entity.dart';
 
-// Única clase que sabe hablar con el endpoint real de tu API Go.
 class LoginRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
   Future<UserEntity> login({

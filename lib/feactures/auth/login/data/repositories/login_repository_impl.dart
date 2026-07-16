@@ -2,7 +2,6 @@ import '../../domain/entitie/user_entity.dart';
 import '../../domain/repositories/login_repository.dart';
 import '../datasoruce/login_remote_datasource.dart';
 
-// Implementación concreta del contrato del dominio.
 class LoginRepositoryImpl implements LoginRepository {
   final LoginRemoteDatasource _datasource;
 
