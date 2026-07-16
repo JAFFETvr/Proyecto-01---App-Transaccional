@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../../../shared/theme/app_colors.dart';
+import '../../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../../shared/widgets/primary_gradient_button.dart';
 
 /// Componente puro de UI: solo renderiza el formulario,
@@ -82,7 +83,7 @@ class _LoginFormState extends State<LoginForm> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.slate900,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -91,7 +92,7 @@ class _LoginFormState extends State<LoginForm> {
             keyboardType: TextInputType.emailAddress,
             textInputAction: TextInputAction.next,
             autocorrect: false,
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900),
+            style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
             decoration: const InputDecoration(
               hintText: 'correo@ejemplo.com',
               prefixIcon: Icon(Icons.email_outlined),
@@ -110,7 +111,7 @@ class _LoginFormState extends State<LoginForm> {
             style: GoogleFonts.inter(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.slate900,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -119,7 +120,7 @@ class _LoginFormState extends State<LoginForm> {
             obscureText: _obscure,
             textInputAction: TextInputAction.done,
             onFieldSubmitted: (_) => _submit(),
-            style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900),
+            style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
             decoration: InputDecoration(
               hintText: '••••••••',
               prefixIcon: const Icon(Icons.lock_outline),
@@ -127,7 +128,7 @@ class _LoginFormState extends State<LoginForm> {
                 icon: Icon(_obscure
                     ? Icons.visibility_outlined
                     : Icons.visibility_off_outlined,
-                    color: AppColors.slate600),
+                    color: context.textSecondary),
                 onPressed: () => setState(() => _obscure = !_obscure),
               ),
             ),

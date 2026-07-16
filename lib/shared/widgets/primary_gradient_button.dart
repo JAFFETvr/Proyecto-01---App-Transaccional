@@ -31,6 +31,7 @@ class PrimaryGradientButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDisabled = onPressed == null;
+    final cs = Theme.of(context).colorScheme;
 
     return Container(
       height: height,
@@ -39,7 +40,7 @@ class PrimaryGradientButton extends StatelessWidget {
         gradient: isDisabled
             ? null
             : AppColors.primaryGradient,
-        color: isDisabled ? Colors.grey.shade300 : null,
+        color: isDisabled ? cs.surfaceContainerHighest : null,
         borderRadius: BorderRadius.circular(12),
         boxShadow: isDisabled ? [] : AppColors.primaryButtonShadow,
       ),
@@ -55,7 +56,7 @@ class PrimaryGradientButton extends StatelessWidget {
                 if (icon != null) ...[
                   Icon(
                     icon,
-                    color: isDisabled ? Colors.grey.shade600 : Colors.white,
+                    color: isDisabled ? cs.onSurfaceVariant : Colors.white,
                     size: fontSize + 2,
                   ),
                   const SizedBox(width: 8),
@@ -65,7 +66,7 @@ class PrimaryGradientButton extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: fontSize,
                     fontWeight: FontWeight.w700,
-                    color: isDisabled ? Colors.grey.shade600 : Colors.white,
+                    color: isDisabled ? cs.onSurfaceVariant : Colors.white,
                   ),
                 ),
               ],

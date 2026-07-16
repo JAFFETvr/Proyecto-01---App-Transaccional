@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/theme/theme_extensions.dart';
 import '../../../auth/login/presentation/providers/login_provider.dart';
 import '../../../propietario/presentation/providers/tool_provider.dart';
 import '../../../solicitante/presentation/providers/catalog_provider.dart';
@@ -43,29 +44,29 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
       });
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.slate900),
+        iconTheme: IconThemeData(color: context.textPrimary),
         title: Text(
           'Mis Rentas',
           style: GoogleFonts.montserrat(
             fontSize: 18,
             fontWeight: FontWeight.w800,
-            color: AppColors.slate900,
+            color: context.textPrimary,
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+          child: Container(height: 1, color: context.borderColor),
         ),
       ),
       body: rentalProvider.loading && rentals.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : rentals.isEmpty
-              ? _buildEmptyState()
+              ? _buildEmptyState(context)
               : RefreshIndicator(
                   onRefresh: () => rentalProvider.fetchRentals(),
                   color: AppColors.orange500,
@@ -82,7 +83,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -105,7 +106,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
-                color: AppColors.slate900,
+                color: context.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
@@ -113,7 +114,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
               'Cuando rentes o te renten una herramienta, aparecerá aquí su seguimiento.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: AppColors.slate600,
+                color: context.textSecondary,
                 height: 1.5,
               ),
               textAlign: TextAlign.center,
@@ -190,7 +191,7 @@ class _RentalCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
@@ -199,7 +200,7 @@ class _RentalCard extends StatelessWidget {
               offset: const Offset(0, 2),
             ),
           ],
-          border: Border.all(color: const Color(0xFFF1F5F9)),
+          border: Border.all(color: context.borderColor),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,17 +211,17 @@ class _RentalCard extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
+                    color: context.colors.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: photoUrl.isNotEmpty
                       ? Image.network(photoUrl, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(
+                          errorBuilder: (_, __, ___) => Icon(
                               Icons.construction,
-                              color: AppColors.slate600))
-                      : const Icon(Icons.construction,
-                          color: AppColors.slate600),
+                              color: context.textSecondary))
+                      : Icon(Icons.construction,
+                          color: context.textSecondary),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -232,7 +233,7 @@ class _RentalCard extends StatelessWidget {
                         style: GoogleFonts.montserrat(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.slate900,
+                          color: context.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -242,18 +243,18 @@ class _RentalCard extends StatelessWidget {
                         '${rental.startDate} → ${rental.endDate}',
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: AppColors.slate600,
+                          color: context.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.arrow_forward_ios_rounded,
-                    size: 16, color: AppColors.slate300),
+                Icon(Icons.arrow_forward_ios_rounded,
+                    size: 16, color: context.colors.outline),
               ],
             ),
             const SizedBox(height: 14),
-            const Divider(height: 1, color: Color(0xFFF1F5F9)),
+            Divider(height: 1, color: context.borderColor),
             const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -284,7 +285,7 @@ class _RentalCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.slate900,
+                    color: context.textPrimary,
                   ),
                 ),
               ],

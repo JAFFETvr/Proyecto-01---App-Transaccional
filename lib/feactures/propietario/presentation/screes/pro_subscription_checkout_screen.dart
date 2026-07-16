@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../providers/tool_provider.dart';
 
 /// Pide la preferencia de pago del plan Pro al backend y abre el Checkout Pro
@@ -83,18 +84,18 @@ class _ProSubscriptionCheckoutScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.slate900),
+        iconTheme: IconThemeData(color: context.textPrimary),
         title: Text(
           'Plan Pro — Pago Seguro',
           style: GoogleFonts.montserrat(
             fontSize: 16,
             fontWeight: FontWeight.w700,
-            color: AppColors.slate900,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -109,7 +110,7 @@ class _ProSubscriptionCheckoutScreenState
           WebViewWidget(controller: _controller),
           if (!_ready)
             Container(
-              color: AppColors.background,
+              color: context.bg,
               child: const Center(child: CircularProgressIndicator()),
             ),
         ],

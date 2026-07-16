@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/theme/theme_extensions.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 import '../providers/admin_provider.dart';
@@ -36,7 +37,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -74,12 +75,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.slate900,
+                          color: context.textPrimary,
                         ),
                       ),
                       Text(
                         'Contrato Renta #${rental.id.length > 8 ? rental.id.substring(0, 8) : rental.id}',
-                        style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600),
+                        style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
                       ),
                     ],
                   ),
@@ -92,9 +93,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.bg,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.slate200),
+                border: Border.all(color: context.borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +109,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.slate700,
+                          color: context.textPrimary,
                         ),
                       ),
                     ],
@@ -116,18 +117,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   const SizedBox(height: 8),
                   Text(
                     rental.disputeReason.isNotEmpty ? rental.disputeReason : 'Sin descripción proporcionada.',
-                    style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900, height: 1.4),
+                    style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary, height: 1.4),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: Divider(height: 1, color: AppColors.slate200),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Divider(height: 1, color: context.borderColor),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Garantía Retenida en MP:',
-                        style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600),
+                        style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
                       ),
                       Text(
                         '\$${rental.deductibleAmount.toStringAsFixed(2)} MXN',
@@ -150,22 +151,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.slate900,
+                color: context.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: notesCtrl,
               maxLines: 3,
-              style: GoogleFonts.inter(fontSize: 14, color: AppColors.slate900),
+              style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
               decoration: InputDecoration(
                 hintText: 'Ej. Daño verificado por visión artificial post-entrega. Se procede a cobrar garantía...',
-                hintStyle: GoogleFonts.inter(color: AppColors.slate400, fontSize: 13),
+                hintStyle: GoogleFonts.inter(color: context.colors.outline, fontSize: 13),
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: context.bg,
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.slate200),
+                  borderSide: BorderSide(color: context.borderColor),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -194,8 +195,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       }
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.slate700,
-                      side: const BorderSide(color: AppColors.slate300),
+                      foregroundColor: context.textPrimary,
+                      side: BorderSide(color: context.colors.outline),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -257,19 +258,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final stats = provider.stats;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
           // ── AppBar limpia estilo Fintech Industrial ────────────────────────
           SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.surface,
+            backgroundColor: context.surface,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(0),
-              child: Container(height: 1, color: AppColors.slate200),
+              child: Container(height: 1, color: context.borderColor),
             ),
             title: Row(
               children: [
@@ -289,7 +290,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.slate900,
+                    color: context.textPrimary,
                   ),
                 ),
               ],
@@ -297,13 +298,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.refresh_rounded),
-                color: AppColors.slate600,
+                color: context.textSecondary,
                 tooltip: 'Actualizar datos',
                 onPressed: () => provider.fetchDashboardData(statusFilter: _currentFilter),
               ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded),
-                color: AppColors.slate600,
+                color: context.textSecondary,
                 tooltip: 'Cerrar sesión',
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
@@ -327,7 +328,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.slate500,
+                      color: context.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -336,7 +337,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.slate900,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -437,10 +438,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     Container(
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
-                        color: AppColors.slate100,
+                        color: context.colors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.done_all_rounded, size: 48, color: AppColors.slate400),
+                      child: Icon(Icons.done_all_rounded, size: 48, color: context.colors.outline),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -450,7 +451,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       style: GoogleFonts.inter(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.slate600,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -469,11 +470,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.surface,
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: AppColors.cardShadow,
                       border: Border.all(
-                        color: isDisputed ? AppColors.orange500 : AppColors.slate200,
+                        color: isDisputed ? AppColors.orange500 : context.borderColor,
                         width: isDisputed ? 1.5 : 1.0,
                       ),
                     ),
@@ -491,25 +492,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 style: GoogleFonts.montserrat(
                                   fontWeight: FontWeight.w800,
                                   fontSize: 17,
-                                  color: AppColors.slate900,
+                                  color: context.textPrimary,
                                 ),
                               ),
                             ],
                           ),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(height: 1, color: AppColors.slate100),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            child: Divider(height: 1, color: context.colors.surfaceContainerHigh),
                           ),
                           Row(
                             children: [
-                              const Icon(Icons.qr_code_rounded, size: 16, color: AppColors.slate400),
+                              Icon(Icons.qr_code_rounded, size: 16, color: context.colors.outline),
                               const SizedBox(width: 6),
                               Text(
                                 'Contrato #${r.id}',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.slate500,
+                                  color: context.textSecondary,
                                 ),
                               ),
                             ],
@@ -517,11 +518,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              const Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.slate400),
+                              Icon(Icons.calendar_today_rounded, size: 14, color: context.colors.outline),
                               const SizedBox(width: 6),
                               Text(
                                 '${r.startDate.split('T')[0]}  →  ${r.endDate.split('T')[0]}',
-                                style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate700),
+                                style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
                               ),
                             ],
                           ),
@@ -549,7 +550,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     r.disputeReason,
-                                    style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate900),
+                                    style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
                                   ),
                                 ],
                               ),
@@ -613,10 +614,10 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.surface,
         borderRadius: BorderRadius.circular(18),
         boxShadow: AppColors.cardShadow,
-        border: Border.all(color: AppColors.slate200),
+        border: Border.all(color: context.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -632,7 +633,7 @@ class _MetricCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.slate500,
+                    color: context.textSecondary,
                   ),
                 ),
               ),
@@ -655,7 +656,7 @@ class _MetricCard extends StatelessWidget {
             style: GoogleFonts.montserrat(
               fontSize: 17,
               fontWeight: FontWeight.w800,
-              color: AppColors.slate900,
+              color: context.textPrimary,
             ),
           ),
         ],
@@ -685,10 +686,10 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           gradient: isSelected ? AppColors.primaryGradient : null,
-          color: isSelected ? null : AppColors.surface,
+          color: isSelected ? null : context.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Colors.transparent : AppColors.slate300,
+            color: isSelected ? Colors.transparent : context.colors.outline,
           ),
           boxShadow: isSelected ? AppColors.primaryButtonShadow : null,
         ),
@@ -697,7 +698,7 @@ class _FilterChip extends StatelessWidget {
           style: GoogleFonts.inter(
             fontSize: 13,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: isSelected ? Colors.white : AppColors.slate700,
+            color: isSelected ? Colors.white : context.textPrimary,
           ),
         ),
       ),
@@ -730,8 +731,8 @@ class _StatusBadge extends StatelessWidget {
         fg = AppColors.blue600;
         break;
       default:
-        bg = AppColors.slate100;
-        fg = AppColors.slate600;
+        bg = context.colors.surfaceContainerHigh;
+        fg = context.textSecondary;
     }
 
     return Container(

@@ -7,10 +7,13 @@ import 'package:provider/provider.dart';
 import '../providers/rental_provider.dart';
 import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
 import '../../../../../shared/components/contract_verification_widget.dart';
 import '../../../../../shared/services/biometric_service.dart';
+import '../../../review/presentation/providers/review_provider.dart';
+import '../../../review/presentation/components/submit_review_sheet.dart';
 
 class RentalTrackingOwnerScreen extends StatefulWidget {
   const RentalTrackingOwnerScreen({super.key});
@@ -173,8 +176,8 @@ class _RentalTrackingOwnerScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Describe el daño, retraso o inconveniente. Soporte evaluará el depósito en garantía.',
-              style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600),
+              'Describe el daño, retraso o inconveniente. Soporte evaluará el caso.',
+              style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -248,7 +251,7 @@ class _RentalTrackingOwnerScreenState
         content: Text(
           'La renta continúa activa. Puedes volver a tu panel y retomar el seguimiento '
           'desde el banner "Herramienta en renta" en cualquier momento.',
-          style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600, height: 1.5),
+          style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary, height: 1.5),
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -294,12 +297,12 @@ class _RentalTrackingOwnerScreenState
     if (rental.isDisputed) phaseIndex = 3;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.slate900),
+        iconTheme: IconThemeData(color: context.textPrimary),
         // Siempre permitir retroceder
         automaticallyImplyLeading: true,
         leading: IconButton(
@@ -317,7 +320,7 @@ class _RentalTrackingOwnerScreenState
           style: GoogleFonts.montserrat(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppColors.slate900,
+            color: context.textPrimary,
           ),
         ),
         actions: [
@@ -344,7 +347,7 @@ class _RentalTrackingOwnerScreenState
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+          child: Container(height: 1, color: context.borderColor),
         ),
       ),
       body: SafeArea(
@@ -374,7 +377,7 @@ class _RentalTrackingOwnerScreenState
                           : 'Esperando que el solicitante inicie el retorno físico...',
                       style: GoogleFonts.inter(
                         fontSize: 12,
-                        color: AppColors.slate600,
+                        color: context.textSecondary,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -436,7 +439,7 @@ class _RentalTrackingOwnerScreenState
       case 1:
         return _OwnerPhase1(rental: rental);
       case 2:
-        return _OwnerPhase2Accepted();
+        return _OwnerPhase2Accepted(rental: rental);
       case 3:
       default:
         return _OwnerPhase2Rejected(rental: rental);
@@ -476,7 +479,7 @@ class _OwnerPhase0 extends StatelessWidget {
             style: GoogleFonts.montserrat(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.slate900,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -484,7 +487,7 @@ class _OwnerPhase0 extends StatelessWidget {
             'Reúnete con el solicitante en el lugar acordado. Al entregar la herramienta física, presiona Confirmar Entrega.',
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: AppColors.slate600,
+              color: context.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -495,7 +498,7 @@ class _OwnerPhase0 extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A).withOpacity(0.04),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: context.borderColor),
             ),
             child: Column(children: [
               Row(children: [
@@ -506,7 +509,7 @@ class _OwnerPhase0 extends StatelessWidget {
                     rental.ownerConfirmedDelivery
                         ? 'Confirmaste la entrega ✓'
                         : 'Falta tu confirmación de entrega',
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(fontSize: 12, color: context.textPrimary, fontWeight: FontWeight.w600),
                   ),
                 ),
               ]),
@@ -519,7 +522,7 @@ class _OwnerPhase0 extends StatelessWidget {
                     rental.requesterConfirmedDelivery
                         ? 'El solicitante confirmó la entrega ✓'
                         : 'Falta confirmación de entrega del solicitante',
-                    style: GoogleFonts.inter(fontSize: 12, color: AppColors.slate700, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(fontSize: 12, color: context.textPrimary, fontWeight: FontWeight.w600),
                   ),
                 ),
               ]),
@@ -564,7 +567,7 @@ class _OwnerPhase1 extends StatelessWidget {
             style: GoogleFonts.montserrat(
               fontSize: 20,
               fontWeight: FontWeight.w800,
-              color: AppColors.slate900,
+              color: context.textPrimary,
             ),
           ),
           const SizedBox(height: 10),
@@ -572,7 +575,7 @@ class _OwnerPhase1 extends StatelessWidget {
             'El solicitante posee la herramienta física. Los fondos están garantizados e inmutables bajo contrato digital.',
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: AppColors.slate600,
+              color: context.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -590,8 +593,14 @@ class _OwnerPhase1 extends StatelessWidget {
 }
 
 class _OwnerPhase2Accepted extends StatelessWidget {
+  final RentalEntity rental;
+  const _OwnerPhase2Accepted({required this.rental});
+
   @override
   Widget build(BuildContext context) {
+    final reviewProvider = context.watch<ReviewProvider>();
+    final alreadyReviewed = reviewProvider.hasReviewed(rental.id, role: 'owner');
+
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -616,15 +625,29 @@ class _OwnerPhase2Accepted extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Has confirmado la devolución física. Los fondos se han transferido a tu saldo y el depósito de garantía ha sido devuelto al solicitante.',
+            'Has confirmado la devolución física. Los fondos de la renta se han transferido a tu saldo.',
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: AppColors.slate600,
+              color: context.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
+          if (!alreadyReviewed) ...[
+            OutlinedButton.icon(
+              icon: const Icon(Icons.star_outline_rounded),
+              label: const Text('Calificar al solicitante'),
+              onPressed: () => SubmitReviewSheet.show(
+                context,
+                rentalId: rental.id,
+                role: 'owner',
+                title: 'Califica al solicitante',
+                subtitle: '¿Cómo fue tu experiencia con quien rentó tu herramienta?',
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           PrimaryGradientButton(
             label: 'Volver a mi Panel',
             onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),
@@ -664,10 +687,10 @@ class _OwnerPhase2Rejected extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Se ha abierto un reporte de disputa sobre este contrato. El soporte de ToolShare evaluará la situación y el depósito en garantía.',
+            'Se ha abierto un reporte de disputa sobre este contrato. El soporte de ToolShare evaluará la situación.',
             style: GoogleFonts.inter(
               fontSize: 13,
-              color: AppColors.slate600,
+              color: context.textSecondary,
               height: 1.5,
             ),
             textAlign: TextAlign.center,
@@ -683,7 +706,7 @@ class _OwnerPhase2Rejected extends StatelessWidget {
                   children: [
                     Text('Detalle del reporte:', style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.danger)),
                     const SizedBox(height: 6),
-                    Text(rental.disputeReason, style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate700)),
+                    Text(rental.disputeReason, style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary)),
                   ],
                 ),
               ),
@@ -717,7 +740,7 @@ class _OwnerPhaseIndicator extends StatelessWidget {
                 height: 2,
                 color: i ~/ 2 < (phase > 2 ? 2 : phase)
                     ? AppColors.orange500
-                    : const Color(0xFFE2E8F0),
+                    : context.borderColor,
               ),
             );
           }
@@ -735,7 +758,7 @@ class _OwnerPhaseIndicator extends StatelessWidget {
                     ? null
                     : active
                         ? AppColors.orange500.withOpacity(0.1)
-                        : const Color(0xFFE2E8F0),
+                        : context.borderColor,
                 border: Border.all(
                   color:
                       active ? AppColors.orange500 : Colors.transparent,
@@ -752,7 +775,7 @@ class _OwnerPhaseIndicator extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: active
                               ? AppColors.orange500
-                              : AppColors.slate600,
+                              : context.textSecondary,
                         ),
                       ),
               ),
@@ -763,7 +786,7 @@ class _OwnerPhaseIndicator extends StatelessWidget {
               style: GoogleFonts.inter(
                 fontSize: 11,
                 color:
-                    active ? AppColors.orange500 : AppColors.slate600,
+                    active ? AppColors.orange500 : context.textSecondary,
                 fontWeight:
                     active ? FontWeight.w700 : FontWeight.normal,
               ),

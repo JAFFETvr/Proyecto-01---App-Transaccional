@@ -208,6 +208,26 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
+  Future<ToolEntity> uploadPhoto(String toolId, File photo) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/tools/$toolId/photo');
+      final request = http.MultipartRequest('POST', uri);
+
+      final headers = await _authHeaders;
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
+
+      request.files.add(await http.MultipartFile.fromPath('photo', photo.path));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      _throwIfError(response);
+      return _fromJson(json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al subir la foto.'); }
+  }
+
   Future<Map<String, dynamic>> predictCondition(File photo) async {
     try {
       final uri = Uri.parse('$_baseUrl/tools/predict-condition');

@@ -11,6 +11,7 @@ import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../auth/login/presentation/providers/login_provider.dart';
 import '../../../auth/register/presentation/providers/register_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
 import '../../../checkout/presentation/screes/rental_tracking_owner_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
@@ -51,13 +52,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
         content: Text(
           '¿Eliminar "$name"? No se puede deshacer.',
-          style: GoogleFonts.inter(color: AppColors.slate600),
+          style: GoogleFonts.inter(color: context.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('Cancelar',
-                style: GoogleFonts.inter(color: AppColors.slate600)),
+                style: GoogleFonts.inter(color: context.textSecondary)),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
@@ -107,9 +108,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final activeRental = activeRentals.firstOrNull;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       drawer: Drawer(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         child: Column(
           children: [
             DrawerHeader(
@@ -140,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 'Mis Rentas',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate900,
+                  color: context.textPrimary,
                 ),
               ),
               trailing: activeRentals.isNotEmpty
@@ -149,7 +150,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       decoration: BoxDecoration(color: AppColors.orange500, borderRadius: BorderRadius.circular(12)),
                       child: Text('${activeRentals.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                     )
-                  : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.slate300),
+                  : Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.colors.outline),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
@@ -202,13 +203,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // ── AppBar ────────────────────────────────────────────────────────
           SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.surface,
+            backgroundColor: context.surface,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(0),
-              child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+              child: Container(height: 1, color: context.borderColor),
             ),
             title: Row(children: [
               Container(
@@ -226,7 +227,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.slate900,
+                  color: context.textPrimary,
                 ),
               ),
             ]),
@@ -255,7 +256,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'Hola, $_userName 👋',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: AppColors.slate600,
+                      color: context.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -264,7 +265,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.slate900,
+                      color: context.textPrimary,
                     ),
                   ),
                 ],
@@ -334,9 +335,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   : Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        border: Border.all(color: context.borderColor),
                         boxShadow: AppColors.cardShadow,
                       ),
                       child: Column(
@@ -356,7 +357,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               Text(
                                 'Plan Gratuito',
                                 style: GoogleFonts.montserrat(
-                                  color: AppColors.slate900,
+                                  color: context.textPrimary,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
                                 ),
@@ -367,7 +368,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Text(
                             'Límite de hasta 3 herramientas y valor máximo de \$1,500 MXN por activo.',
                             style: GoogleFonts.inter(
-                              color: AppColors.slate600,
+                              color: context.textSecondary,
                               fontSize: 12,
                             ),
                           ),
@@ -520,7 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.slate900,
+                  color: context.textPrimary,
                 ),
               ),
             ),
@@ -535,10 +536,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.wifi_off_rounded, size: 48,
-                      color: AppColors.slate300),
+                      color: context.colors.outline),
                   const SizedBox(height: 12),
                   Text(provider.error!,
-                      style: GoogleFonts.inter(color: AppColors.slate600)),
+                      style: GoogleFonts.inter(color: context.textSecondary)),
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () =>
@@ -554,13 +555,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverFillRemaining(
               child: Center(
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Icon(Icons.inbox_rounded, size: 56, color: AppColors.slate300),
+                  Icon(Icons.inbox_rounded, size: 56, color: context.colors.outline),
                   const SizedBox(height: 12),
                   Text('Sin herramientas',
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.slate600,
+                        color: context.textSecondary,
                       )),
                 ]),
               ),
@@ -612,7 +613,7 @@ class _MetricCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: context.surface,
           borderRadius: BorderRadius.circular(16),
           boxShadow: AppColors.cardShadow,
         ),
@@ -638,7 +639,7 @@ class _MetricCard extends StatelessWidget {
             label,
             style: GoogleFonts.inter(
               fontSize: 11,
-              color: AppColors.slate600,
+              color: context.textSecondary,
             ),
             textAlign: TextAlign.center,
           ),

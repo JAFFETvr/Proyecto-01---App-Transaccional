@@ -39,6 +39,9 @@ class ToolRepositoryImpl implements ToolRepository {
   @override Future<void> deleteTool(String id) =>
       _datasource.deleteTool(id);
 
+  @override Future<ToolEntity> uploadPhoto(String toolId, File photo) =>
+      _datasource.uploadPhoto(toolId, photo);
+
   @override Future<Map<String, dynamic>> getPricingSuggestion({
     required double estimatedValue,
     required double scoreCondicion,

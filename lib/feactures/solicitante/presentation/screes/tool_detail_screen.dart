@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
+import '../../../review/presentation/providers/review_provider.dart';
+import '../../../review/presentation/components/review_stars.dart';
 
 class ToolDetailScreen extends StatefulWidget {
   final ToolEntity tool;
@@ -20,18 +24,47 @@ class ToolDetailScreen extends StatefulWidget {
 
 class _ToolDetailScreenState extends State<ToolDetailScreen> {
   int _days = 1;
+  late final TextEditingController _daysCtrl =
+      TextEditingController(text: _days.toString());
 
   double get _effectiveRate => widget.tool.dailyRate > 0 ? widget.tool.dailyRate : widget.pricePerDay;
   double get _subtotal => _effectiveRate * _days;
   double get _deposit  => _subtotal * 0.10;
   double get _total    => _subtotal + _deposit;
 
+  void _setDays(int value) {
+    final clamped = value.clamp(1, 30);
+    setState(() => _days = clamped);
+    final text = clamped.toString();
+    if (_daysCtrl.text != text) {
+      _daysCtrl.value = TextEditingValue(
+        text: text,
+        selection: TextSelection.collapsed(offset: text.length),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ReviewProvider>().fetchToolReviews(widget.tool.id);
+    });
+  }
+
+  @override
+  void dispose() {
+    _daysCtrl.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final tool = widget.tool;
+    final reviewsResult = context.watch<ReviewProvider>().toolReviews;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       body: CustomScrollView(
         slivers: [
           // ── Hero AppBar ─────────────────────────────────────────────────
@@ -99,7 +132,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            AppColors.background,
+                            context.bg,
                             Colors.transparent,
                           ],
                         ),
@@ -151,7 +184,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.slate900,
+                            color: context.textPrimary,
                             height: 1.2,
                           ),
                         ),
@@ -184,27 +217,47 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   // Ubicación + rating
                   Row(children: [
                     Icon(Icons.location_on_outlined,
-                        size: 14, color: AppColors.slate600),
+                        size: 14, color: context.textSecondary),
                     const SizedBox(width: 4),
                     Text(
                       '~2.3 km · Zona Norte',
                       style: GoogleFonts.inter(
-                          fontSize: 13, color: AppColors.slate600),
+                          fontSize: 13, color: context.textSecondary),
                     ),
                     const SizedBox(width: 16),
-                    Icon(Icons.star_rounded,
-                        size: 14, color: AppColors.amber),
-                    const SizedBox(width: 4),
-                    Text(
-                      '4.8 (23 rentas)',
-                      style: GoogleFonts.inter(
-                          fontSize: 13, color: AppColors.slate600),
-                    ),
+                    if (reviewsResult.reviewCount > 0) ...[
+                      Icon(Icons.star_rounded,
+                          size: 14, color: AppColors.amber),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${reviewsResult.averageRating.toStringAsFixed(1)} (${reviewsResult.reviewCount} reseña${reviewsResult.reviewCount == 1 ? '' : 's'})',
+                        style: GoogleFonts.inter(
+                            fontSize: 13, color: context.textSecondary),
+                      ),
+                    ] else
+                      Text(
+                        'Sin reseñas todavía',
+                        style: GoogleFonts.inter(
+                            fontSize: 13, color: context.textSecondary),
+                      ),
                   ]),
+                  if (tool.ownerName.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Row(children: [
+                      Icon(Icons.person_outline_rounded,
+                          size: 14, color: context.textSecondary),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Propietario: ${tool.ownerName}',
+                        style: GoogleFonts.inter(
+                            fontSize: 13, color: context.textSecondary),
+                      ),
+                    ]),
+                  ],
                   const SizedBox(height: 20),
 
                   // Divider sutil
-                  const Divider(color: Color(0xFFE2E8F0)),
+                  Divider(color: context.borderColor),
                   const SizedBox(height: 16),
 
                   // Descripción
@@ -213,7 +266,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.slate900,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -223,11 +276,57 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                         : 'Sin descripción disponible.',
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: AppColors.slate600,
+                      color: context.textSecondary,
                       height: 1.6,
                     ),
                   ),
                   const SizedBox(height: 20),
+
+                  // Reseñas
+                  if (reviewsResult.reviewCount > 0) ...[
+                    Row(children: [
+                      Text(
+                        'Reseñas',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ReviewStars(rating: reviewsResult.averageRating, size: 14),
+                    ]),
+                    const SizedBox(height: 10),
+                    ...reviewsResult.reviews.take(3).map((r) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: context.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: context.borderColor),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ReviewStars(rating: r.rating.toDouble(), size: 13),
+                                if (r.comment.isNotEmpty) ...[
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    r.comment,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: context.textSecondary,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        )),
+                    const SizedBox(height: 10),
+                  ],
 
                   // Info chips
                   Row(children: [
@@ -253,7 +352,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.slate900,
+                      color: context.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -261,7 +360,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.surface,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: AppColors.cardShadow,
                     ),
@@ -273,37 +372,53 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           children: [
                             Text('Días de renta:',
                                 style: GoogleFonts.inter(
-                                    fontSize: 14, color: AppColors.slate900)),
+                                    fontSize: 14, color: context.textPrimary)),
                             Row(children: [
                               _DayButton(
                                 icon: Icons.remove_rounded,
                                 onPressed: _days > 1
-                                    ? () => setState(() => _days--)
+                                    ? () => _setDays(_days - 1)
                                     : null,
                               ),
                               SizedBox(
-                                width: 42,
-                                child: Text(
-                                  '$_days',
+                                width: 48,
+                                child: TextField(
+                                  controller: _daysCtrl,
+                                  keyboardType: TextInputType.number,
+                                  textAlign: TextAlign.center,
                                   style: GoogleFonts.montserrat(
                                     fontSize: 20,
                                     fontWeight: FontWeight.w800,
                                     color: AppColors.orange500,
                                   ),
-                                  textAlign: TextAlign.center,
+                                  decoration: const InputDecoration(
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.symmetric(vertical: 6),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                  ),
+                                  onChanged: (v) {
+                                    final parsed = int.tryParse(v);
+                                    if (parsed != null) _setDays(parsed);
+                                  },
+                                  onSubmitted: (v) {
+                                    final parsed = int.tryParse(v);
+                                    _setDays(parsed ?? _days);
+                                  },
                                 ),
                               ),
                               _DayButton(
                                 icon: Icons.add_rounded,
                                 onPressed: _days < 30
-                                    ? () => setState(() => _days++)
+                                    ? () => _setDays(_days + 1)
                                     : null,
                               ),
                             ]),
                           ],
                         ),
                         const SizedBox(height: 14),
-                        const Divider(color: Color(0xFFE2E8F0)),
+                        Divider(color: context.borderColor),
                         const SizedBox(height: 14),
 
                         _CostRow(
@@ -314,33 +429,33 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                         ),
                         const SizedBox(height: 8),
 
-                        // Deducible / Depósito en garantía
+                        // Comisión de servicio (pago con tarjeta)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppColors.background,
+                            color: context.colors.surfaceContainerHighest.withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(10),
-                            border: const Border(
+                            border: Border(
                               left: BorderSide(
-                                  color: Color(0xFFE2E8F0), width: 3),
+                                  color: context.borderColor, width: 3),
                             ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _CostRow(
-                                label: 'Depósito en garantía (10%):',
+                                label: 'Comisión de servicio (10%):',
                                 value: '\$${_deposit.toStringAsFixed(2)} MXN',
                                 valueBold: false,
-                                labelColor: AppColors.slate600,
-                                valueColor: AppColors.slate600,
+                                labelColor: context.textSecondary,
+                                valueColor: context.textSecondary,
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Se devuelve al finalizar en buen estado',
+                                'Cargo de la plataforma por el servicio de renta',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
-                                  color: AppColors.slate600.withOpacity(0.7),
+                                  color: context.textSecondary.withValues(alpha: 0.7),
                                   fontStyle: FontStyle.italic,
                                 ),
                               ),
@@ -348,7 +463,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           ),
                         ),
                         const SizedBox(height: 14),
-                        const Divider(color: Color(0xFFE2E8F0)),
+                        Divider(color: context.borderColor),
                         const SizedBox(height: 14),
 
                         _CostRow(
@@ -367,7 +482,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                   Container(
                     padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      color: AppColors.successBg,
+                      color: context.colors.tertiaryContainer,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                           color: AppColors.success.withOpacity(0.3)),
@@ -381,7 +496,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           'Tu pago está protegido. Los fondos se retienen y solo se liberan cuando confirmas la entrega.',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: const Color(0xFF064E3B),
+                            color: context.colors.onTertiaryContainer,
                             height: 1.4,
                           ),
                         ),
@@ -445,13 +560,13 @@ class _DayButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: isEnabled
               ? AppColors.orange500.withOpacity(0.1)
-              : AppColors.slate100,
+              : context.colors.surfaceContainerHigh,
           shape: BoxShape.circle,
         ),
         child: Icon(
           icon,
           size: 16,
-          color: isEnabled ? AppColors.orange500 : AppColors.slate300,
+          color: isEnabled ? AppColors.orange500 : context.colors.outline,
         ),
       ),
     );
@@ -488,7 +603,7 @@ class _InfoChip extends StatelessWidget {
             Text(label,
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: AppColors.slate600,
+                  color: context.textSecondary,
                 )),
           ]),
           const SizedBox(height: 5),
@@ -533,7 +648,7 @@ class _CostRow extends StatelessWidget {
               fontSize: 14,
               fontWeight:
                   labelBold ? FontWeight.w700 : FontWeight.w500,
-              color: labelColor ?? AppColors.slate900,
+              color: labelColor ?? context.textPrimary,
             ),
           ),
         ),
@@ -544,7 +659,7 @@ class _CostRow extends StatelessWidget {
             fontSize: 14,
             fontWeight:
                 valueBold ? FontWeight.w800 : FontWeight.w600,
-            color: valueColor ?? AppColors.slate900,
+            color: valueColor ?? context.textPrimary,
           ),
         ),
       ],

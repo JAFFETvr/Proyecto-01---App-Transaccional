@@ -28,6 +28,7 @@ abstract class ToolRepository {
     double? longitude,
   });
   Future<void> deleteTool(String id);
+  Future<ToolEntity> uploadPhoto(String toolId, File photo);
   Future<Map<String, dynamic>> getPricingSuggestion({
     required double estimatedValue,
     required double scoreCondicion,

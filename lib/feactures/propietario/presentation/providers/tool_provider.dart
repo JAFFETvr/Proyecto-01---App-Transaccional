@@ -12,6 +12,7 @@ import '../../domain/usesCases/get_pricing_suggestion_usecase.dart';
 import '../../domain/usesCases/subscribe_usecase.dart';
 import '../../domain/usesCases/predict_condition_usecase.dart';
 import '../../domain/usesCases/auto_valuate_usecase.dart';
+import '../../domain/usesCases/upload_tool_photo_usecase.dart';
 
 class ToolProvider extends ChangeNotifier {//
   final GetToolsUseCase _getTools;
@@ -21,6 +22,7 @@ class ToolProvider extends ChangeNotifier {//
   final GetPricingSuggestionUseCase _getPricingSuggestion;
   final PredictConditionUseCase _predictCondition;
   final AutoValuateUseCase _autoValuate;
+  final UploadToolPhotoUseCase _uploadToolPhoto;
   final GetSubscriptionPreferenceUseCase _getSubscriptionPreference;
   final ConfirmSubscriptionPaymentUseCase _confirmSubscriptionPayment;
   final RefreshIsProUseCase _refreshIsPro;
@@ -55,6 +57,7 @@ class ToolProvider extends ChangeNotifier {//
     required GetPricingSuggestionUseCase getPricingSuggestion,
     required PredictConditionUseCase predictCondition,
     required AutoValuateUseCase autoValuate,
+    required UploadToolPhotoUseCase uploadToolPhoto,
     required GetSubscriptionPreferenceUseCase getSubscriptionPreference,
     required ConfirmSubscriptionPaymentUseCase confirmSubscriptionPayment,
     required RefreshIsProUseCase refreshIsPro,
@@ -65,6 +68,7 @@ class ToolProvider extends ChangeNotifier {//
         _getPricingSuggestion = getPricingSuggestion,
         _predictCondition = predictCondition,
         _autoValuate = autoValuate,
+        _uploadToolPhoto = uploadToolPhoto,
         _getSubscriptionPreference = getSubscriptionPreference,
         _confirmSubscriptionPayment = confirmSubscriptionPayment,
         _refreshIsPro = refreshIsPro;
@@ -93,7 +97,7 @@ class ToolProvider extends ChangeNotifier {//
     }
   }
 
-  Future<bool> createTool({
+  Future<ToolEntity?> createTool({
     required String name,
     required String description,
     required String category,
@@ -125,20 +129,20 @@ class ToolProvider extends ChangeNotifier {//
         conditionScore: conditionScore,
       );
       _tools.add(tool);
-      return true;
+      return tool;
     } on AppError catch (e) {
       _error = e.userMessage;
-      return false;
+      return null;
     } catch (_) {
       _error = 'Sin conexión.';
-      return false;
+      return null;
     } finally {
       _loading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> updateTool({
+  Future<ToolEntity?> updateTool({
     required String id,
     String? name,
     String? description,
@@ -167,16 +171,36 @@ class ToolProvider extends ChangeNotifier {//
       );
       final idx = _tools.indexWhere((t) => t.id == id);
       if (idx != -1) _tools[idx] = updated;
+      return updated;
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión.';
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Sube la foto tomada/elegida en el formulario hacia el backend
+  /// (POST /tools/{id}/photo) y actualiza la entidad local con la
+  /// photo_url resultante. No lanza: si falla, deja el error en [error]
+  /// y retorna false, para no bloquear el guardado de la herramienta.
+  Future<bool> uploadPhoto(String toolId, File photo) async {
+    try {
+      final updated = await _uploadToolPhoto.execute(toolId, photo);
+      final idx = _tools.indexWhere((t) => t.id == toolId);
+      if (idx != -1) _tools[idx] = updated;
+      notifyListeners();
       return true;
     } on AppError catch (e) {
       _error = e.userMessage;
       return false;
     } catch (_) {
-      _error = 'Sin conexión.';
+      _error = 'Sin conexión al subir la foto.';
       return false;
-    } finally {
-      _loading = false;
-      notifyListeners();
     }
   }
 

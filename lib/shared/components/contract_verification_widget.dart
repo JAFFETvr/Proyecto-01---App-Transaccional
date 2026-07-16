@@ -331,15 +331,17 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
     final isSuccess = _isValid == true;
     final isFailure = _isValid == false;
 
+    final cs = Theme.of(context).colorScheme;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isSuccess
-            ? const Color(0xFFECFDF5)
+            ? cs.tertiaryContainer
             : isFailure
-                ? const Color(0xFFFEF2F2)
-                : AppColors.successBg,
+                ? cs.errorContainer
+                : cs.tertiaryContainer,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isSuccess
@@ -375,23 +377,27 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
               color: isSuccess
-                  ? const Color(0xFF047857)
+                  ? cs.onTertiaryContainer
                   : isFailure
-                      ? const Color(0xFFB91C1C)
-                      : AppColors.success,
+                      ? cs.onErrorContainer
+                      : cs.onTertiaryContainer,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
           Text(
             'Hash del contrato:',
-            style: GoogleFonts.inter(fontSize: 11, color: AppColors.slate600, fontWeight: FontWeight.w500),
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              color: isFailure ? cs.onErrorContainer : cs.onTertiaryContainer,
+              fontWeight: FontWeight.w500,
+            ),
           ),
           SelectableText(
             widget.rental.contractHash,
             style: GoogleFonts.inter(
               fontSize: 10,
-              color: AppColors.slate700,
+              color: isFailure ? cs.onErrorContainer : cs.onTertiaryContainer,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,

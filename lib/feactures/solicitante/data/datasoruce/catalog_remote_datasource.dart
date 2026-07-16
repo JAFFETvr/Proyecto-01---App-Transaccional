@@ -26,6 +26,7 @@ class CatalogRemoteDatasource {
           return ToolEntity(
             id:          j['id']          as String,
             ownerId:     j['owner_id']    as String,
+            ownerName:   j['owner_name']  as String? ?? '',
             name:        j['name']        as String,
             description: j['description'] as String? ?? '',
             category:    j['category']    as String? ?? '',

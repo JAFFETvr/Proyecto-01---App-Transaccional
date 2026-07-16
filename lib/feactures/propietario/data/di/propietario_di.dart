@@ -6,6 +6,7 @@ import '../../domain/usesCases/update_tool_usecase.dart';
 import '../../domain/usesCases/delete_tool_usecase.dart';
 import '../../domain/usesCases/predict_condition_usecase.dart';
 import '../../domain/usesCases/auto_valuate_usecase.dart';
+import '../../domain/usesCases/upload_tool_photo_usecase.dart';
 
 import '../../domain/usesCases/get_pricing_suggestion_usecase.dart';
 import '../../domain/usesCases/subscribe_usecase.dart';
@@ -24,6 +25,8 @@ class PropietarioDI {
       PredictConditionUseCase(_repository);
   static AutoValuateUseCase provideAutoValuate() =>
       AutoValuateUseCase(_repository);
+  static UploadToolPhotoUseCase provideUploadToolPhoto() =>
+      UploadToolPhotoUseCase(_repository);
   static GetSubscriptionPreferenceUseCase provideGetSubscriptionPreference() =>
       GetSubscriptionPreferenceUseCase(_repository);
   static ConfirmSubscriptionPaymentUseCase provideConfirmSubscriptionPayment() =>

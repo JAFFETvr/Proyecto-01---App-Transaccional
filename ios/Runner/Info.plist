@@ -26,6 +26,12 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ToolShare usa tu ubicación para mostrar herramientas cercanas y marcar el punto de entrega/recolección.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>ToolShare usa la cámara para fotografiar herramientas al publicarlas.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ToolShare usa tu galería para elegir fotos de herramientas al publicarlas.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

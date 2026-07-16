@@ -7,8 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../shared/components/location_picker_modal.dart';
+import '../../../../shared/theme/app_colors.dart';
 import '../providers/tool_provider.dart';
 import '../../domain/entitie/tool_entity.dart';
+import '../components/tool_list_item.dart' show kInsuranceMonthlyRate;
 import 'pro_subscription_checkout_screen.dart';
 
 class ToolFormScreen extends StatefulWidget {
@@ -47,8 +49,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool get _isEditing => widget.tool != null;
 
   static const _categories = [
-    'Eléctrico', 'Corte', 'Acabado', 'Energía',
-    'Neumático', 'Manual', 'Medición', 'Otro',
+    'Manual', 'Eléctrico', 'Neumático', 'Medición', 'Energía', 'Otro',
   ];
 
   static const _wearOptions = ['Nuevo', 'Buen Estado', 'Desgastado'];
@@ -152,12 +153,50 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     }
   }
 
+  Future<ImageSource?> _chooseImageSource() {
+    return showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40, height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(ctx).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de la galería'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _pickImage() async {
+    final source = await _chooseImageSource();
+    if (source == null) return;
+
     setState(() => _imageLoading = true);
     try {
       final picker = ImagePicker();
       final xFile = await picker.pickImage(
-        source: ImageSource.camera,
+        source: source,
         imageQuality: 80,
         maxWidth: 1080,
       );
@@ -198,6 +237,13 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           }
         }
       }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No se pudo acceder a la cámara/galería. Prueba en un dispositivo o emulador Android/iOS real.'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
     } finally {
       if (mounted) {
         setState(() => _imageLoading = false);
@@ -223,10 +269,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
     final provider = context.read<ToolProvider>();
     final estVal = double.tryParse(_estValCtrl.text.trim()) ?? 0.0;
-    bool ok;
+    ToolEntity? saved;
 
     if (_isEditing) {
-      ok = await provider.updateTool(
+      saved = await provider.updateTool(
         id:          widget.tool!.id,
         name:        _nameCtrl.text.trim(),
         description: _descCtrl.text.trim(),
@@ -246,7 +292,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       } else if (_wearLevel == 'Desgastado') {
         score = 0.5;
       }
-      ok = await provider.createTool(
+      saved = await provider.createTool(
         name:        _nameCtrl.text.trim(),
         description: _descCtrl.text.trim(),
         category:    _catCtrl.text.trim(),
@@ -262,6 +308,18 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     }
 
     if (!mounted) return;
+    final ok = saved != null;
+    if (ok && _pickedImage != null) {
+      final photoOk = await provider.uploadPhoto(saved.id, _pickedImage!);
+      if (!photoOk && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Herramienta guardada, pero la foto no se pudo subir: ${provider.error ?? "intenta de nuevo desde Editar"}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ));
+      }
+    }
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(_isEditing
@@ -286,16 +344,18 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       if (isPlanError && !_isEditing) {
         await showDialog(
           context: context,
-          builder: (ctx) => AlertDialog(
+          builder: (ctx) {
+            final dialogCs = Theme.of(ctx).colorScheme;
+            return AlertDialog(
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             icon: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7ED),
+                color: dialogCs.primaryContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.workspace_premium_rounded,
-                  size: 32, color: Color(0xFFF97316)),
+              child: Icon(Icons.workspace_premium_rounded,
+                  size: 32, color: dialogCs.primary),
             ),
             title: const Text(
               'Límite del Plan Gratuito',
@@ -307,24 +367,24 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7ED),
+                    color: dialogCs.primaryContainer,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFF97316).withOpacity(0.3)),
+                    border: Border.all(color: dialogCs.primary.withValues(alpha: 0.3)),
                   ),
                   child: Text(
                     errorMsg,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF92400E),
+                      color: dialogCs.onPrimaryContainer,
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Text(
+                Text(
                   'El Plan Pro te permite publicar herramientas ilimitadas y de cualquier valor catálogo.',
-                  style: TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.5),
+                  style: TextStyle(fontSize: 13, color: dialogCs.onSurfaceVariant, height: 1.5),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -336,7 +396,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               ),
               FilledButton.icon(
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFF97316),
+                  backgroundColor: dialogCs.primary,
                 ),
                 onPressed: () async {
                   Navigator.pop(ctx);
@@ -346,7 +406,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 label: const Text('Obtener Plan Pro'),
               ),
             ],
-          ),
+          );
+          },
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -523,12 +584,19 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
               TextFormField(
                 controller: _estValCtrl,
+                readOnly: _isEditing,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 textInputAction: TextInputAction.next,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Valor original de catálogo (MXN) *',
                   hintText: 'Ej. 2500',
-                  prefixIcon: Icon(Icons.attach_money_outlined),
+                  prefixIcon: const Icon(Icons.attach_money_outlined),
+                  suffixIcon: _isEditing
+                      ? Icon(Icons.lock_outline, size: 18, color: cs.onSurfaceVariant)
+                      : null,
+                  helperText: _isEditing
+                      ? 'No editable después de publicar la herramienta'
+                      : null,
                 ),
                 onChanged: (_) => _onFieldChanged(),
                 validator: (v) {
@@ -557,6 +625,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                 decoration: BoxDecoration(
+                  color: _isEditing ? cs.surfaceContainerHighest.withValues(alpha: 0.3) : null,
                   border: Border.all(color: cs.outline),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -564,7 +633,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                   child: DropdownButton<String>(
                     value: _wearLevel,
                     isExpanded: true,
-                    icon: const Icon(Icons.expand_more),
+                    icon: Icon(_isEditing ? Icons.lock_outline : Icons.expand_more,
+                        size: _isEditing ? 18 : 24),
                     items: _wearOptions.map((w) {
                       final color = w == 'Nuevo'
                           ? const Color(0xFF16A34A)
@@ -584,13 +654,22 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                         ]),
                       );
                     }).toList(),
-                    onChanged: (v) {
-                      setState(() => _wearLevel = v!);
-                      _updatePricingSuggestion();
-                    },
+                    onChanged: _isEditing
+                        ? null
+                        : (v) {
+                            setState(() => _wearLevel = v!);
+                            _updatePricingSuggestion();
+                          },
                   ),
                 ),
               ),
+              if (_isEditing) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'La condición se define solo al publicar la herramienta.',
+                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ],
               const SizedBox(height: 24),
 
 
@@ -695,6 +774,16 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
               ),
               const SizedBox(height: 20),
 
+              if (_isEditing) ...[
+                _SectionTitle('Respaldo ToolShare'),
+                const SizedBox(height: 12),
+                _ToolShareBackupCard(
+                  estimatedValue: widget.tool!.estimatedValue,
+                  isAvailable: widget.tool!.isAvailable,
+                ),
+                const SizedBox(height: 20),
+              ],
+
               _SectionTitle('Geolocalización (Mapa Cercano)'),
               const SizedBox(height: 12),
               Card(
@@ -775,5 +864,220 @@ class _SectionTitle extends StatelessWidget {
       const SizedBox(width: 8),
       Text(text, style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
     ]);
+  }
+}
+
+/// "Respaldo ToolShare": presenta el seguro por herramienta (independiente
+/// del plan de suscripción Pro/Gratuito) — la prima mensual se calcula como
+/// un % del valor tasado por IA. Por ahora es informativo: el switch expresa
+/// la intención de contratar, sin disparar un cobro real todavía.
+class _ToolShareBackupCard extends StatefulWidget {
+  final double estimatedValue;
+  final bool isAvailable;
+
+  const _ToolShareBackupCard({
+    required this.estimatedValue,
+    required this.isAvailable,
+  });
+
+  @override
+  State<_ToolShareBackupCard> createState() => _ToolShareBackupCardState();
+}
+
+class _ToolShareBackupCardState extends State<_ToolShareBackupCard> {
+  bool _insuranceWanted = false;
+
+  double get _monthlyPremium => widget.estimatedValue * kInsuranceMonthlyRate;
+
+  void _showTerms(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  Icon(Icons.shield_outlined, color: cs.primary, size: 22),
+                  const SizedBox(width: 8),
+                  Text('Qué cubre el Respaldo ToolShare',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cs.onSurface)),
+                ]),
+                const SizedBox(height: 16),
+                Text('Sí cubre:',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.success)),
+                const SizedBox(height: 6),
+                _TermLine(text: 'Daño accidental durante el periodo de renta'),
+                _TermLine(text: 'Robo o extravío comprobado de la herramienta'),
+                _TermLine(text: 'Roturas atribuibles al uso indebido del solicitante'),
+                const SizedBox(height: 14),
+                Text('No cubre:',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.error)),
+                const SizedBox(height: 6),
+                _TermLine(text: 'Desgaste normal por uso (brocas, discos, consumibles)', negative: true),
+                _TermLine(text: 'Fletes, traslados o tiempo de inactividad del propietario', negative: true),
+                _TermLine(text: 'Daños previos no declarados al publicar la herramienta', negative: true),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Entendido'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isAvailable = widget.isAvailable;
+    final semaphoreColor = isAvailable ? AppColors.success : const Color(0xFF2563EB);
+    final semaphoreText = isAvailable
+        ? 'Listo para rentar. Tu equipo está respaldado contra daño total y robo.'
+        : 'Fondo bloqueado. MercadoPago tiene retenido el deducible del solicitante.';
+    final semaphoreIcon = isAvailable ? Icons.check_circle_outline : Icons.lock_outline;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Icon(Icons.verified_user_rounded, color: cs.primary, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text('Garantía de Activo de Confianza',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: cs.onSurface)),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            Text(
+              'Valor comercial tasado por IA: \$${widget.estimatedValue.toStringAsFixed(0)} MXN',
+              style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
+            ),
+            const SizedBox(height: 14),
+            // Seguro por herramienta (independiente del plan Pro/Gratuito)
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: cs.primary.withValues(alpha: 0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Icon(Icons.health_and_safety_outlined, color: cs.primary, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Seguro contra daños y robo',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: cs.onSurface),
+                      ),
+                    ),
+                  ]),
+                  const SizedBox(height: 4),
+                  Text(
+                    '\$${_monthlyPremium.toStringAsFixed(0)} MXN/mes (5% del valor tasado)',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: cs.primary),
+                  ),
+                  const SizedBox(height: 8),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    value: _insuranceWanted,
+                    onChanged: (v) => setState(() => _insuranceWanted = v),
+                    title: Text(
+                      _insuranceWanted ? 'Quiero contratar este seguro' : 'Sin seguro contratado',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: cs.onSurface),
+                    ),
+                    subtitle: Text(
+                      _insuranceWanted
+                          ? 'Registramos tu interés. El cobro mensual se activará próximamente.'
+                          : 'Actívalo para proteger esta herramienta contra daño total y robo.',
+                      style: TextStyle(fontSize: 11, color: cs.onSurfaceVariant),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: semaphoreColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: semaphoreColor.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(semaphoreIcon, color: semaphoreColor, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      semaphoreText,
+                      style: TextStyle(fontSize: 12, color: semaphoreColor, height: 1.4),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () => _showTerms(context),
+                child: const Text('Ver términos de cobertura'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TermLine extends StatelessWidget {
+  final String text;
+  final bool negative;
+  const _TermLine({required this.text, this.negative = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            negative ? Icons.close_rounded : Icons.check_rounded,
+            size: 15,
+            color: negative ? cs.error : AppColors.success,
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(text, style: TextStyle(fontSize: 12.5, color: cs.onSurfaceVariant, height: 1.3)),
+          ),
+        ],
+      ),
+    );
   }
 }

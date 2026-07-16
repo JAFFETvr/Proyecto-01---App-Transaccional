@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../providers/chat_provider.dart';
 
 class RentalChatSheet extends StatefulWidget {
@@ -63,19 +64,19 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
-      decoration: const BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.bg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
           // Header
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: context.surface,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              border: Border(bottom: BorderSide(color: context.borderColor)),
             ),
             child: Row(
               children: [
@@ -84,11 +85,11 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                 Expanded(
                   child: Text(
                     widget.title,
-                    style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.slate900),
+                    style: GoogleFonts.montserrat(fontSize: 16, fontWeight: FontWeight.w700, color: context.textPrimary),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, color: AppColors.slate600),
+                  icon: Icon(Icons.close_rounded, color: context.textSecondary),
                   onPressed: () {
                     context.read<ChatProvider>().stopChat();
                     Navigator.pop(context);
@@ -106,7 +107,7 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                     ? Center(
                         child: Text(
                           'Aún no hay mensajes. ¡Escribe el primero para coordinar la entrega!',
-                          style: GoogleFonts.inter(fontSize: 13, color: AppColors.slate600),
+                          style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
                           textAlign: TextAlign.center,
                         ),
                       )
@@ -125,7 +126,7 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                               constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
                               decoration: BoxDecoration(
-                                color: isMe ? AppColors.orange500 : AppColors.surface,
+                                color: isMe ? AppColors.orange500 : context.surface,
                                 borderRadius: BorderRadius.only(
                                   topLeft: const Radius.circular(16),
                                   topRight: const Radius.circular(16),
@@ -138,7 +139,7 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                                 m.message,
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
-                                  color: isMe ? Colors.white : AppColors.slate900,
+                                  color: isMe ? Colors.white : context.textPrimary,
                                 ),
                               ),
                             ),
@@ -150,9 +151,9 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
           // Input Bar
           Container(
             padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).viewInsets.bottom + 16),
-            decoration: const BoxDecoration(
-              color: AppColors.surface,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: context.surface,
+              border: Border(top: BorderSide(color: context.borderColor)),
             ),
             child: Row(
               children: [
@@ -162,9 +163,9 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
                     textCapitalization: TextCapitalization.sentences,
                     decoration: InputDecoration(
                       hintText: 'Escribe un mensaje...',
-                      hintStyle: GoogleFonts.inter(fontSize: 14, color: AppColors.slate600),
+                      hintStyle: GoogleFonts.inter(fontSize: 14, color: context.textSecondary),
                       filled: true,
-                      fillColor: AppColors.background,
+                      fillColor: context.bg,
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(24), borderSide: BorderSide.none),
                     ),

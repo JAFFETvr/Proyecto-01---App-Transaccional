@@ -127,9 +127,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onTap: kycLoading
                         ? null
                         : () async {
-                            final file = await picker.pickImage(source: ImageSource.camera);
-                            if (file != null) {
-                              setDialogState(() => inePath = file.path);
+                            try {
+                              final file = await picker.pickImage(source: ImageSource.camera);
+                              if (file != null) {
+                                setDialogState(() => inePath = file.path);
+                              }
+                            } catch (_) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'No se pudo acceder a la cámara. Prueba esta pantalla en un dispositivo o emulador Android/iOS real.'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             }
                           },
                   ),
@@ -151,9 +163,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onTap: kycLoading
                         ? null
                         : () async {
-                            final file = await picker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
-                            if (file != null) {
-                              setDialogState(() => selfiePath = file.path);
+                            try {
+                              final file = await picker.pickImage(
+                                  source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
+                              if (file != null) {
+                                setDialogState(() => selfiePath = file.path);
+                              }
+                            } catch (_) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'No se pudo acceder a la cámara. Prueba esta pantalla en un dispositivo o emulador Android/iOS real.'),
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
                             }
                           },
                   ),

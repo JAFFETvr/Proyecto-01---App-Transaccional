@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'rental_tracking_requester_screen.dart';
 import '../providers/rental_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -67,23 +68,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final rentalProvider = context.watch<RentalProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppColors.slate900),
+        iconTheme: IconThemeData(color: context.textPrimary),
         title: Text(
           'Pago Seguro',
           style: GoogleFonts.montserrat(
             fontSize: 17,
             fontWeight: FontWeight.w700,
-            color: AppColors.slate900,
+            color: context.textPrimary,
           ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(height: 1, color: const Color(0xFFE2E8F0)),
+          child: Container(height: 1, color: context.borderColor),
         ),
         actions: [
           Container(
@@ -117,7 +118,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: context.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: AppColors.cardShadow,
             ),
@@ -129,7 +130,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.slate900,
+                    color: context.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -144,11 +145,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         '\$${(priceDay * days).toStringAsFixed(0)} MXN'),
                 _SummaryRow(
                     icon: Icons.security_outlined,
-                    label: 'Depósito (10%)',
+                    label: _selectedPayment == 'card'
+                        ? 'Comisión de servicio (10%)'
+                        : 'Depósito (10%)',
                     value:
                         '\$${(deposit as double).toStringAsFixed(0)} MXN'),
                 const SizedBox(height: 10),
-                const Divider(color: Color(0xFFE2E8F0)),
+                Divider(color: context.borderColor),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,7 +160,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
-                          color: AppColors.slate900,
+                          color: context.textPrimary,
                         )),
                     Text(
                       '\$${(total as double).toStringAsFixed(0)} MXN',
@@ -177,7 +180,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(children: [
-              Icon(Icons.info_outline, size: 14, color: AppColors.slate600),
+              Icon(Icons.info_outline, size: 14, color: context.textSecondary),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -186,7 +189,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       : 'Pago directo en efectivo al momento de recibir la herramienta.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: AppColors.slate600,
+                    color: context.textSecondary,
                   ),
                 ),
               ),
@@ -205,23 +208,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _selectedPayment == 'card' ? AppColors.orange500 : AppColors.surface,
+                        color: _selectedPayment == 'card' ? AppColors.orange500 : context.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _selectedPayment == 'card' ? AppColors.orange500 : const Color(0xFFCBD5E1),
+                          color: _selectedPayment == 'card' ? AppColors.orange500 : context.borderColor,
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700),
+                          Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : context.textSecondary),
                           const SizedBox(width: 8),
                           Text(
                             'Tarjeta',
                             style: GoogleFonts.montserrat(
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
-                              color: _selectedPayment == 'card' ? Colors.white : AppColors.slate700,
+                              color: _selectedPayment == 'card' ? Colors.white : context.textSecondary,
                             ),
                           ),
                         ],
@@ -236,23 +239,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: _selectedPayment == 'cash' ? AppColors.orange500 : AppColors.surface,
+                        color: _selectedPayment == 'cash' ? AppColors.orange500 : context.surface,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: _selectedPayment == 'cash' ? AppColors.orange500 : const Color(0xFFCBD5E1),
+                          color: _selectedPayment == 'cash' ? AppColors.orange500 : context.borderColor,
                         ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700),
+                          Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : context.textSecondary),
                           const SizedBox(width: 8),
                           Text(
                             'Efectivo',
                             style: GoogleFonts.montserrat(
                               fontWeight: FontWeight.w700,
                               fontSize: 13,
-                              color: _selectedPayment == 'cash' ? Colors.white : AppColors.slate700,
+                              color: _selectedPayment == 'cash' ? Colors.white : context.textSecondary,
                             ),
                           ),
                         ],
@@ -274,10 +277,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         Container(
                           margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.surface,
                             borderRadius: BorderRadius.circular(16),
-                            border: const Border.fromBorderSide(
-                                BorderSide(color: Color(0xFFE2E8F0))),
+                            border: Border.fromBorderSide(
+                                BorderSide(color: context.borderColor)),
                             boxShadow: AppColors.cardShadow,
                           ),
                           clipBehavior: Clip.antiAlias,
@@ -287,7 +290,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           Container(
                             margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             decoration: BoxDecoration(
-                              color: AppColors.surface,
+                              color: context.surface,
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Column(
@@ -299,7 +302,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                   errorBuilder: (_, __, ___) => Icon(
                                       Icons.payment_outlined,
                                       size: 48,
-                                      color: AppColors.slate300),
+                                      color: context.colors.outline),
                                 ),
                                 const SizedBox(height: 16),
                                 const CircularProgressIndicator(),
@@ -307,7 +310,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                                 Text('Cargando pasarela de pago…',
                                     style: GoogleFonts.inter(
                                       fontSize: 13,
-                                      color: AppColors.slate600,
+                                      color: context.textSecondary,
                                     )),
                               ],
                             ),
@@ -317,23 +320,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   : Container(
                       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.surface,
                         borderRadius: BorderRadius.circular(16),
-                        border: const Border.fromBorderSide(
-                            BorderSide(color: Color(0xFFE2E8F0))),
+                        border: Border.fromBorderSide(
+                            BorderSide(color: context.borderColor)),
                         boxShadow: AppColors.cardShadow,
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(Icons.credit_card_rounded,
-                              size: 48, color: AppColors.slate300),
+                              size: 48, color: context.colors.outline),
                           const SizedBox(height: 12),
                           Text(
                             'Presiona "Confirmar" para\niniciar el pago seguro',
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: AppColors.slate600,
+                              color: context.textSecondary,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -347,7 +350,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
+                  color: context.colors.errorContainer,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
                   boxShadow: AppColors.cardShadow,
@@ -364,7 +367,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF92400E),
+                            color: context.colors.onErrorContainer,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -375,7 +378,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             height: 1.4,
-                            color: const Color(0xFF78350F),
+                            color: context.colors.onErrorContainer,
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -454,7 +457,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             'Coordina el encuentro con el propietario y realiza el pago en efectivo al recibir la herramienta.',
                             style: GoogleFonts.inter(
                               fontSize: 13,
-                              color: AppColors.slate600,
+                              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -514,20 +517,20 @@ class _SummaryRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(children: [
-        Icon(icon, size: 14, color: AppColors.slate600),
+        Icon(icon, size: 14, color: context.textSecondary),
         const SizedBox(width: 8),
         Expanded(
             child: Text(label,
                 style: GoogleFonts.inter(
                   fontSize: 13,
-                  color: AppColors.slate600,
+                  color: context.textSecondary,
                 ))),
         if (value.isNotEmpty)
           Text(value,
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: AppColors.slate900,
+                color: context.textPrimary,
               )),
       ]),
     );

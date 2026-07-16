@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../shared/theme/app_colors.dart';
+import '../../../../shared/theme/theme_extensions.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../providers/catalog_provider.dart';
 import 'tool_detail_screen.dart';
@@ -20,6 +22,47 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
   static const _defaultCenter = LatLng(16.6264, -93.0911); // Suchiapa, Chiapas
   final MapController _mapController = MapController();
   ToolEntity? _selectedTool;
+  bool _locating = false;
+
+  Future<void> _goToMyLocation() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        _showLocationError('Activa la ubicación del dispositivo para centrar en tu posición real.');
+        return;
+      }
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+        _showLocationError('Permiso de ubicación denegado.');
+        return;
+      }
+      final pos = await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+      _mapController.move(LatLng(pos.latitude, pos.longitude), 15.5);
+    } catch (_) {
+      _showLocationError('No se pudo obtener tu ubicación.');
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
+  }
+
+  void _showLocationError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(msg),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+
+  void _zoomBy(double delta) {
+    final camera = _mapController.camera;
+    _mapController.move(camera.center, (camera.zoom + delta).clamp(3.0, 19.0));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +78,11 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
             options: MapOptions(
               initialCenter: _defaultCenter,
               initialZoom: 14.5,
+              minZoom: 3,
+              maxZoom: 19,
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.all,
+              ),
               onTap: (_, __) => setState(() => _selectedTool = null),
             ),
             children: [
@@ -122,15 +170,41 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
             ),
           ),
 
-          // Botón centrar
+          // Botones de zoom + centrar en mi ubicación real
           Positioned(
             right: 16,
             bottom: _selectedTool != null ? 220 : 24,
-            child: FloatingActionButton(
-              backgroundColor: AppColors.slate900,
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.my_location_rounded),
-              onPressed: () => _mapController.move(_defaultCenter, 14.5),
+            child: Column(
+              children: [
+                FloatingActionButton.small(
+                  heroTag: 'map_zoom_in',
+                  backgroundColor: AppColors.slate900,
+                  foregroundColor: Colors.white,
+                  child: const Icon(Icons.add_rounded),
+                  onPressed: () => _zoomBy(1),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton.small(
+                  heroTag: 'map_zoom_out',
+                  backgroundColor: AppColors.slate900,
+                  foregroundColor: Colors.white,
+                  child: const Icon(Icons.remove_rounded),
+                  onPressed: () => _zoomBy(-1),
+                ),
+                const SizedBox(height: 8),
+                FloatingActionButton(
+                  heroTag: 'map_my_location',
+                  backgroundColor: AppColors.slate900,
+                  foregroundColor: Colors.white,
+                  child: _locating
+                      ? const SizedBox(
+                          width: 18, height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.my_location_rounded),
+                  onPressed: _locating ? null : _goToMyLocation,
+                ),
+              ],
             ),
           ),
 
@@ -150,7 +224,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: context.surface,
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, offset: const Offset(0, 10))],
                   ),
@@ -158,10 +232,10 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                     children: [
                       Container(
                         width: 70, height: 70,
-                        decoration: BoxDecoration(color: AppColors.slate100, borderRadius: BorderRadius.circular(16)),
+                        decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: BorderRadius.circular(16)),
                         child: _selectedTool!.photoUrl.isNotEmpty
-                            ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network(_selectedTool!.photoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.handyman_rounded, color: AppColors.slate400, size: 32)))
-                            : const Icon(Icons.handyman_rounded, color: AppColors.slate400, size: 32),
+                            ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network(_selectedTool!.photoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.handyman_rounded, color: context.textSecondary, size: 32)))
+                            : Icon(Icons.handyman_rounded, color: context.textSecondary, size: 32),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -175,7 +249,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                               child: Text(_selectedTool!.category.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.orange600)),
                             ),
                             const SizedBox(height: 4),
-                            Text(_selectedTool!.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.montserrat(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.slate900)),
+                            Text(_selectedTool!.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.montserrat(fontWeight: FontWeight.w800, fontSize: 16, color: context.textPrimary)),
                             Text('\$${_selectedTool!.dailyRate.toStringAsFixed(0)} MXN / día', style: GoogleFonts.montserrat(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.emerald600)),
                           ],
                         ),

@@ -2,6 +2,7 @@
 class ToolEntity {
   final String id;
   final String ownerId;
+  final String ownerName;
   final String name;
   final String description;
   final String category;
@@ -18,6 +19,7 @@ class ToolEntity {
   const ToolEntity({
     required this.id,
     required this.ownerId,
+    this.ownerName = '',
     required this.name,
     required this.description,
     required this.category,

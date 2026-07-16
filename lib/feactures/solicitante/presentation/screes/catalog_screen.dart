@@ -12,6 +12,7 @@ import '../../../auth/register/presentation/providers/register_provider.dart';
 import '../../../propietario/presentation/providers/tool_provider.dart';
 import 'tool_detail_screen.dart';
 import '../../../../../shared/theme/app_colors.dart';
+import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
 import '../../../checkout/presentation/screes/rental_tracking_requester_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
@@ -73,9 +74,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
     final activeRental = activeRentals.firstOrNull;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.bg,
       drawer: Drawer(
-        backgroundColor: AppColors.surface,
+        backgroundColor: context.surface,
         child: Column(
           children: [
             DrawerHeader(
@@ -106,7 +107,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 'Mis Rentas',
                 style: GoogleFonts.inter(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.slate900,
+                  color: context.textPrimary,
                 ),
               ),
               trailing: activeRentals.isNotEmpty
@@ -115,7 +116,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       decoration: BoxDecoration(color: AppColors.orange500, borderRadius: BorderRadius.circular(12)),
                       child: Text('${activeRentals.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
                     )
-                  : const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: AppColors.slate300),
+                  : Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.colors.outline),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
@@ -144,13 +145,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
           SliverAppBar(
             pinned: true,
             floating: true,
-            backgroundColor: AppColors.surface,
+            backgroundColor: context.surface,
             surfaceTintColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.logout_rounded),
-              color: AppColors.slate600,
+              color: context.textSecondary,
               onPressed: _logout,
             ),
             // Borde inferior sutil
@@ -158,7 +159,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
               preferredSize: const Size.fromHeight(0),
               child: Container(
                 height: 1,
-                color: const Color(0xFFE2E8F0),
+                color: context.borderColor,
               ),
             ),
             title: Row(
@@ -182,14 +183,14 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.slate900,
+                        color: context.textPrimary,
                       ),
                     ),
                     Text(
                       '${provider.totalCount} herramientas',
                       style: GoogleFonts.inter(
                         fontSize: 11,
-                        color: AppColors.slate600,
+                        color: context.textSecondary,
                       ),
                     ),
                   ],
@@ -209,18 +210,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   onSelected: (v) =>
                       context.read<CatalogProvider>().setOnlyAvailable(v),
                   showCheckmark: false,
-                  selectedColor: AppColors.successBg,
+                  selectedColor: context.colors.tertiaryContainer,
                   labelStyle: GoogleFonts.inter(
                     color: provider.onlyAvailable
                         ? AppColors.success
-                        : AppColors.slate600,
+                        : context.textSecondary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
                   side: BorderSide(
                     color: provider.onlyAvailable
                         ? AppColors.success
-                        : const Color(0xFFE2E8F0),
+                        : context.borderColor,
                   ),
                 ),
               ),
@@ -377,7 +378,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
               child: Container(
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.surface,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: AppColors.cardShadow,
                 ),
@@ -386,16 +387,16 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       context.read<CatalogProvider>().setSearch(v),
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: AppColors.slate900,
+                    color: context.textPrimary,
                   ),
                   decoration: InputDecoration(
                     hintText: 'Buscar herramientas…',
                     hintStyle: GoogleFonts.inter(
                       fontSize: 14,
-                      color: AppColors.slate600.withOpacity(0.5),
+                      color: context.textSecondary.withValues(alpha: 0.6),
                     ),
                     prefixIcon: Icon(Icons.search_rounded,
-                        color: AppColors.slate600, size: 20),
+                        color: context.textSecondary, size: 20),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -430,7 +431,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     labelStyle: GoogleFonts.inter(
                       color: isSelected
                           ? AppColors.orange600
-                          : AppColors.slate600,
+                          : context.textSecondary,
                       fontWeight: isSelected
                           ? FontWeight.w700
                           : FontWeight.w500,
@@ -439,7 +440,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     side: BorderSide(
                       color: isSelected
                           ? AppColors.orange500
-                          : const Color(0xFFE2E8F0),
+                          : context.borderColor,
                     ),
                   );
                 },
@@ -457,7 +458,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     : '${tools.length} resultado${tools.length != 1 ? 's' : ''}',
                 style: GoogleFonts.inter(
                   fontSize: 12,
-                  color: AppColors.slate600,
+                  color: context.textSecondary,
                 ),
               ),
             ),
@@ -474,10 +475,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.wifi_off_rounded, size: 48,
-                        color: AppColors.slate300),
+                        color: context.colors.outline),
                     const SizedBox(height: 12),
                     Text(provider.error!,
-                        style: GoogleFonts.inter(color: AppColors.slate600)),
+                        style: GoogleFonts.inter(color: context.textSecondary)),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () =>
@@ -497,13 +498,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(Icons.search_off_rounded, size: 56,
-                        color: AppColors.slate300),
+                        color: context.colors.outline),
                     const SizedBox(height: 12),
                     Text('Sin resultados',
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.slate600,
+                          color: context.textSecondary,
                         )),
                   ],
                 ),
