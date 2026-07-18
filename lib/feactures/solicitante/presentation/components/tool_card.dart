@@ -16,6 +16,26 @@ class ToolCard extends StatelessWidget {
     this.zone = '~2.3 km',
   });
 
+  Widget _placeholderBg() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF1E293B),
+            const Color(0xFF334155),
+          ],
+        ),
+      ),
+      child: Icon(
+        Icons.handyman_outlined,
+        size: 52,
+        color: Colors.white.withOpacity(0.15),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -37,23 +57,15 @@ class ToolCard extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF1E293B),
-                            const Color(0xFF334155),
-                          ],
-                        ),
-                      ),
-                      child: Icon(
-                        Icons.handyman_outlined,
-                        size: 52,
-                        color: Colors.white.withOpacity(0.15),
-                      ),
-                    ),
+                    tool.photoUrl.isNotEmpty
+                        ? Image.network(
+                            tool.photoUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => _placeholderBg(),
+                            loadingBuilder: (ctx, child, progress) =>
+                                progress == null ? child : _placeholderBg(),
+                          )
+                        : _placeholderBg(),
                     Positioned(
                       bottom: 0, left: 0, right: 0,
                       child: Container(

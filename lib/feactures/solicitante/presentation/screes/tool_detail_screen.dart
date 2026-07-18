@@ -64,6 +64,51 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
     super.dispose();
   }
 
+  Widget _heroPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF1E293B),
+            Color(0xFF0F172A),
+          ],
+        ),
+      ),
+      child: Stack(children: [
+        Center(
+          child: Icon(
+            Icons.handyman_outlined,
+            size: 140,
+            color: Colors.white.withOpacity(0.06),
+          ),
+        ),
+        Center(
+          child: Container(
+            width: 110, height: 110,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.orange500.withOpacity(0.15),
+                  AppColors.orange600.withOpacity(0.08),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.handyman_rounded,
+              size: 56,
+              color: AppColors.orange500.withOpacity(0.8),
+            ),
+          ),
+        ),
+      ]),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tool = widget.tool;
@@ -83,48 +128,15 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF1E293B),
-                          Color(0xFF0F172A),
-                        ],
-                      ),
-                    ),
-                    child: Stack(children: [
-                      Center(
-                        child: Icon(
-                          Icons.handyman_outlined,
-                          size: 140,
-                          color: Colors.white.withOpacity(0.06),
-                        ),
-                      ),
-                      Center(
-                        child: Container(
-                          width: 110, height: 110,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                AppColors.orange500.withOpacity(0.15),
-                                AppColors.orange600.withOpacity(0.08),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.handyman_rounded,
-                            size: 56,
-                            color: AppColors.orange500.withOpacity(0.8),
-                          ),
-                        ),
-                      ),
-                    ]),
-                  ),
+                  tool.photoUrl.isNotEmpty
+                      ? Image.network(
+                          tool.photoUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _heroPlaceholder(),
+                          loadingBuilder: (ctx, child, progress) =>
+                              progress == null ? child : _heroPlaceholder(),
+                        )
+                      : _heroPlaceholder(),
                   Positioned(
                     bottom: 0, left: 0, right: 0,
                     child: Container(

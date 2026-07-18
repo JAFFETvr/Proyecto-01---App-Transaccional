@@ -20,6 +20,19 @@ class ToolListItem extends StatelessWidget {
 
   double get _monthlyPremium => tool.estimatedValue * kInsuranceMonthlyRate;
 
+  Widget _thumbPlaceholder() {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF1E293B), Color(0xFF334155)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Icon(Icons.handyman_outlined, color: Colors.white, size: 22),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,18 +49,20 @@ class ToolListItem extends StatelessWidget {
         leading: Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
-              width: 46, height: 46,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF1E293B), Color(0xFF334155)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 46, height: 46,
+                child: tool.photoUrl.isNotEmpty
+                    ? Image.network(
+                        tool.photoUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => _thumbPlaceholder(),
+                        loadingBuilder: (ctx, child, progress) =>
+                            progress == null ? child : _thumbPlaceholder(),
+                      )
+                    : _thumbPlaceholder(),
               ),
-              child: const Icon(Icons.handyman_outlined,
-                  color: Colors.white, size: 22),
             ),
             if (tool.estimatedValue > 0)
               Positioned(
