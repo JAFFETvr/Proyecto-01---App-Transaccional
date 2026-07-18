@@ -10,6 +10,8 @@ class AutoValuateUseCase {
     required String category,
     required String brand,
     int? ageMonths,
+    double? precioBaseManual,
+    bool ticketValidado = false,
   }) {
     return _repository.autoValuate(
       name: name,
@@ -17,6 +19,8 @@ class AutoValuateUseCase {
       category: category,
       brand: brand,
       ageMonths: ageMonths,
+      precioBaseManual: precioBaseManual,
+      ticketValidado: ticketValidado,
     );
   }
 }

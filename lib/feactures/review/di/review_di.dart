@@ -1,8 +1,8 @@
-import '../datasoruce/review_remote_datasource.dart';
-import '../repositories/review_repository_impl.dart';
-import '../../domain/usesCases/submit_review_usecase.dart';
-import '../../domain/usesCases/get_tool_reviews_usecase.dart';
-import '../../domain/usesCases/get_user_reviews_usecase.dart';
+import '../data/datasoruce/review_remote_datasource.dart';
+import '../data/repositories/review_repository_impl.dart';
+import '../domain/usesCases/submit_review_usecase.dart';
+import '../domain/usesCases/get_tool_reviews_usecase.dart';
+import '../domain/usesCases/get_user_reviews_usecase.dart';
 
 class ReviewDI {
   static final _datasource = ReviewRemoteDatasource();

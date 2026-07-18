@@ -1,15 +1,15 @@
-import '../datasoruce/rental_remote_datasource.dart';
-import '../repositories/rental_repository_impl.dart';
-import '../../domain/usesCases/create_rental_usecase.dart';
-import '../../domain/usesCases/get_rentals_usecase.dart';
-import '../../domain/usesCases/get_rental_usecase.dart';
-import '../../domain/usesCases/confirm_delivery_usecase.dart';
-import '../../domain/usesCases/confirm_return_usecase.dart';
-import '../../domain/usesCases/dispute_rental_usecase.dart';
-import '../../domain/usesCases/cancel_rental_usecase.dart';
-import '../../domain/usesCases/verify_contract_usecase.dart';
-import '../../domain/usesCases/get_preference_usecase.dart';
-import '../../domain/usesCases/stream_rental_usecase.dart';
+import '../data/datasoruce/rental_remote_datasource.dart';
+import '../data/repositories/rental_repository_impl.dart';
+import '../domain/usesCases/create_rental_usecase.dart';
+import '../domain/usesCases/get_rentals_usecase.dart';
+import '../domain/usesCases/get_rental_usecase.dart';
+import '../domain/usesCases/confirm_delivery_usecase.dart';
+import '../domain/usesCases/confirm_return_usecase.dart';
+import '../domain/usesCases/dispute_rental_usecase.dart';
+import '../domain/usesCases/cancel_rental_usecase.dart';
+import '../domain/usesCases/verify_contract_usecase.dart';
+import '../domain/usesCases/get_preference_usecase.dart';
+import '../domain/usesCases/stream_rental_usecase.dart';
 
 class CheckoutDI {
   static final _datasource = RentalRemoteDatasource();

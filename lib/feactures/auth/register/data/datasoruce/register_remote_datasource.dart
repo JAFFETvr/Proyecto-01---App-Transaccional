@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../../../../../shared/error/app_error.dart';
-import '../../../../../shared/config/api_config.dart';
+import '../../../../../core/error/app_error.dart';
+import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/user_entity.dart';
 
 class RegisterRemoteDatasource {

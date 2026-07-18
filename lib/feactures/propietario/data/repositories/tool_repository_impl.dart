@@ -56,20 +56,34 @@ class ToolRepositoryImpl implements ToolRepository {
   @override Future<Map<String, dynamic>> predictCondition(File photo) =>
       _datasource.predictCondition(photo);
 
+  @override Future<Map<String, dynamic>> extractTicketPrice(File photo) =>
+      _datasource.extractTicketPrice(photo);
+
   @override Future<Map<String, dynamic>> autoValuate({
     required String name,
     required double scoreCondicion,
     required String category,
     required String brand,
     int? ageMonths,
+    double? precioBaseManual,
+    bool ticketValidado = false,
   }) => _datasource.autoValuate(
         name: name,
         scoreCondicion: scoreCondicion,
         category: category,
         brand: brand,
-        ageMonths: ageMonths);
+        ageMonths: ageMonths,
+        precioBaseManual: precioBaseManual,
+        ticketValidado: ticketValidado);
 
   @override Future<String> getSubscriptionPreference() => _datasource.getSubscriptionPreference();
   @override Future<bool> confirmSubscriptionPayment(String paymentId) => _datasource.confirmSubscriptionPayment(paymentId);
   @override Future<bool> refreshIsPro() => _datasource.refreshIsPro();
+
+  @override Future<String> getInsurancePreference(String toolId) =>
+      _datasource.getInsurancePreference(toolId);
+  @override Future<ToolEntity> confirmInsurancePayment(String toolId, String paymentId) =>
+      _datasource.confirmInsurancePayment(toolId, paymentId);
+  @override Future<ToolEntity> cancelInsurance(String toolId) =>
+      _datasource.cancelInsurance(toolId);
 }

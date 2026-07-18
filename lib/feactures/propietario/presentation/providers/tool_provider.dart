@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../../shared/error/app_error.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../domain/usesCases/get_tools_usecase.dart';
 import '../../domain/usesCases/create_tool_usecase.dart';
@@ -12,7 +12,11 @@ import '../../domain/usesCases/get_pricing_suggestion_usecase.dart';
 import '../../domain/usesCases/subscribe_usecase.dart';
 import '../../domain/usesCases/predict_condition_usecase.dart';
 import '../../domain/usesCases/auto_valuate_usecase.dart';
+import '../../domain/usesCases/extract_ticket_price_usecase.dart';
 import '../../domain/usesCases/upload_tool_photo_usecase.dart';
+import '../../domain/usesCases/get_insurance_preference_usecase.dart';
+import '../../domain/usesCases/confirm_insurance_payment_usecase.dart';
+import '../../domain/usesCases/cancel_insurance_usecase.dart';
 
 class ToolProvider extends ChangeNotifier {
   final GetToolsUseCase _getTools;
@@ -22,10 +26,14 @@ class ToolProvider extends ChangeNotifier {
   final GetPricingSuggestionUseCase _getPricingSuggestion;
   final PredictConditionUseCase _predictCondition;
   final AutoValuateUseCase _autoValuate;
+  final ExtractTicketPriceUseCase _extractTicketPrice;
   final UploadToolPhotoUseCase _uploadToolPhoto;
   final GetSubscriptionPreferenceUseCase _getSubscriptionPreference;
   final ConfirmSubscriptionPaymentUseCase _confirmSubscriptionPayment;
   final RefreshIsProUseCase _refreshIsPro;
+  final GetInsurancePreferenceUseCase _getInsurancePreference;
+  final ConfirmInsurancePaymentUseCase _confirmInsurancePayment;
+  final CancelInsuranceUseCase _cancelInsurance;
 
   List<ToolEntity> _tools = [];
   bool _loading = false;
@@ -57,10 +65,14 @@ class ToolProvider extends ChangeNotifier {
     required GetPricingSuggestionUseCase getPricingSuggestion,
     required PredictConditionUseCase predictCondition,
     required AutoValuateUseCase autoValuate,
+    required ExtractTicketPriceUseCase extractTicketPrice,
     required UploadToolPhotoUseCase uploadToolPhoto,
     required GetSubscriptionPreferenceUseCase getSubscriptionPreference,
     required ConfirmSubscriptionPaymentUseCase confirmSubscriptionPayment,
     required RefreshIsProUseCase refreshIsPro,
+    required GetInsurancePreferenceUseCase getInsurancePreference,
+    required ConfirmInsurancePaymentUseCase confirmInsurancePayment,
+    required CancelInsuranceUseCase cancelInsurance,
   })  : _getTools = getTools,
         _createTool = createTool,
         _updateTool = updateTool,
@@ -68,10 +80,14 @@ class ToolProvider extends ChangeNotifier {
         _getPricingSuggestion = getPricingSuggestion,
         _predictCondition = predictCondition,
         _autoValuate = autoValuate,
+        _extractTicketPrice = extractTicketPrice,
         _uploadToolPhoto = uploadToolPhoto,
         _getSubscriptionPreference = getSubscriptionPreference,
         _confirmSubscriptionPayment = confirmSubscriptionPayment,
-        _refreshIsPro = refreshIsPro;
+        _refreshIsPro = refreshIsPro,
+        _getInsurancePreference = getInsurancePreference,
+        _confirmInsurancePayment = confirmInsurancePayment,
+        _cancelInsurance = cancelInsurance;
 
   Future<void> checkSubscriptionStatus() async {
     final prefs = await SharedPreferences.getInstance();
@@ -306,6 +322,8 @@ class ToolProvider extends ChangeNotifier {
     required String category,
     required String brand,
     int? ageMonths,
+    double? precioBaseManual,
+    bool ticketValidado = false,
   }) async {
     _loading = true;
     _error = null;
@@ -317,6 +335,8 @@ class ToolProvider extends ChangeNotifier {
         category: category,
         brand: brand,
         ageMonths: ageMonths,
+        precioBaseManual: precioBaseManual,
+        ticketValidado: ticketValidado,
       );
     } on AppError catch (e) {
       _error = e.userMessage;
@@ -324,6 +344,88 @@ class ToolProvider extends ChangeNotifier {
     } catch (_) {
       _error = 'Sin conexión al valuar herramienta.';
       return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Lee por OCR el precio de un ticket de compra. Es la fuente de precio
+  /// más confiable: si es válido, se usa como precio_base_manual verificado
+  /// en la siguiente llamada a autoValuate en vez del catálogo semilla.
+  Future<Map<String, dynamic>?> extractTicketPrice(File photo) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      return await _extractTicketPrice.execute(photo);
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al leer el ticket.';
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Crea la preferencia de pago en Mercado Pago para el seguro mensual de
+  /// esta herramienta específica.
+  Future<String?> getInsurancePreference(String toolId) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      return await _getInsurancePreference.execute(toolId);
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al iniciar el pago del seguro.';
+      return null;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Verifica con Mercado Pago que el pago del seguro fue aprobado y
+  /// actualiza la herramienta localmente si se activó correctamente.
+  Future<bool> confirmInsurancePayment(String toolId, String paymentId) async {
+    try {
+      final updated = await _confirmInsurancePayment.execute(toolId, paymentId);
+      final idx = _tools.indexWhere((t) => t.id == toolId);
+      if (idx != -1) _tools[idx] = updated;
+      notifyListeners();
+      return updated.wantsInsurance;
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return false;
+    } catch (_) {
+      _error = 'El pago no se pudo confirmar todavía.';
+      return false;
+    }
+  }
+
+  /// Cancela el seguro activo de la herramienta. No hay reembolso: la prima
+  /// ya pagada cubre el mes en curso, solo se detiene la renovación.
+  Future<bool> cancelInsurance(String toolId) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      final updated = await _cancelInsurance.execute(toolId);
+      final idx = _tools.indexWhere((t) => t.id == toolId);
+      if (idx != -1) _tools[idx] = updated;
+      return true;
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return false;
+    } catch (_) {
+      _error = 'Sin conexión al cancelar el seguro.';
+      return false;
     } finally {
       _loading = false;
       notifyListeners();

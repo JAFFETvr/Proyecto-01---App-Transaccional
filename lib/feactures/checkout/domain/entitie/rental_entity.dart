@@ -15,6 +15,7 @@ class RentalEntity {
   final String mpPaymentId;
   final String paymentStatus;
   final double deductibleAmount;
+  final double commissionAmount;
 
   final bool ownerConfirmedDelivery;
   final bool requesterConfirmedDelivery;
@@ -48,6 +49,7 @@ class RentalEntity {
     this.mpPaymentId = '',
     this.paymentStatus = '',
     this.deductibleAmount = 0.0,
+    this.commissionAmount = 0.0,
     required this.ownerConfirmedDelivery,
     required this.requesterConfirmedDelivery,
     this.contractHash = '',
@@ -66,5 +68,4 @@ class RentalEntity {
   bool get isDisputed => status == 'disputed';
   bool get isCancelled => status == 'cancelled';
   bool get isPending => status == 'pending';
-  bool get isCash => paymentMethod == 'cash';
 }

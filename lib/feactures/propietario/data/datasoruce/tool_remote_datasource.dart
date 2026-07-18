@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../shared/error/app_error.dart';
-import '../../../../../shared/config/api_config.dart';
+import '../../../../../core/error/app_error.dart';
+import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/tool_entity.dart';
 
 class ToolRemoteDatasource {
@@ -17,8 +17,6 @@ class ToolRemoteDatasource {
       'Authorization': 'Bearer $token',
     };
   }
-
-  static const _jsonHeaders = {'Content-Type': 'application/json'};
 
   ToolEntity _fromJson(Map<String, dynamic> j) => ToolEntity(
         id:          j['id']          as String,
@@ -39,6 +37,8 @@ class ToolRemoteDatasource {
         city:           j['city']           as String? ?? 'Guadalajara',
         state:          j['state']          as String? ?? 'Jalisco',
         priceSource:    j['price_source']    as String? ?? 'catalogo_semilla',
+        wantsInsurance: j['wants_insurance'] as bool? ?? false,
+        insuranceMonthlyPremium: (j['insurance_monthly_premium'] as num?)?.toDouble() ?? 0.0,
         createdAt:   j['created_at']  as String,
         updatedAt:   j['updated_at']  as String,
       );
@@ -258,6 +258,8 @@ class ToolRemoteDatasource {
     required String category,
     required String brand,
     int? ageMonths,
+    double? precioBaseManual,
+    bool ticketValidado = false,
   }) async {
     try {
       final queryParams = {
@@ -267,6 +269,10 @@ class ToolRemoteDatasource {
         'brand': brand,
       };
       if (ageMonths != null) queryParams['age_months'] = ageMonths.toString();
+      if (precioBaseManual != null) {
+        queryParams['precio_base_manual'] = precioBaseManual.toString();
+        queryParams['ticket_validado'] = ticketValidado.toString();
+      }
 
       final uri = Uri.parse('$_baseUrl/tools/auto-valuate').replace(
         queryParameters: queryParams,
@@ -276,5 +282,63 @@ class ToolRemoteDatasource {
       return json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
+  Future<Map<String, dynamic>> extractTicketPrice(File photo) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/tools/extract-ticket-price');
+      final request = http.MultipartRequest('POST', uri);
+
+      final headers = await _authHeaders;
+      headers.remove('Content-Type');
+      request.headers.addAll(headers);
+
+      request.files.add(await http.MultipartFile.fromPath('photo', photo.path));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      _throwIfError(response);
+      return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al leer el ticket.'); }
+  }
+
+  Future<String> getInsurancePreference(String toolId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/tools/$toolId/insurance/preference'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      return body['init_point'] as String;
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al iniciar el pago del seguro.'); }
+  }
+
+  Future<ToolEntity> confirmInsurancePayment(String toolId, String paymentId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/tools/$toolId/insurance/confirm'),
+        headers: await _authHeaders,
+        body: json.encode({'payment_id': paymentId}),
+      );
+      _throwIfError(res);
+      return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al confirmar el pago del seguro.'); }
+  }
+
+  Future<ToolEntity> cancelInsurance(String toolId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/tools/$toolId/insurance/cancel'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al cancelar el seguro.'); }
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/error/app_error.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/reviews_result_entity.dart';
 import '../../domain/usesCases/submit_review_usecase.dart';
 import '../../domain/usesCases/get_tool_reviews_usecase.dart';

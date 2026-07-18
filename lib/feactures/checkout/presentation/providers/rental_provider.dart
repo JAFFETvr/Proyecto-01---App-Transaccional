@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../../../../../shared/error/app_error.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/rental_entity.dart';
 import '../../domain/usesCases/create_rental_usecase.dart';
 import '../../domain/usesCases/get_rentals_usecase.dart';

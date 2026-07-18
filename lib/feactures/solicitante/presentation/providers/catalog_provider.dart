@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/error/app_error.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../domain/usesCases/get_catalog_usecase.dart';
 

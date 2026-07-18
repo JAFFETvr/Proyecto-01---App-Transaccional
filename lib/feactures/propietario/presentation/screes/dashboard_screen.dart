@@ -13,6 +13,7 @@ import '../../../auth/register/presentation/providers/register_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
+import '../../../payment_methods/presentation/screes/saved_cards_screen.dart';
 import '../../../checkout/presentation/screes/rental_tracking_owner_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
@@ -154,6 +155,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.credit_card_rounded, color: AppColors.orange500),
+              title: Text(
+                'Métodos de pago',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimary,
+                ),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.colors.outline),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedCardsScreen()));
               },
             ),
             const Spacer(),

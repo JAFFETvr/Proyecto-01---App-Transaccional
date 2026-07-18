@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../../shared/error/app_error.dart';
-import '../../../../../shared/config/api_config.dart';
+import '../../../../../core/error/app_error.dart';
+import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/rental_entity.dart';
 import '../../domain/entitie/message_entity.dart';
 
@@ -41,6 +41,7 @@ class RentalRemoteDatasource {
         mpPaymentId:                j['mp_payment_id'] as String? ?? '',
         paymentStatus:              j['payment_status'] as String? ?? '',
         deductibleAmount:           (j['deductible_amount'] as num?)?.toDouble() ?? 0.0,
+        commissionAmount:           (j['commission_amount'] as num?)?.toDouble() ?? 0.0,
         ownerConfirmedDelivery:     j['owner_confirmed_delivery'] as bool? ?? false,
         requesterConfirmedDelivery: j['requester_confirmed_delivery'] as bool? ?? false,
         contractHash:               j['contract_hash'] as String? ?? '',

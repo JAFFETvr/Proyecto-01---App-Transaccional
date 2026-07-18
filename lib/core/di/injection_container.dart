@@ -1,3 +1,26 @@
+// Inyección de Dependencias: DI Manual (no Service Locator, no DI Automatizada).
+//
+// Cada feature construye su propio grafo de dependencias por constructor en
+// una clase `XxxDI` bajo `feactures/<feature>/di/` (ej. `PropietarioDI`):
+// Datasource -> Repository -> UseCase -> Provider, sin ningún contenedor de
+// resolución automática ni anotaciones/codegen. Eso es DI manual clásica.
+//
+// `InjectionContainer` es el único lugar donde ese resultado se registra en
+// el árbol de widgets, usando `MultiProvider` del paquete `provider`. Que las
+// pantallas lean una dependencia con `context.read<ToolProvider>()` NO es
+// Service Locator en el sentido de este material (get_it/GetIt.instance):
+// aquí la resolución está acotada al árbol de widgets vía InheritedWidget, no
+// hay un registro global consultable con `getIt<T>()` fuera de un
+// BuildContext. Tampoco hay `injectable` + `build_runner` generando el
+// registro (DI Automatizada) — todo el cableado de arriba es código escrito
+// a mano.
+//
+// Si en algún momento se migra a Service Locator real: agregar `get_it`,
+// registrar cada dependencia en `GetIt.instance` (reemplazando las `XxxDI`),
+// y sustituir `MultiProvider` por consultas directas al locator. Para DI
+// Automatizada, el siguiente paso sería anotar esas mismas clases con
+// `@injectable`/`@lazySingleton` y generar el registro con `injectable` +
+// `build_runner` sobre ese mismo `GetIt.instance`.
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
@@ -9,13 +32,15 @@ import '../../feactures/checkout/presentation/providers/rental_provider.dart';
 import '../../feactures/checkout/presentation/providers/chat_provider.dart';
 import '../../feactures/admin/presentation/providers/admin_provider.dart';
 import '../../feactures/review/presentation/providers/review_provider.dart';
+import '../../feactures/payment_methods/presentation/providers/card_provider.dart';
 
-import '../../feactures/auth/login/data/di/login_di.dart';
-import '../../feactures/auth/register/data/di/register_di.dart';
-import '../../feactures/propietario/data/di/propietario_di.dart';
-import '../../feactures/solicitante/data/di/solicitante_di.dart';
-import '../../feactures/checkout/data/di/checkout_di.dart';
-import '../../feactures/review/data/di/review_di.dart';
+import '../../feactures/auth/login/di/login_di.dart';
+import '../../feactures/auth/register/di/register_di.dart';
+import '../../feactures/propietario/di/propietario_di.dart';
+import '../../feactures/solicitante/di/solicitante_di.dart';
+import '../../feactures/checkout/di/checkout_di.dart';
+import '../../feactures/review/di/review_di.dart';
+import '../../feactures/payment_methods/di/payment_methods_di.dart';
 
 class InjectionContainer {
   static List<SingleChildWidget> get providers => [
@@ -39,12 +64,16 @@ class InjectionContainer {
             getPricingSuggestion: PropietarioDI.provideGetPricingSuggestion(),
             predictCondition: PropietarioDI.providePredictCondition(),
             autoValuate: PropietarioDI.provideAutoValuate(),
+            extractTicketPrice: PropietarioDI.provideExtractTicketPrice(),
             uploadToolPhoto: PropietarioDI.provideUploadToolPhoto(),
             getSubscriptionPreference:
                 PropietarioDI.provideGetSubscriptionPreference(),
             confirmSubscriptionPayment:
                 PropietarioDI.provideConfirmSubscriptionPayment(),
             refreshIsPro: PropietarioDI.provideRefreshIsPro(),
+            getInsurancePreference: PropietarioDI.provideGetInsurancePreference(),
+            confirmInsurancePayment: PropietarioDI.provideConfirmInsurancePayment(),
+            cancelInsurance: PropietarioDI.provideCancelInsurance(),
           ),
         ),
         ChangeNotifierProvider<CatalogProvider>(
@@ -78,6 +107,9 @@ class InjectionContainer {
             getToolReviews: ReviewDI.provideGetToolReviews(),
             getUserReviews: ReviewDI.provideGetUserReviews(),
           ),
+        ),
+        ChangeNotifierProvider<CardProvider>(
+          create: (_) => PaymentMethodsDI.provideCardProvider(),
         ),
       ];
 }

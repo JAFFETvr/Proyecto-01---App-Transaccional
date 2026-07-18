@@ -36,14 +36,20 @@ abstract class ToolRepository {
     required String brand,
   });
   Future<Map<String, dynamic>> predictCondition(File photo);
+  Future<Map<String, dynamic>> extractTicketPrice(File photo);
   Future<Map<String, dynamic>> autoValuate({
     required String name,
     required double scoreCondicion,
     required String category,
     required String brand,
     int? ageMonths,
+    double? precioBaseManual,
+    bool ticketValidado = false,
   });
   Future<String> getSubscriptionPreference();
   Future<bool> confirmSubscriptionPayment(String paymentId);
   Future<bool> refreshIsPro();
+  Future<String> getInsurancePreference(String toolId);
+  Future<ToolEntity> confirmInsurancePayment(String toolId, String paymentId);
+  Future<ToolEntity> cancelInsurance(String toolId);
 }

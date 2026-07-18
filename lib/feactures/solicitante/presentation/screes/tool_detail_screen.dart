@@ -28,9 +28,15 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
       TextEditingController(text: _days.toString());
 
   double get _effectiveRate => widget.tool.dailyRate > 0 ? widget.tool.dailyRate : widget.pricePerDay;
-  double get _subtotal => _effectiveRate * _days;
-  double get _deposit  => _subtotal * 0.10;
-  double get _total    => _subtotal + _deposit;
+  double get _subtotal   => _effectiveRate * _days;
+  // Comisión de servicio de ToolShare: no reembolsable, calculada sobre la
+  // renta (coincide con rentaldomain.ServiceCommissionRate en el backend).
+  double get _commission => _subtotal * 0.10;
+  // Depósito de garantía: reembolsable si no hay disputa, calculado sobre el
+  // valor estimado de la herramienta (coincide con tool.EstimatedValue * 0.10
+  // en rental_service.go — no con el subtotal de la renta).
+  double get _deposit    => widget.tool.estimatedValue * 0.10;
+  double get _total      => _subtotal + _commission + _deposit;
 
   void _setDays(int value) {
     final clamped = value.clamp(1, 30);
@@ -430,6 +436,23 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                             children: [
                               _CostRow(
                                 label: 'Comisión de servicio (10%):',
+                                value: '\$${_commission.toStringAsFixed(2)} MXN',
+                                valueBold: false,
+                                labelColor: context.textSecondary,
+                                valueColor: context.textSecondary,
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Cargo de la plataforma por el servicio de renta (no reembolsable)',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: context.textSecondary.withValues(alpha: 0.7),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              _CostRow(
+                                label: 'Depósito de garantía (10%):',
                                 value: '\$${_deposit.toStringAsFixed(2)} MXN',
                                 valueBold: false,
                                 labelColor: context.textSecondary,
@@ -437,7 +460,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Cargo de la plataforma por el servicio de renta',
+                                'Se libera automáticamente al devolver la herramienta sin incidentes',
                                 style: GoogleFonts.inter(
                                   fontSize: 11,
                                   color: context.textSecondary.withValues(alpha: 0.7),
@@ -512,6 +535,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                       'pricePerDay': _effectiveRate,
                       'total': _total,
                       'deposit': _deposit,
+                      'commission': _commission,
                     },
                   ),
                 )

@@ -11,7 +11,7 @@ import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
 import '../../../../../shared/components/contract_verification_widget.dart';
-import '../../../../../shared/services/biometric_service.dart';
+import '../../../../../core/services/biometric_service.dart';
 import '../../../review/presentation/providers/review_provider.dart';
 import '../../../review/presentation/components/submit_review_sheet.dart';
 

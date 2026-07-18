@@ -1,7 +1,7 @@
-import '../datasoruce/register_remote_datasource.dart';
-import '../repositories/register_repository_impl.dart';
-import '../../domain/usesCases/register_usecase.dart';
-import '../../domain/usesCases/verify_kyc_usecase.dart';
+import '../data/datasoruce/register_remote_datasource.dart';
+import '../data/repositories/register_repository_impl.dart';
+import '../domain/usesCases/register_usecase.dart';
+import '../domain/usesCases/verify_kyc_usecase.dart';
 
 class RegisterDI {
   static final _datasource = RegisterRemoteDatasource();

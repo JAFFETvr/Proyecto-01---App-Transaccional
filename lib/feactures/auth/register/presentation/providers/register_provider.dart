@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../../shared/error/app_error.dart';
+import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/user_entity.dart';
 import '../../domain/usesCases/register_usecase.dart';
 import '../../domain/usesCases/verify_kyc_usecase.dart';

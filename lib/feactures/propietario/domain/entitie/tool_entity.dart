@@ -17,6 +17,8 @@ class ToolEntity {
   final String city;
   final String state;
   final String priceSource;
+  final bool wantsInsurance;
+  final double insuranceMonthlyPremium;
   final String createdAt;
   final String updatedAt;
 
@@ -39,6 +41,8 @@ class ToolEntity {
     this.city = 'Guadalajara',
     this.state = 'Jalisco',
     this.priceSource = 'catalogo_semilla',
+    this.wantsInsurance = false,
+    this.insuranceMonthlyPremium = 0.0,
     required this.createdAt,
     required this.updatedAt,
   });

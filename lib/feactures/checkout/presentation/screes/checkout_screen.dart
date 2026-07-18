@@ -21,7 +21,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   bool _webViewReady = false;
   late final WebViewController _webViewController;
   bool _processingPayment = false;
-  String _selectedPayment = 'card';
   bool _showWebView = false;
 
   Map<String, dynamic> get _args =>
@@ -58,12 +57,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tool     = _args['tool'];
-    final toolName = tool?.name ?? 'Herramienta';
-    final days     = _args['days'] ?? 1;
-    final total    = _args['total'] ?? 0.0;
-    final deposit  = _args['deposit'] ?? 0.0;
-    final priceDay = _args['pricePerDay'] ?? 0.0;
+    final tool       = _args['tool'];
+    final toolName   = tool?.name ?? 'Herramienta';
+    final days       = _args['days'] ?? 1;
+    final total      = _args['total'] ?? 0.0;
+    final deposit    = _args['deposit'] ?? 0.0;
+    final commission = _args['commission'] ?? 0.0;
+    final priceDay   = _args['pricePerDay'] ?? 0.0;
 
     final rentalProvider = context.watch<RentalProvider>();
 
@@ -143,10 +143,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     value:
                         '\$${(priceDay * days).toStringAsFixed(0)} MXN'),
                 _SummaryRow(
+                    icon: Icons.storefront_outlined,
+                    label: 'Comisión de servicio (10%)',
+                    value:
+                        '\$${(commission as double).toStringAsFixed(0)} MXN'),
+                _SummaryRow(
                     icon: Icons.security_outlined,
-                    label: _selectedPayment == 'card'
-                        ? 'Comisión de servicio (10%)'
-                        : 'Depósito (10%)',
+                    label: 'Depósito de garantía (10%)',
                     value:
                         '\$${(deposit as double).toStringAsFixed(0)} MXN'),
                 const SizedBox(height: 10),
@@ -182,9 +185,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
-                  _selectedPayment == 'card'
-                      ? 'Solo se capturan los fondos al confirmar la entrega física.'
-                      : 'Pago directo en efectivo al momento de recibir la herramienta.',
+                  'Solo se capturan los fondos al confirmar la entrega física.',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: context.textSecondary,
@@ -193,80 +194,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             ]),
           ),
-          const SizedBox(height: 12),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedPayment = 'card'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedPayment == 'card' ? AppColors.orange500 : context.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _selectedPayment == 'card' ? AppColors.orange500 : context.borderColor,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.credit_card_rounded, size: 18, color: _selectedPayment == 'card' ? Colors.white : context.textSecondary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Tarjeta',
-                            style: GoogleFonts.montserrat(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: _selectedPayment == 'card' ? Colors.white : context.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedPayment = 'cash'),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(
-                        color: _selectedPayment == 'cash' ? AppColors.orange500 : context.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: _selectedPayment == 'cash' ? AppColors.orange500 : context.borderColor,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.payments_outlined, size: 18, color: _selectedPayment == 'cash' ? Colors.white : context.textSecondary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Efectivo',
-                            style: GoogleFonts.montserrat(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                              color: _selectedPayment == 'cash' ? Colors.white : context.textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
           const SizedBox(height: 16),
 
-          if (_selectedPayment == 'card')
-            Expanded(
+          Expanded(
               child: _showWebView
                   ? Stack(
                       children: [
@@ -339,51 +269,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ],
                       ),
                     ),
-            )
-          else
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: context.colors.errorContainer,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: const Color(0xFFF59E0B), width: 1.5),
-                  boxShadow: AppColors.cardShadow,
-                ),
-                child: Center(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.gpp_maybe_rounded, size: 48, color: Color(0xFFD97706)),
-                        const SizedBox(height: 12),
-                        Text(
-                          '⚠️ Advertencia Legal y de Seguro',
-                          style: GoogleFonts.montserrat(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: context.colors.onErrorContainer,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 10),
-                        Text(
-                          'Al elegir pago en efectivo, la transacción y acuerdo económico se realizan directamente con el propietario.\n\n'
-                          'ToolShare no retiene fondos en garantía y NO nos hacemos responsables ni cubrimos seguro alguno en caso de robos, extravíos o daños a la herramienta.',
-                          style: GoogleFonts.inter(
-                            fontSize: 13,
-                            height: 1.4,
-                            color: context.colors.onErrorContainer,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          ),
         ],
       ),
 
@@ -417,7 +303,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       toolId: tool.id as String,
                       startDate: startDateStr,
                       endDate: endDateStr,
-                      paymentMethod: _selectedPayment,
+                      paymentMethod: 'card',
                     );
 
                     if (!mounted) return;
@@ -429,41 +315,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                           content: Text(rentalProv.error ?? 'Error al registrar la renta'),
                           backgroundColor: AppColors.danger,
                           behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                      return;
-                    }
-
-                    if (_selectedPayment == 'cash') {
-                      setState(() => _processingPayment = false);
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (ctx) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                          icon: const Icon(Icons.check_circle_outline,
-                              size: 52, color: AppColors.success),
-                          title: Text('¡Renta creada!',
-                              style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w800)),
-                          content: Text(
-                            'Coordina el encuentro con el propietario y realiza el pago en efectivo al recibir la herramienta.',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: Theme.of(ctx).colorScheme.onSurfaceVariant,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          actions: [
-                            FilledButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _navigateToTracking();
-                              },
-                              child: const Text('Ver seguimiento'),
-                            ),
-                          ],
                         ),
                       );
                       return;

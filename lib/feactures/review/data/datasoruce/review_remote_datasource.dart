@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../../../../shared/error/app_error.dart';
-import '../../../../../shared/config/api_config.dart';
+import '../../../../../core/error/app_error.dart';
+import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/review_entity.dart';
 import '../../domain/entitie/reviews_result_entity.dart';
 
