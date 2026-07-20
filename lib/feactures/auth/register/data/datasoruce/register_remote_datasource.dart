@@ -61,12 +61,14 @@ class RegisterRemoteDatasource {
   Future<Map<String, dynamic>> verifyKyc({
     required String inePath,
     required String selfiePath,
+    required String curp,
   }) async {
     try {
       final uri = Uri.parse('$_baseUrl/auth/verify-kyc');
       final req = http.MultipartRequest('POST', uri);
       req.files.add(await http.MultipartFile.fromPath('ine_image', inePath));
       req.files.add(await http.MultipartFile.fromPath('selfie_image', selfiePath));
+      req.fields['curp'] = curp;
 
       final streamedRes = await req.send();
       final res = await http.Response.fromStream(streamedRes);

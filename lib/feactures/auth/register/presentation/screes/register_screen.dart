@@ -128,7 +128,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ? null
                         : () async {
                             try {
-                              final file = await picker.pickImage(source: ImageSource.camera);
+                              final file = await picker.pickImage(
+                                source: ImageSource.camera,
+                                maxWidth: 800,
+                                maxHeight: 800,
+                                imageQuality: 80,
+                              );
                               if (file != null) {
                                 setDialogState(() => inePath = file.path);
                               }
@@ -165,7 +170,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         : () async {
                             try {
                               final file = await picker.pickImage(
-                                  source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
+                                source: ImageSource.camera,
+                                preferredCameraDevice: CameraDevice.front,
+                                maxWidth: 800,
+                                maxHeight: 800,
+                                imageQuality: 80,
+                              );
                               if (file != null) {
                                 setDialogState(() => selfiePath = file.path);
                               }
@@ -199,7 +209,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           kycError = null;
                         });
                         final provider = context.read<RegisterProvider>();
-                        final res = await provider.verifyKyc(inePath: inePath!, selfiePath: selfiePath!);
+                        final res = await provider.verifyKyc(
+                          inePath: inePath!,
+                          selfiePath: selfiePath!,
+                          curp: _ineCtrl.text.trim(),
+                        );
                         if (res != null) {
                           setDialogState(() {
                             kycLoading = false;

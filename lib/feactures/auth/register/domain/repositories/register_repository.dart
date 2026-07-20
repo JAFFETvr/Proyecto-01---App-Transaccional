@@ -13,5 +13,6 @@ abstract class RegisterRepository {
   Future<Map<String, dynamic>> verifyKyc({
     required String inePath,
     required String selfiePath,
+    required String curp,
   });
 }

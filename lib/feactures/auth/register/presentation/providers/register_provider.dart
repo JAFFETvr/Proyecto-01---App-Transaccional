@@ -34,6 +34,7 @@ class RegisterProvider extends ChangeNotifier {
   Future<Map<String, dynamic>?> verifyKyc({
     required String inePath,
     required String selfiePath,
+    required String curp,
   }) async {
     _loading = true;
     _errorMessage = null;
@@ -43,6 +44,7 @@ class RegisterProvider extends ChangeNotifier {
       final res = await _verifyKycUseCase.execute(
         inePath: inePath,
         selfiePath: selfiePath,
+        curp: curp,
       );
       return res;
     } on AppError catch (e) {
