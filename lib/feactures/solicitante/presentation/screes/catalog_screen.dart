@@ -26,7 +26,6 @@ class CatalogScreen extends StatefulWidget {
 }
 
 class _CatalogScreenState extends State<CatalogScreen> {
-
   @override
   void initState() {
     super.initState();
@@ -87,7 +86,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.person_outline, size: 48, color: Colors.white),
+                    const Icon(
+                      Icons.person_outline,
+                      size: 48,
+                      color: Colors.white,
+                    ),
                     const SizedBox(height: 10),
                     Text(
                       'Mi Perfil',
@@ -102,7 +105,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.assignment_rounded, color: AppColors.orange500),
+              leading: const Icon(
+                Icons.assignment_rounded,
+                color: AppColors.orange500,
+              ),
               title: Text(
                 'Mis Rentas',
                 style: GoogleFonts.inter(
@@ -112,20 +118,43 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
               trailing: activeRentals.isNotEmpty
                   ? Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(color: AppColors.orange500, borderRadius: BorderRadius.circular(12)),
-                      child: Text('${activeRentals.length}', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.orange500,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${activeRentals.length}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     )
-                  : Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.colors.outline),
+                  : Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: context.colors.outline,
+                    ),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const MyRentalsScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MyRentalsScreen()),
+                );
               },
             ),
             const Spacer(),
             const Divider(),
             ListTile(
-              leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
+              leading: const Icon(
+                Icons.logout_rounded,
+                color: AppColors.danger,
+              ),
               title: Text(
                 'Cerrar sesión',
                 style: GoogleFonts.inter(
@@ -155,21 +184,22 @@ class _CatalogScreenState extends State<CatalogScreen> {
             ),
             bottom: PreferredSize(
               preferredSize: const Size.fromHeight(0),
-              child: Container(
-                height: 1,
-                color: context.borderColor,
-              ),
+              child: Container(height: 1, color: context.borderColor),
             ),
             title: Row(
               children: [
                 Container(
-                  width: 34, height: 34,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.construction_rounded,
-                      color: Colors.white, size: 18),
+                  child: const Icon(
+                    Icons.construction_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Column(
@@ -200,7 +230,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 child: FilterChip(
                   label: Text(
                     'Disponibles',
-                    style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   selected: provider.onlyAvailable,
                   onSelected: (v) =>
@@ -231,7 +264,9 @@ class _CatalogScreenState extends State<CatalogScreen> {
                   if (activeRentals.length > 1) {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const MyRentalsScreen()),
+                      MaterialPageRoute(
+                        builder: (_) => const MyRentalsScreen(),
+                      ),
                     );
                   } else if (activeRental != null) {
                     rentalProvider.setCurrentRental(activeRental);
@@ -246,7 +281,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 },
                 child: Container(
                   margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [Color(0xFFEA580C), Color(0xFFF97316)],
@@ -270,8 +308,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           color: Colors.white24,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.timer_outlined,
-                            color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.timer_outlined,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -292,8 +333,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
                               activeRentals.length > 1
                                   ? 'Toca para ver la sección de tus rentas'
                                   : (activeRental!.isPending
-                                      ? 'Pendiente de entrega — Toca para ver'
-                                      : 'En curso — Toca para ver el seguimiento'),
+                                        ? 'Pendiente de entrega — Toca para ver'
+                                        : 'En curso — Toca para ver el seguimiento'),
                               style: GoogleFonts.inter(
                                 color: Colors.white.withOpacity(0.9),
                                 fontSize: 11,
@@ -302,8 +343,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
                           ],
                         ),
                       ),
-                      const Icon(Icons.chevron_right_rounded,
-                          color: Colors.white, size: 22),
+                      const Icon(
+                        Icons.chevron_right_rounded,
+                        color: Colors.white,
+                        size: 22,
+                      ),
                     ],
                   ),
                 ),
@@ -313,53 +357,11 @@ class _CatalogScreenState extends State<CatalogScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-              child: GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CatalogMapScreen())),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: AppColors.primaryButtonShadow,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.22),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(Icons.map_rounded, color: Colors.white, size: 28),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Explorar Mapa Interactivo',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 3),
-                            Text(
-                              'Encuentra herramientas cerca de tu ubicación actual',
-                              style: GoogleFonts.inter(
-                                color: Colors.white.withValues(alpha: 0.92),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
-                    ],
-                  ),
+              child: _MapExploreCard(
+                nearbyCount: tools.where((t) => t.isAvailable).length,
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CatalogMapScreen()),
                 ),
               ),
             ),
@@ -388,13 +390,18 @@ class _CatalogScreenState extends State<CatalogScreen> {
                       fontSize: 14,
                       color: context.textSecondary.withValues(alpha: 0.6),
                     ),
-                    prefixIcon: Icon(Icons.search_rounded,
-                        color: context.textSecondary, size: 20),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: context.textSecondary,
+                      size: 20,
+                    ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 4, vertical: 13),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 13,
+                    ),
                     isDense: true,
                   ),
                 ),
@@ -406,7 +413,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
             child: SizedBox(
               height: 44,
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
                 scrollDirection: Axis.horizontal,
                 itemCount: provider.categories.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 8),
@@ -457,24 +467,31 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
           if (provider.loading)
             const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()))
+              child: Center(child: CircularProgressIndicator()),
+            )
           else if (provider.error != null)
             SliverFillRemaining(
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.wifi_off_rounded, size: 48,
-                        color: context.colors.outline),
+                    Icon(
+                      Icons.wifi_off_rounded,
+                      size: 48,
+                      color: context.colors.outline,
+                    ),
                     const SizedBox(height: 12),
-                    Text(provider.error!,
-                        style: GoogleFonts.inter(color: context.textSecondary)),
+                    Text(
+                      provider.error!,
+                      style: GoogleFonts.inter(color: context.textSecondary),
+                    ),
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () =>
                           context.read<CatalogProvider>().fetchTools(),
                       style: FilledButton.styleFrom(
-                          minimumSize: const Size(140, 44)),
+                        minimumSize: const Size(140, 44),
+                      ),
                       child: const Text('Reintentar'),
                     ),
                   ],
@@ -487,15 +504,20 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.search_off_rounded, size: 56,
-                        color: context.colors.outline),
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 56,
+                      color: context.colors.outline,
+                    ),
                     const SizedBox(height: 12),
-                    Text('Sin resultados',
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: context.textSecondary,
-                        )),
+                    Text(
+                      'Sin resultados',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: context.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -506,8 +528,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
               sliver: SliverPadding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 sliver: SliverGrid(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 16,
                     crossAxisSpacing: 16,
@@ -527,4 +548,146 @@ class _CatalogScreenState extends State<CatalogScreen> {
       ),
     );
   }
+}
+
+class _MapExploreCard extends StatelessWidget {
+  final int nearbyCount;
+  final VoidCallback onTap;
+
+  const _MapExploreCard({required this.nearbyCount, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final gridColor = Colors.white.withValues(alpha: isDark ? 0.05 : 0.16);
+    const waveColor = Color(0xFFC17A54);
+
+    return GestureDetector(
+      onTap: onTap,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDark
+                  ? const [Color(0xFF161B26), Color(0xFF0B0F17)]
+                  : const [Color(0xFFDCDCDE), Color(0xFF8B8C90)],
+            ),
+            boxShadow: AppColors.cardShadow,
+          ),
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: _MapCardChartPainter(
+                    gridColor: gridColor,
+                    waveColor: waveColor,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 44, 16, 16),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.orange500,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.location_on_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Explorar mapa interactivo',
+                            style: GoogleFonts.montserrat(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            nearbyCount == 1
+                                ? '1 herramienta cerca de ti'
+                                : '$nearbyCount herramientas cerca de ti',
+                            style: GoogleFonts.inter(
+                              color: Colors.white.withValues(alpha: 0.7),
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      size: 24,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MapCardChartPainter extends CustomPainter {
+  final Color gridColor;
+  final Color waveColor;
+
+  _MapCardChartPainter({required this.gridColor, required this.waveColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final gridPaint = Paint()
+      ..color = gridColor
+      ..strokeWidth = 1;
+
+    const columns = 5;
+    for (var i = 1; i < columns; i++) {
+      final x = size.width / columns * i;
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+
+    const rowsInChartArea = 3;
+    final chartHeight = size.height * 0.6;
+    for (var i = 1; i < rowsInChartArea; i++) {
+      final y = chartHeight / rowsInChartArea * i;
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final wavePaint = Paint()
+      ..color = waveColor
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final w = size.width;
+    final h = size.height;
+    final path = Path()
+      ..moveTo(0, h * 0.30)
+      ..cubicTo(w * 0.15, h * 0.46, w * 0.30, h * 0.46, w * 0.42, h * 0.28)
+      ..cubicTo(w * 0.55, h * 0.08, w * 0.68, h * 0.04, w * 0.80, h * 0.14)
+      ..cubicTo(w * 0.90, h * 0.20, w * 0.95, h * 0.12, w, h * 0.10);
+    canvas.drawPath(path, wavePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _MapCardChartPainter oldDelegate) =>
+      oldDelegate.gridColor != gridColor || oldDelegate.waveColor != waveColor;
 }
