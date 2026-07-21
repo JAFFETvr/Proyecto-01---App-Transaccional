@@ -31,7 +31,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
   double get _subtotal   => _effectiveRate * _days;
   // Comisión de servicio de ToolShare: no reembolsable, calculada sobre la
   // renta (coincide con rentaldomain.ServiceCommissionRate en el backend).
-  double get _commission => _subtotal * 0.10;
+  double get _commission => _subtotal * 0.05;
   // Depósito de garantía: reembolsable si no hay disputa, calculado sobre el
   // valor estimado de la herramienta (coincide con tool.EstimatedValue * 0.10
   // en rental_service.go — no con el subtotal de la renta).
@@ -447,7 +447,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               _CostRow(
-                                label: 'Comisión de servicio (10%):',
+                                label: 'Comisión de servicio (5%):',
                                 value: '\$${_commission.toStringAsFixed(2)} MXN',
                                 valueBold: false,
                                 labelColor: context.textSecondary,

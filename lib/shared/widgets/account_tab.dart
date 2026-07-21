@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/theme_extensions.dart';
 import '../../feactures/auth/login/presentation/providers/login_provider.dart';
+import '../../feactures/mp_connect/presentation/screes/mp_connect_screen.dart';
 
 class AccountTab extends StatelessWidget {
   final Future<void> Function() onLogout;
@@ -132,6 +133,49 @@ class AccountTab extends StatelessWidget {
                   ],
                 ),
               ),
+              if (user?.isOwner == true) ...[
+                const SizedBox(height: 20),
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    leading: const Icon(
+                      Icons.account_balance_wallet_rounded,
+                      color: AppColors.orange500,
+                    ),
+                    title: Text(
+                      'Cuenta de Mercado Pago',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                        color: context.textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Para recibir el pago de tus rentas',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 16,
+                      color: context.colors.outline,
+                    ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const MpConnectScreen()),
+                    ),
+                  ),
+                ),
+              ],
               const Spacer(),
               SizedBox(
                 width: double.infinity,

@@ -33,6 +33,7 @@ import '../../feactures/checkout/presentation/providers/chat_provider.dart';
 import '../../feactures/admin/presentation/providers/admin_provider.dart';
 import '../../feactures/review/presentation/providers/review_provider.dart';
 import '../../feactures/payment_methods/presentation/providers/card_provider.dart';
+import '../../feactures/mp_connect/presentation/providers/mp_connect_provider.dart';
 
 import '../../feactures/auth/login/di/login_di.dart';
 import '../../feactures/auth/register/di/register_di.dart';
@@ -41,6 +42,7 @@ import '../../feactures/solicitante/di/solicitante_di.dart';
 import '../../feactures/checkout/di/checkout_di.dart';
 import '../../feactures/review/di/review_di.dart';
 import '../../feactures/payment_methods/di/payment_methods_di.dart';
+import '../../feactures/mp_connect/di/mp_connect_di.dart';
 
 class InjectionContainer {
   static List<SingleChildWidget> get providers => [
@@ -110,6 +112,9 @@ class InjectionContainer {
         ),
         ChangeNotifierProvider<CardProvider>(
           create: (_) => PaymentMethodsDI.provideCardProvider(),
+        ),
+        ChangeNotifierProvider<MpConnectProvider>(
+          create: (_) => MpConnectDI.provideMpConnectProvider(),
         ),
       ];
 }

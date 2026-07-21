@@ -114,6 +114,48 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: AppColors.success,
                   ),
                 ),
+                const SizedBox(height: 14),
+                _SummaryRow(
+                    icon: Icons.handyman_outlined,
+                    label: toolName,
+                    value: ''),
+                _SummaryRow(
+                    icon: Icons.calendar_today_outlined,
+                    label: '$days día${days > 1 ? 's' : ''}',
+                    value:
+                        '\$${(priceDay * days).toStringAsFixed(0)} MXN'),
+                _SummaryRow(
+                    icon: Icons.storefront_outlined,
+                    label: 'Comisión de servicio (5%)',
+                    value:
+                        '\$${(commission as double).toStringAsFixed(0)} MXN'),
+                _SummaryRow(
+                    icon: Icons.security_outlined,
+                    label: 'Depósito de garantía (10%)',
+                    value:
+                        '\$${(deposit as double).toStringAsFixed(0)} MXN'),
+                const SizedBox(height: 10),
+                Divider(color: context.borderColor),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total:',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: context.textPrimary,
+                        )),
+                    Text(
+                      '\$${(total as double).toStringAsFixed(0)} MXN',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.orange500,
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
