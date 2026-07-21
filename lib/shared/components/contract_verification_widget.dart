@@ -140,7 +140,7 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                         '3. COBERTURA DE SEGURO (IA): El inquilino acepta un cargo en garantía de \$${widget.rental.deductibleAmount.toStringAsFixed(0)} MXN, correspondiente al 10% del valor de catálogo del activo, que servirá de deducible en caso de siniestro. Este monto se libera automáticamente si no hay disputa.',
                       ),
                       _buildClauseText(
-                        '3.1 COMISIÓN DE SERVICIO: ToolShare cobra una comisión de servicio no reembolsable de \$${widget.rental.commissionAmount.toStringAsFixed(0)} MXN, correspondiente al 10% del importe total de la renta.',
+                        '3.1 COMISIÓN DE SERVICIO: ToolShare cobra una comisión de servicio no reembolsable de \$${widget.rental.commissionAmount.toStringAsFixed(0)} MXN, correspondiente al 5% del importe total de la renta.',
                       ),
                       _buildClauseText(
                         '4. INTEGRIDAD: El contrato se firma digitalmente usando la marca de tiempo de entrega, geolocalización de encuentro e identificador de hardware.',

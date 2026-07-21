@@ -3,14 +3,15 @@ import 'dart:io' show Platform;
 class EnvConfig {
   static const bool useProduction = true;
 
-  static const String serverIp = '127.0.0.1';
+  // IP de la Mac en la red WiFi local (necesaria para dispositivos físicos
+  // como el iPhone; 'localhost' solo funciona en el Simulador de iOS).
+  static const String serverIp = '192.168.1.60';
   static const String port = '8080';
 
   static String get baseUrl {
     if (useProduction) {
       return 'https://toolshare-api.up.railway.app/api';
     }
-    if (Platform.isAndroid) return 'http://$serverIp:$port/api';
-    return 'http://localhost:$port/api';
+    return 'http://$serverIp:$port/api';
   }
 }

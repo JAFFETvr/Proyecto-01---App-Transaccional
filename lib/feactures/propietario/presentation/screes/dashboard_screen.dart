@@ -14,6 +14,7 @@ import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
 import '../../../payment_methods/presentation/screes/saved_cards_screen.dart';
+import '../../../mp_connect/presentation/screes/mp_connect_screen.dart';
 import '../../../checkout/presentation/screes/rental_tracking_owner_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
@@ -170,6 +171,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SavedCardsScreen()));
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.account_balance_wallet_rounded, color: AppColors.orange500),
+              title: Text(
+                'Cuenta de Mercado Pago',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  color: context.textPrimary,
+                ),
+              ),
+              subtitle: Text(
+                'Para recibir el pago de tus rentas',
+                style: GoogleFonts.inter(fontSize: 11, color: context.textSecondary),
+              ),
+              trailing: Icon(Icons.arrow_forward_ios_rounded, size: 16, color: context.colors.outline),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const MpConnectScreen()));
               },
             ),
             const Spacer(),

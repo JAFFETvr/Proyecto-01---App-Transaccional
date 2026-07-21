@@ -4,4 +4,9 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!-- Cleartext (HTTP) solo permitido en builds de debug, para hablar con
+         http://127.0.0.1:8080 en el emulador. El build de release no lo
+         declara, por lo que queda en "false" por defecto (H-05). -->
+    <application android:usesCleartextTraffic="true"/>
 </manifest>
