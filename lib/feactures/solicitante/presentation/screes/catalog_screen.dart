@@ -14,7 +14,6 @@ import 'tool_detail_screen.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
-import '../../../checkout/presentation/screes/rental_tracking_requester_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 import 'catalog_map_screen.dart';
 import '../../../../../shared/widgets/account_tab.dart';
@@ -67,6 +66,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final activeRentalCount = context
+        .watch<RentalProvider>()
+        .rentals
+        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
+        .length;
+
     return Scaffold(
       backgroundColor: context.bg,
       body: IndexedStack(
@@ -84,11 +89,21 @@ class _CatalogScreenState extends State<CatalogScreen> {
           setState(() => _selectedIndex = i);
           if (i == 0) context.read<CatalogProvider>().fetchTools();
         },
-        items: const [
-          AppBottomNavItem(icon: Icons.home_rounded, label: 'Disponibles'),
-          AppBottomNavItem(icon: Icons.location_on_rounded, label: 'Mapa'),
-          AppBottomNavItem(icon: Icons.access_time_rounded, label: 'Rentas'),
-          AppBottomNavItem(icon: Icons.person_rounded, label: 'Cuenta'),
+        items: [
+          const AppBottomNavItem(
+            icon: Icons.home_rounded,
+            label: 'Disponibles',
+          ),
+          const AppBottomNavItem(
+            icon: Icons.location_on_rounded,
+            label: 'Mapa',
+          ),
+          AppBottomNavItem(
+            icon: Icons.access_time_rounded,
+            label: 'Rentas',
+            badgeCount: activeRentalCount,
+          ),
+          const AppBottomNavItem(icon: Icons.person_rounded, label: 'Cuenta'),
         ],
       ),
     );
@@ -97,12 +112,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget _buildHomeTab(BuildContext context) {
     final provider = context.watch<CatalogProvider>();
     final tools = provider.filtered;
-    final rentalProvider = context.watch<RentalProvider>();
-    final activeRentals = rentalProvider.rentals
-        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
-        .toList();
-    final bool hasActiveRental = activeRentals.isNotEmpty;
-    final activeRental = activeRentals.firstOrNull;
 
     return RefreshIndicator(
       onRefresh: () => provider.fetchTools(),
@@ -191,98 +200,6 @@ class _CatalogScreenState extends State<CatalogScreen> {
               ),
             ],
           ),
-
-          if (hasActiveRental)
-            SliverToBoxAdapter(
-              child: GestureDetector(
-                onTap: () {
-                  if (activeRentals.length > 1) {
-                    setState(() => _selectedIndex = 2);
-                  } else if (activeRental != null) {
-                    rentalProvider.setCurrentRental(activeRental);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RentalTrackingRequesterScreen(),
-                        settings: RouteSettings(arguments: activeRental),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFEA580C), Color(0xFFF97316)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.orange500.withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.white24,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.timer_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activeRentals.length > 1
-                                  ? 'Tienes ${activeRentals.length} rentas en proceso'
-                                  : 'Tienes una renta activa',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              activeRentals.length > 1
-                                  ? 'Toca para ver la sección de tus rentas'
-                                  : (activeRental!.isPending
-                                        ? 'Pendiente de entrega — Toca para ver'
-                                        : 'En curso — Toca para ver el seguimiento'),
-                              style: GoogleFonts.inter(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
 
           SliverToBoxAdapter(
             child: Padding(

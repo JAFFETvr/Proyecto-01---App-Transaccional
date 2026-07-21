@@ -16,7 +16,6 @@ import '../../../../../shared/widgets/account_tab.dart';
 import '../../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
 import '../../../payment_methods/presentation/screes/saved_cards_screen.dart';
-import '../../../checkout/presentation/screes/rental_tracking_owner_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -27,6 +26,8 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  static const _freeToolLimit = 3;
+
   String _userName = '';
   int _selectedIndex = 0;
 
@@ -45,6 +46,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) {
       setState(() => _userName = prefs.getString('user_name') ?? '');
     }
+  }
+
+  Future<void> _showProPromo(BuildContext context) async {
+    final provider = context.read<ToolProvider>();
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: context.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          28,
+          24,
+          24 + MediaQuery.of(ctx).viewInsets.bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'PLAN PRO',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.2,
+                color: ctx.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sin límites en tu inventario',
+              style: GoogleFonts.montserrat(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: ctx.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Herramientas ilimitadas',
+              style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Publica sin tope de valor',
+              style: GoogleFonts.inter(fontSize: 14, color: ctx.textPrimary),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '\$69',
+                  style: GoogleFonts.montserrat(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.orange500,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'MXN/mes',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: ctx.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 54,
+              child: FilledButton(
+                onPressed: provider.loading
+                    ? null
+                    : () {
+                        Navigator.pop(ctx);
+                        openProSubscriptionCheckout(context);
+                      },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.orange500,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  'Mejorar ahora',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(
+                  'Ahora no',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: ctx.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmDelete(String id, String name) async {
@@ -153,12 +271,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHomeTab(BuildContext context) {
     final provider = context.watch<ToolProvider>();
-    final rentalProvider = context.watch<RentalProvider>();
-    final activeRentals = rentalProvider.rentals
-        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
-        .toList();
-    final bool hasActiveRental = activeRentals.isNotEmpty;
-    final activeRental = activeRentals.firstOrNull;
 
     return RefreshIndicator(
       onRefresh: () => provider.fetchTools(),
@@ -191,12 +303,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  'Mi Panel',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: context.textPrimary,
+                Flexible(
+                  child: Text(
+                    'Hola, $_userName',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: context.textPrimary,
+                    ),
                   ),
                 ),
               ],
@@ -206,26 +321,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Hola, $_userName 👋',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: context.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Gestiona tu inventario',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
-                    ),
-                  ),
-                ],
+              child: Text(
+                'Gestiona tu inventario',
+                style: GoogleFonts.montserrat(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                ),
               ),
             ),
           ),
@@ -292,76 +394,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     )
-                  : Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: context.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: context.borderColor),
-                        boxShadow: AppColors.cardShadow,
-                      ),
-                      child: Row(
+                  : InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: provider.loading
+                          ? null
+                          : () => _showProPromo(context),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: AppColors.orange500.withValues(alpha: 0.1),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.info_outline_rounded,
-                              color: AppColors.orange500,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Plan Gratuito',
-                                  style: GoogleFonts.montserrat(
-                                    color: context.textPrimary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Hasta 3 herramientas · máx. \$1,500 MXN por activo',
-                                  style: GoogleFonts.inter(
-                                    color: context.textSecondary,
-                                    fontSize: 11,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          ConstrainedBox(
-                            constraints: const BoxConstraints(maxWidth: 140),
-                            child: FilledButton(
-                              onPressed: provider.loading
-                                  ? null
-                                  : () => openProSubscriptionCheckout(context),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.orange500,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${provider.totalTools} de $_freeToolLimit herramientas usadas',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  color: context.textSecondary,
                                 ),
                               ),
-                              child: Text(
-                                'Mejorar',
-                                style: GoogleFonts.inter(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 13,
-                                ),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Pasar a Pro',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.orange500,
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 18,
+                                    color: AppColors.orange500,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: (provider.totalTools / _freeToolLimit)
+                                  .clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: context.borderColor,
+                              valueColor: const AlwaysStoppedAnimation(
+                                AppColors.orange500,
                               ),
                             ),
                           ),
@@ -370,98 +450,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
             ),
           ),
-
-          if (hasActiveRental)
-            SliverToBoxAdapter(
-              child: GestureDetector(
-                onTap: () {
-                  if (activeRentals.length > 1) {
-                    setState(() => _selectedIndex = 1);
-                  } else if (activeRental != null) {
-                    rentalProvider.setCurrentRental(activeRental);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const RentalTrackingOwnerScreen(),
-                        settings: RouteSettings(arguments: activeRental),
-                      ),
-                    );
-                  }
-                },
-                child: Container(
-                  margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF6366F1).withOpacity(0.3),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: Colors.white24,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.handshake_outlined,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              activeRentals.length > 1
-                                  ? '${activeRentals.length} rentas en progreso'
-                                  : 'Herramienta en renta',
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            Text(
-                              activeRentals.length > 1
-                                  ? 'Toca para gestionar todas tus rentas'
-                                  : (activeRental!.isPending
-                                        ? 'Pendiente de entrega — Toca para gestionar'
-                                        : 'Activa — Toca para ver el estado'),
-                              style: GoogleFonts.inter(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Icon(
-                        Icons.chevron_right_rounded,
-                        color: Colors.white,
-                        size: 22,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
 
           SliverToBoxAdapter(
             child: Padding(

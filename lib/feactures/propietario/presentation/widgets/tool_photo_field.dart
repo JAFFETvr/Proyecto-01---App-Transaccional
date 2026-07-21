@@ -14,6 +14,7 @@ class ToolPhotoField extends StatelessWidget {
   final bool loading;
   final int minPhotos;
   final int maxPhotos;
+  final bool editable;
   final VoidCallback onAdd;
   final ValueChanged<int> onRemove;
 
@@ -26,9 +27,11 @@ class ToolPhotoField extends StatelessWidget {
     required this.onRemove,
     this.minPhotos = 2,
     this.maxPhotos = 5,
+    this.editable = true,
   });
 
-  bool get _hasExisting => existingPhotoUrl != null && existingPhotoUrl!.isNotEmpty;
+  bool get _hasExisting =>
+      existingPhotoUrl != null && existingPhotoUrl!.isNotEmpty;
   int get _totalCount => pickedImages.length + (_hasExisting ? 1 : 0);
 
   @override
@@ -36,7 +39,7 @@ class ToolPhotoField extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final metMinimum = _totalCount >= minPhotos;
-    final canAddMore = pickedImages.length < maxPhotos && !loading;
+    final canAddMore = editable && pickedImages.length < maxPhotos && !loading;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,14 +84,17 @@ class ToolPhotoField extends StatelessWidget {
                     existingPhotoUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (ctx, error, stack) => Center(
-                      child: Icon(Icons.broken_image_outlined, color: cs.onSurfaceVariant),
+                      child: Icon(
+                        Icons.broken_image_outlined,
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ),
                 ),
               for (var i = 0; i < pickedImages.length; i++)
                 _PhotoThumb(
                   image: Image.file(pickedImages[i], fit: BoxFit.cover),
-                  onRemove: loading ? null : () => onRemove(i),
+                  onRemove: (editable && !loading) ? () => onRemove(i) : null,
                 ),
               if (canAddMore)
                 GestureDetector(
@@ -106,10 +112,17 @@ class ToolPhotoField extends StatelessWidget {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo_outlined, color: cs.onSurfaceVariant),
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                color: cs.onSurfaceVariant,
+                              ),
                               const SizedBox(height: 6),
-                              Text('Agregar',
-                                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+                              Text(
+                                'Agregar',
+                                style: tt.bodySmall?.copyWith(
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
                             ],
                           ),
                   ),
