@@ -38,10 +38,16 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
   bool _isAvailable = true;
   String _wearLevel = 'Nuevo';
-  File? _pickedImage;
+  final List<File> _pickedImages = [];
   double? _latitude;
   double? _longitude;
   bool _imageLoading = false;
+
+  // Debe coincidir con MinRequiredPhotos en Api_Apptransacional/internal/tool/service/tool_service.go.
+  // Con menos fotos, una sola imagen favorecedora puede ocultar desgaste real;
+  // el backend usa el peor score entre todas, así que hacen falta varios
+  // ángulos para que esa protección tenga sentido.
+  static const _minRequiredPhotos = 2;
 
   bool _ticketLoading = false;
   double? _ticketDetectedPrice;
@@ -103,7 +109,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
   void _onFieldChanged() {
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 1000), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 2000), () {
       if (mounted) {
         _updatePricingSuggestion();
       }
@@ -119,7 +125,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
   Future<void> _updatePricingSuggestion() async {
     final name = _nameCtrl.text.trim();
-    if (name.isEmpty) return;
+    if (name.isEmpty || name.length < 3) return;
 
     setState(() => _fetchingPricing = true);
 
@@ -141,18 +147,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           _requiresManualReview = res['requires_manual_review'] as bool? ?? false;
 
           final estValue = (res['estimated_value'] as num?)?.toDouble();
+          // Solo auto-llenamos el valor estimado si el usuario no ha escrito nada o es cero.
           if (estValue != null && estValue > 0) {
-            _estValCtrl.text = estValue.toStringAsFixed(0);
-          }
-
-          if (_finalPrice < _minPrice) {
-            _finalPrice = _minPrice;
-          } else {
-            final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
-            if (_finalPrice > maxRateVal) {
-              _finalPrice = maxRateVal;
+            final currentEst = double.tryParse(_estValCtrl.text.trim()) ?? 0.0;
+            if (currentEst <= 0) {
+              _estValCtrl.text = estValue.toStringAsFixed(0);
             }
           }
+
+          // Asegurar que el precio final actual quede dentro de las nuevas cotizaciones permitidas
+          final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
+          _finalPrice = _finalPrice.clamp(_minPrice, maxRateVal);
         });
       }
     } catch (_) {
@@ -170,17 +175,25 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     setState(() => _ticketLoading = true);
     try {
       final picker = ImagePicker();
-      final xFile = await picker.pickImage(
+      XFile? xFile = await picker.pickImage(
         source: source,
         imageQuality: 80,
         maxWidth: 1080,
       );
+      
+      if (xFile == null) {
+        final LostDataResponse response = await picker.retrieveLostData();
+        if (!response.isEmpty && response.file != null) {
+          xFile = response.file;
+        }
+      }
+
       if (xFile != null && mounted) {
         final file = File(xFile.path);
         final provider = context.read<ToolProvider>();
         final res = await provider.extractTicketPrice(file);
         final valid = res?['valid'] as bool? ?? false;
-        final precio = (res?['precio_detectado'] as num?)?.toDouble();
+        final precio = ((res?['detected_price'] ?? res?['precio_detectado']) as num?)?.toDouble();
 
         if (valid && precio != null && mounted) {
           setState(() {
@@ -256,53 +269,41 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     );
   }
 
-  Future<void> _pickImage() async {
+  // La condición NO se evalúa aquí, al agregar la foto — solo se llama a la
+  // CNN una vez, del lado del servidor, cuando la foto se sube de verdad
+  // (UploadPhoto en tool_service.go, después de presionar "Publicar").
+  // Evaluar también aquí en el cliente duplicaba la llamada a la CNN por
+  // cada foto (una al agregar + otra al subir) sin necesidad. El precio que
+  // se ve mientras se llena el formulario usa el nivel de
+  // "Condición física" que elijas a mano (o el default); en cuanto se
+  // suben las fotos, el servidor corrige el condition_score real — ver el
+  // aviso de precio ajustado en _save().
+  Future<void> _addImage() async {
     final source = await _chooseImageSource();
     if (source == null) return;
 
     setState(() => _imageLoading = true);
     try {
       final picker = ImagePicker();
-      final xFile = await picker.pickImage(
+      XFile? xFile = await picker.pickImage(
         source: source,
         imageQuality: 80,
         maxWidth: 1080,
       );
-      if (xFile != null) {
-        final file = File(xFile.path);
-        setState(() {
-          _pickedImage = file;
-        });
 
-        if (mounted) {
-          final provider = context.read<ToolProvider>();
-          final pred = await provider.predictCondition(file);
-          if (pred != null && mounted) {
-            final clase = pred['clase_predicha'] as String?;
-            String mappedLevel = _wearLevel;
-            if (clase == 'nuevo') {
-              mappedLevel = 'Nuevo';
-            } else if (clase == 'uso_moderado') {
-              mappedLevel = 'Buen Estado';
-            } else if (clase == 'viejo_desgastado') {
-              mappedLevel = 'Desgastado';
-            }
-            setState(() {
-              _wearLevel = mappedLevel;
-            });
-            await _updatePricingSuggestion();
-          } else if (mounted) {
-            setState(() {
-              _pickedImage = null;
-            });
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(provider.error ?? 'La imagen no corresponde a una herramienta de construcción válida.'),
-              backgroundColor: const Color(0xFFEF4444),
-              behavior: SnackBarBehavior.floating,
-              duration: const Duration(seconds: 5),
-            ));
-          }
+      // Si Android destruyó la actividad al abrir la cámara/galería (muy común en Xiaomi MIUI),
+      // intentamos recuperar la imagen perdida de manera síncrona.
+      if (xFile == null) {
+        final LostDataResponse response = await picker.retrieveLostData();
+        if (!response.isEmpty && response.file != null) {
+          xFile = response.file;
         }
+      }
+
+      if (xFile != null && mounted) {
+        setState(() {
+          _pickedImages.add(File(xFile!.path));
+        });
       }
     } catch (_) {
       if (mounted) {
@@ -318,8 +319,24 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     }
   }
 
+  void _removeImage(int index) {
+    setState(() => _pickedImages.removeAt(index));
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_isEditing && _pickedImages.length < _minRequiredPhotos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Sube al menos $_minRequiredPhotos fotos en ángulos distintos antes de publicar.'),
+          backgroundColor: const Color(0xFFEF4444),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
 
     if (!_isEditing && (double.tryParse(_estValCtrl.text.trim()) ?? 0) <= 0) {
       await _updatePricingSuggestion();
@@ -382,15 +399,59 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
     if (!mounted) return;
     final ok = saved != null;
-    if (ok && _pickedImage != null) {
-      final photoOk = await provider.uploadPhoto(saved.id, _pickedImage!);
-      if (!photoOk && mounted) {
+    if (ok && _pickedImages.isNotEmpty) {
+      var subidas = 0;
+      for (final img in _pickedImages) {
+        final photoOk = await provider.uploadPhoto(saved.id, img);
+        if (photoOk) subidas++;
+      }
+      if (subidas < _pickedImages.length && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Herramienta guardada, pero la foto no se pudo subir: ${provider.error ?? "intenta de nuevo desde Editar"}'),
+          content: Text(
+              'Herramienta guardada, pero solo se subieron $subidas de ${_pickedImages.length} fotos: '
+              '${provider.error ?? "intenta subir el resto de nuevo desde Editar"}'),
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
         ));
+      }
+      // El precio que se guardó arriba se calculó con el nivel de
+      // "Condición física" elegido a mano (o el default "Nuevo"), NO con el
+      // score real que acaba de calcular la CNN al subir las fotos — esa es
+      // la única evaluación que se hace (ver nota en _addImage). Aquí se
+      // recalcula el precio con ese score real (el peor de todas las fotos,
+      // ya persistido en la herramienta por UploadPhoto) y se corrige.
+      if (subidas > 0 && mounted) {
+        final savedId = saved.id;
+        final freshTool = provider.tools
+            .cast<ToolEntity?>()
+            .firstWhere((t) => t?.id == savedId, orElse: () => null);
+        final realScore = freshTool?.conditionScore;
+        if (realScore != null) {
+          final res = await provider.autoValuate(
+            name: _nameCtrl.text.trim(),
+            scoreCondicion: realScore,
+            category: _catCtrl.text.trim(),
+            brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+            ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
+            precioBaseManual: _ticketValidado ? _ticketDetectedPrice : null,
+            ticketValidado: _ticketValidado,
+          );
+          final realPrice = (res?['suggested_daily_rate'] as num?)?.toDouble();
+          if (realPrice != null && (realPrice - _finalPrice).abs() > 0.5 && mounted) {
+            await provider.updateTool(id: saved.id, dailyRate: realPrice);
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    'Precio ajustado a \$${realPrice.toStringAsFixed(0)} MXN/día '
+                    'según el desgaste real detectado en tus fotos.'),
+                backgroundColor: const Color(0xFF2563EB),
+                behavior: SnackBarBehavior.floating,
+                duration: const Duration(seconds: 5),
+              ));
+            }
+          }
+        }
       }
     }
     if (ok) {
@@ -508,10 +569,12 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             children: [
               ToolPhotoField(
-                pickedImage: _pickedImage,
+                pickedImages: _pickedImages,
                 existingPhotoUrl: widget.tool?.photoUrl,
                 loading: _imageLoading,
-                onTap: _pickImage,
+                minPhotos: _minRequiredPhotos,
+                onAdd: _addImage,
+                onRemove: _removeImage,
               ),
               const SizedBox(height: 24),
 

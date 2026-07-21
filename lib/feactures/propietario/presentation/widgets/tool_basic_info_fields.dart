@@ -106,25 +106,7 @@ class ToolBasicInfoFields extends StatelessWidget {
               ? 'Campo requerido' : null,
           onChanged: (_) => onFieldChanged(),
         ),
-        const SizedBox(height: 14),
 
-        TextFormField(
-          controller: catCtrl,
-          textInputAction: TextInputAction.next,
-          decoration: InputDecoration(
-            labelText: 'Categoría',
-            hintText: 'Eléctrico, Manual, Corte…',
-            prefixIcon: const Icon(Icons.category_outlined),
-            suffixIcon: PopupMenuButton<String>(
-              icon: const Icon(Icons.arrow_drop_down),
-              onSelected: onCategorySelected,
-              itemBuilder: (_) => categories
-                  .map((c) => PopupMenuItem(value: c, child: Text(c)))
-                  .toList(),
-            ),
-          ),
-          onChanged: (_) => onFieldChanged(),
-        ),
         const SizedBox(height: 14),
 
         TextFormField(

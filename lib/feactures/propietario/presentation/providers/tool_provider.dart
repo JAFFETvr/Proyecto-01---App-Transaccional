@@ -307,8 +307,10 @@ class ToolProvider extends ChangeNotifier {
     } on AppError catch (e) {
       _error = e.userMessage;
       return null;
-    } catch (_) {
-      _error = 'Sin conexión al predecir desgaste.';
+    } catch (e, stack) {
+      print('FLUTTER RUNTIME ERROR IN predictCondition: $e');
+      print(stack);
+      _error = 'Sin conexión al predecir desgaste: $e';
       return null;
     } finally {
       _loading = false;
@@ -358,12 +360,17 @@ class ToolProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      return await _extractTicketPrice.execute(photo);
+      final res = await _extractTicketPrice.execute(photo);
+      print('FLUTTER DEBUG: extractTicketPrice Response -> $res');
+      return res;
     } on AppError catch (e) {
+      print('FLUTTER DEBUG: extractTicketPrice AppError -> ${e.userMessage}');
       _error = e.userMessage;
       return null;
-    } catch (_) {
-      _error = 'Sin conexión al leer el ticket.';
+    } catch (e, stack) {
+      print('FLUTTER DEBUG: extractTicketPrice Unexpected Error -> $e');
+      print(stack);
+      _error = 'Sin conexión al leer el ticket: $e';
       return null;
     } finally {
       _loading = false;
