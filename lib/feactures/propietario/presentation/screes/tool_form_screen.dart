@@ -39,6 +39,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool _isAvailable = true;
   String _wearLevel = 'Nuevo';
   final List<File> _pickedImages = [];
+  // Score de cada foto en _pickedImages (mismo índice), calculado por la CNN
+  // en cuanto se agrega la foto en esta pantalla (antes de publicar).
+  // _wearLevel siempre refleja el PEOR score entre todas.
+  final List<double> _photoScores = [];
   double? _latitude;
   double? _longitude;
   bool _imageLoading = false;
@@ -269,15 +273,26 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     );
   }
 
-  // La condición NO se evalúa aquí, al agregar la foto — solo se llama a la
-  // CNN una vez, del lado del servidor, cuando la foto se sube de verdad
-  // (UploadPhoto en tool_service.go, después de presionar "Publicar").
-  // Evaluar también aquí en el cliente duplicaba la llamada a la CNN por
-  // cada foto (una al agregar + otra al subir) sin necesidad. El precio que
-  // se ve mientras se llena el formulario usa el nivel de
-  // "Condición física" que elijas a mano (o el default); en cuanto se
-  // suben las fotos, el servidor corrige el condition_score real — ver el
-  // aviso de precio ajustado en _save().
+  // Traduce el score continuo de la CNN (1.0 nuevo / 0.65 uso_moderado /
+  // 0.40 viejo_desgastado — ver SCORE_MAPPING en api/routes_tool.py) a la
+  // etiqueta del dropdown.
+  String _wearLevelForScore(double score) {
+    if (score >= 0.9) return 'Nuevo';
+    if (score >= 0.5) return 'Buen Estado';
+    return 'Desgastado';
+  }
+
+  /// _wearLevel (y por lo tanto el precio sugerido) siempre refleja el PEOR
+  /// score entre todas las fotos agregadas hasta el momento.
+  void _actualizarCondicionDesdeFotos() {
+    if (_photoScores.isEmpty) return;
+    final peor = _photoScores.reduce((a, b) => a < b ? a : b);
+    setState(() => _wearLevel = _wearLevelForScore(peor));
+  }
+
+  // La CNN se evalúa AQUÍ, en cuanto se agrega cada foto a esta pantalla —
+  // antes de publicar. Así "Condición física" y el precio sugerido ya
+  // reflejan las fotos reales mientras se llena el formulario.
   Future<void> _addImage() async {
     final source = await _chooseImageSource();
     if (source == null) return;
@@ -301,9 +316,30 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
 
       if (xFile != null && mounted) {
-        setState(() {
-          _pickedImages.add(File(xFile!.path));
-        });
+        final file = File(xFile.path);
+        final provider = context.read<ToolProvider>();
+        final pred = await provider.predictCondition(file);
+
+        if (pred == null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(provider.error ??
+                'La imagen no corresponde a una herramienta de construcción válida.'),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ));
+          return;
+        }
+
+        final score = (pred!['score_condicion'] as num?)?.toDouble() ?? 0.70;
+        if (mounted) {
+          setState(() {
+            _pickedImages.add(file);
+            _photoScores.add(score);
+          });
+          _actualizarCondicionDesdeFotos();
+          await _updatePricingSuggestion();
+        }
       }
     } catch (_) {
       if (mounted) {
@@ -320,7 +356,13 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   }
 
   void _removeImage(int index) {
-    setState(() => _pickedImages.removeAt(index));
+    setState(() {
+      _pickedImages.removeAt(index);
+      _photoScores.removeAt(index);
+      if (_photoScores.isEmpty) _wearLevel = 'Nuevo';
+    });
+    if (_photoScores.isNotEmpty) _actualizarCondicionDesdeFotos();
+    _updatePricingSuggestion();
   }
 
   Future<void> _save() async {
