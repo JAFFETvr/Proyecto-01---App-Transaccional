@@ -12,7 +12,9 @@ import '../providers/catalog_provider.dart';
 import 'tool_detail_screen.dart';
 
 class CatalogMapScreen extends StatefulWidget {
-  const CatalogMapScreen({super.key});
+  final bool embedded;
+
+  const CatalogMapScreen({super.key, this.embedded = false});
 
   @override
   State<CatalogMapScreen> createState() => _CatalogMapScreenState();
@@ -30,19 +32,25 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        _showLocationError('Activa la ubicación del dispositivo para centrar en tu posición real.');
+        _showLocationError(
+          'Activa la ubicación del dispositivo para centrar en tu posición real.',
+        );
         return;
       }
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
       }
-      if (perm == LocationPermission.deniedForever || perm == LocationPermission.denied) {
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
         _showLocationError('Permiso de ubicación denegado.');
         return;
       }
       final pos = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
       _mapController.move(LatLng(pos.latitude, pos.longitude), 15.5);
     } catch (_) {
       _showLocationError('No se pudo obtener tu ubicación.');
@@ -53,10 +61,9 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
 
   void _showLocationError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+    );
   }
 
   void _zoomBy(double delta) {
@@ -93,8 +100,12 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                 markers: tools.asMap().entries.map((entry) {
                   final idx = entry.key;
                   final t = entry.value;
-                  double lat = t.latitude != 0.0 ? t.latitude : _defaultCenter.latitude + (idx % 5 - 2) * 0.0025;
-                  double lng = t.longitude != 0.0 ? t.longitude : _defaultCenter.longitude + (idx ~/ 5 - 2) * 0.0025;
+                  double lat = t.latitude != 0.0
+                      ? t.latitude
+                      : _defaultCenter.latitude + (idx % 5 - 2) * 0.0025;
+                  double lng = t.longitude != 0.0
+                      ? t.longitude
+                      : _defaultCenter.longitude + (idx ~/ 5 - 2) * 0.0025;
                   final isSelected = _selectedTool?.id == t.id;
 
                   return Marker(
@@ -109,10 +120,21 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         decoration: BoxDecoration(
-                          color: isSelected ? AppColors.slate900 : AppColors.orange500,
+                          color: isSelected
+                              ? AppColors.slate900
+                              : AppColors.orange500,
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: isSelected ? 3 : 2),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.25), blurRadius: 8, offset: const Offset(0, 4))],
+                          border: Border.all(
+                            color: Colors.white,
+                            width: isSelected ? 3 : 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
                         child: Icon(
                           Icons.build_rounded,
@@ -132,17 +154,29 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  Container(
-                    decoration: BoxDecoration(color: AppColors.slate900, borderRadius: BorderRadius.circular(14), boxShadow: AppColors.cardShadow),
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
-                      onPressed: () => Navigator.pop(context),
+                  if (!widget.embedded) ...[
+                    Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.slate900,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: AppColors.cardShadow,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.slate900.withOpacity(0.95),
                         borderRadius: BorderRadius.circular(16),
@@ -150,12 +184,20 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on_rounded, color: AppColors.orange500, size: 20),
+                          const Icon(
+                            Icons.location_on_rounded,
+                            color: AppColors.orange500,
+                            size: 20,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Mapa: ${tools.length} herramientas cercanas',
-                              style: GoogleFonts.montserrat(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13),
+                              style: GoogleFonts.montserrat(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
                         ],
@@ -194,8 +236,12 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                   foregroundColor: Colors.white,
                   child: _locating
                       ? const SizedBox(
-                          width: 18, height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.my_location_rounded),
                   onPressed: _locating ? null : _goToMyLocation,
@@ -221,16 +267,41 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                   decoration: BoxDecoration(
                     color: context.surface,
                     borderRadius: BorderRadius.circular(22),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 20, offset: const Offset(0, 10))],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.18),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
                       Container(
-                        width: 70, height: 70,
-                        decoration: BoxDecoration(color: context.colors.surfaceContainerHigh, borderRadius: BorderRadius.circular(16)),
+                        width: 70,
+                        height: 70,
+                        decoration: BoxDecoration(
+                          color: context.colors.surfaceContainerHigh,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
                         child: _selectedTool!.photoUrl.isNotEmpty
-                            ? ClipRRect(borderRadius: BorderRadius.circular(16), child: Image.network(_selectedTool!.photoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Icon(Icons.handyman_rounded, color: context.textSecondary, size: 32)))
-                            : Icon(Icons.handyman_rounded, color: context.textSecondary, size: 32),
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  _selectedTool!.photoUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Icon(
+                                    Icons.handyman_rounded,
+                                    color: context.textSecondary,
+                                    size: 32,
+                                  ),
+                                ),
+                              )
+                            : Icon(
+                                Icons.handyman_rounded,
+                                color: context.textSecondary,
+                                size: 32,
+                              ),
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -239,13 +310,42 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(color: AppColors.orange500.withOpacity(0.12), borderRadius: BorderRadius.circular(6)),
-                              child: Text(_selectedTool!.category.toUpperCase(), style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.w800, color: AppColors.orange600)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.orange500.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                _selectedTool!.category.toUpperCase(),
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.orange600,
+                                ),
+                              ),
                             ),
                             const SizedBox(height: 4),
-                            Text(_selectedTool!.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: GoogleFonts.montserrat(fontWeight: FontWeight.w800, fontSize: 16, color: context.textPrimary)),
-                            Text('\$${_selectedTool!.dailyRate.toStringAsFixed(0)} MXN / día', style: GoogleFonts.montserrat(fontWeight: FontWeight.w800, fontSize: 14, color: AppColors.emerald600)),
+                            Text(
+                              _selectedTool!.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.montserrat(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 16,
+                                color: context.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              '\$${_selectedTool!.dailyRate.toStringAsFixed(0)} MXN / día',
+                              style: GoogleFonts.montserrat(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                                color: AppColors.emerald600,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -254,20 +354,34 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.orange500,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                           elevation: 3,
                         ),
                         onPressed: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => ToolDetailScreen(tool: _selectedTool!)));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  ToolDetailScreen(tool: _selectedTool!),
+                            ),
+                          );
                         },
-                        child: Text('Rentar', style: GoogleFonts.inter(fontWeight: FontWeight.w700)),
-                      )
+                        child: Text(
+                          'Rentar',
+                          style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            )
+            ),
         ],
       ),
     );

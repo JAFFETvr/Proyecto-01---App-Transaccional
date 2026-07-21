@@ -6,7 +6,7 @@ class AppError implements Exception {
 
   String get userMessage {
     switch (statusCode) {
-      case 400: return 'Datos inválidos. Revisa los campos.';
+      case 400: return message.isNotEmpty ? message : 'Datos inválidos. Revisa los campos.';
       case 401: return 'Credenciales incorrectas.';
       case 403: return 'No tienes permiso para esta acción.';
       case 404: return 'No encontrado.';
