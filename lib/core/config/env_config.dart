@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 
 class EnvConfig {
-  static const bool useProduction = true;
+  static const bool useProduction = false;
 
   static const String serverIp = '127.0.0.1';
   static const String port = '8080';
