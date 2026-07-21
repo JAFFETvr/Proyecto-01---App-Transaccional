@@ -8,6 +8,7 @@ class TicketUploadField extends StatelessWidget {
   final bool ticketValidado;
   final double? detectedPrice;
   final bool loading;
+  final bool editable;
   final VoidCallback onPickTicket;
 
   const TicketUploadField({
@@ -16,6 +17,7 @@ class TicketUploadField extends StatelessWidget {
     required this.detectedPrice,
     required this.loading,
     required this.onPickTicket,
+    this.editable = true,
   });
 
   @override
@@ -39,31 +41,47 @@ class TicketUploadField extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: const Color(0xFF16A34A).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFF16A34A).withValues(alpha: 0.3)),
+                  border: Border.all(
+                    color: const Color(0xFF16A34A).withValues(alpha: 0.3),
+                  ),
                 ),
-                child: Row(children: [
-                  const Icon(Icons.verified_outlined, color: Color(0xFF16A34A), size: 20),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Ticket verificado: \$${detectedPrice!.toStringAsFixed(0)} MXN',
-                      style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF16A34A)),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.verified_outlined,
+                      color: Color(0xFF16A34A),
+                      size: 20,
                     ),
-                  ),
-                  TextButton(
-                    onPressed: loading ? null : onPickTicket,
-                    child: const Text('Cambiar'),
-                  ),
-                ]),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Ticket verificado: \$${detectedPrice!.toStringAsFixed(0)} MXN',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ),
+                    if (editable)
+                      TextButton(
+                        onPressed: loading ? null : onPickTicket,
+                        child: const Text('Cambiar'),
+                      ),
+                  ],
+                ),
               )
             : OutlinedButton.icon(
-                onPressed: loading ? null : onPickTicket,
+                onPressed: (editable && !loading) ? onPickTicket : null,
                 icon: loading
                     ? const SizedBox(
-                        width: 16, height: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2))
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Icon(Icons.receipt_long_outlined),
-                label: Text(loading ? 'Leyendo ticket...' : 'Subir ticket de compra'),
+                label: Text(
+                  loading ? 'Leyendo ticket...' : 'Subir ticket de compra',
+                ),
               ),
       ],
     );

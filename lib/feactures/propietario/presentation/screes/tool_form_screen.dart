@@ -27,7 +27,7 @@ class ToolFormScreen extends StatefulWidget {
 }
 
 class _ToolFormScreenState extends State<ToolFormScreen> {
-  final _formKey     = GlobalKey<FormState>();
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _brandCtrl;
   late final TextEditingController _modelCtrl;
@@ -68,21 +68,31 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool get _isEditing => widget.tool != null;
 
   static const _categories = [
-    'Manual', 'Eléctrico', 'Neumático', 'Medición', 'Energía', 'Otro',
+    'Manual',
+    'Eléctrico',
+    'Neumático',
+    'Medición',
+    'Energía',
+    'Otro',
   ];
 
   @override
   void initState() {
     super.initState();
     final t = widget.tool;
-    _nameCtrl  = TextEditingController(text: t?.name ?? '');
+    _nameCtrl = TextEditingController(text: t?.name ?? '');
     _brandCtrl = TextEditingController(text: t?.brand ?? '');
     _modelCtrl = TextEditingController();
-    _ageCtrl   = TextEditingController(text: t != null ? t.ageMonths.toString() : '12');
-    _descCtrl  = TextEditingController(text: t?.description ?? '');
-    _catCtrl   = TextEditingController(text: t?.category ?? '');
+    _ageCtrl = TextEditingController(
+      text: t != null ? t.ageMonths.toString() : '12',
+    );
+    _descCtrl = TextEditingController(text: t?.description ?? '');
+    _catCtrl = TextEditingController(text: t?.category ?? '');
     _estValCtrl = TextEditingController(
-        text: (t != null && t.estimatedValue > 0) ? t.estimatedValue.toStringAsFixed(0) : '');
+      text: (t != null && t.estimatedValue > 0)
+          ? t.estimatedValue.toStringAsFixed(0)
+          : '',
+    );
     _isAvailable = t?.isAvailable ?? true;
 
     if (t != null) {
@@ -138,17 +148,21 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         name: name,
         scoreCondicion: _scoreForWearLevel(_wearLevel),
         category: _catCtrl.text.trim(),
-        brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+        brand: _brandCtrl.text.trim().isEmpty
+            ? 'Generico'
+            : _brandCtrl.text.trim(),
         ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
         precioBaseManual: _ticketValidado ? _ticketDetectedPrice : null,
         ticketValidado: _ticketValidado,
       );
       if (res != null && mounted) {
         setState(() {
-          _suggestedPrice = (res['suggested_daily_rate'] as num?)?.toDouble() ?? 100.0;
+          _suggestedPrice =
+              (res['suggested_daily_rate'] as num?)?.toDouble() ?? 100.0;
           _minPrice = (res['minimum_daily_rate'] as num?)?.toDouble() ?? 50.0;
           _pricingDesc = res['description'] as String? ?? '';
-          _requiresManualReview = res['requires_manual_review'] as bool? ?? false;
+          _requiresManualReview =
+              res['requires_manual_review'] as bool? ?? false;
 
           final estValue = (res['estimated_value'] as num?)?.toDouble();
           // Solo auto-llenamos el valor estimado si el usuario no ha escrito nada o es cero.
@@ -160,7 +174,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           }
 
           // Asegurar que el precio final actual quede dentro de las nuevas cotizaciones permitidas
-          final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
+          final maxRateVal = _suggestedPrice * 2 > _minPrice
+              ? _suggestedPrice * 2
+              : _minPrice + 10;
           _finalPrice = _finalPrice.clamp(_minPrice, maxRateVal);
         });
       }
@@ -184,7 +200,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         imageQuality: 80,
         maxWidth: 1080,
       );
-      
+
       if (xFile == null) {
         final LostDataResponse response = await picker.retrieveLostData();
         if (!response.isEmpty && response.file != null) {
@@ -197,7 +213,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         final provider = context.read<ToolProvider>();
         final res = await provider.extractTicketPrice(file);
         final valid = res?['valid'] as bool? ?? false;
-        final precio = ((res?['detected_price'] ?? res?['precio_detectado']) as num?)?.toDouble();
+        final precio =
+            ((res?['detected_price'] ?? res?['precio_detectado']) as num?)
+                ?.toDouble();
 
         if (valid && precio != null && mounted) {
           setState(() {
@@ -206,30 +224,40 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           });
           await _updatePricingSuggestion();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Ticket leído: \$${precio.toStringAsFixed(0)} MXN detectado y verificado.'),
-              backgroundColor: const Color(0xFF16A34A),
-              behavior: SnackBarBehavior.floating,
-            ));
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Ticket leído: \$${precio.toStringAsFixed(0)} MXN detectado y verificado.',
+                ),
+                backgroundColor: const Color(0xFF16A34A),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
           }
         } else if (mounted) {
           setState(() {
             _ticketDetectedPrice = null;
             _ticketValidado = false;
           });
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(res?['error'] as String? ??
-                'No se pudo leer un monto en el ticket. Se usará el catálogo de referencia.'),
-            behavior: SnackBarBehavior.floating,
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                res?['error'] as String? ??
+                    'No se pudo leer un monto en el ticket. Se usará el catálogo de referencia.',
+              ),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('No se pudo acceder a la cámara/galería.'),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo acceder a la cámara/galería.'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -250,7 +278,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           children: [
             const SizedBox(height: 8),
             Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: Theme.of(ctx).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
@@ -321,13 +350,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         final pred = await provider.predictCondition(file);
 
         if (pred == null && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(provider.error ??
-                'La imagen no corresponde a una herramienta de construcción válida.'),
-            backgroundColor: const Color(0xFFEF4444),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 5),
-          ));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                provider.error ??
+                    'La imagen no corresponde a una herramienta de construcción válida.',
+              ),
+              backgroundColor: const Color(0xFFEF4444),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
+            ),
+          );
           return;
         }
 
@@ -343,10 +376,14 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('No se pudo acceder a la cámara/galería. Prueba en un dispositivo o emulador Android/iOS real.'),
-          behavior: SnackBarBehavior.floating,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No se pudo acceder a la cámara/galería. Prueba en un dispositivo o emulador Android/iOS real.',
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
       }
     } finally {
       if (mounted) {
@@ -372,7 +409,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-              'Sube al menos $_minRequiredPhotos fotos en ángulos distintos antes de publicar.'),
+            'Sube al menos $_minRequiredPhotos fotos en ángulos distintos antes de publicar.',
+          ),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
         ),
@@ -386,7 +424,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Completa nombre y categoría para calcular el valor de la herramienta.'),
+              content: Text(
+                'Completa nombre y categoría para calcular el valor de la herramienta.',
+              ),
               backgroundColor: Color(0xFFEF4444),
               behavior: SnackBarBehavior.floating,
             ),
@@ -399,7 +439,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     if (_latitude == null || _longitude == null || _latitude == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Selecciona la ubicación real de la herramienta en el mapa antes de publicar.'),
+          content: Text(
+            'Selecciona la ubicación real de la herramienta en el mapa antes de publicar.',
+          ),
           backgroundColor: Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
         ),
@@ -413,10 +455,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
 
     if (_isEditing) {
       saved = await provider.updateTool(
-        id:          widget.tool!.id,
-        name:        _nameCtrl.text.trim(),
+        id: widget.tool!.id,
+        name: _nameCtrl.text.trim(),
         description: _descCtrl.text.trim(),
-        category:    _catCtrl.text.trim(),
+        category: _catCtrl.text.trim(),
         isAvailable: _isAvailable,
         estimatedValue: estVal,
         dailyRate: _finalPrice,
@@ -425,15 +467,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       );
     } else {
       saved = await provider.createTool(
-        name:        _nameCtrl.text.trim(),
+        name: _nameCtrl.text.trim(),
         description: _descCtrl.text.trim(),
-        category:    _catCtrl.text.trim(),
+        category: _catCtrl.text.trim(),
         isAvailable: _isAvailable,
         estimatedValue: estVal,
         dailyRate: _finalPrice,
         latitude: _latitude,
         longitude: _longitude,
-        brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+        brand: _brandCtrl.text.trim().isEmpty
+            ? 'Generico'
+            : _brandCtrl.text.trim(),
         ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
         conditionScore: _scoreForWearLevel(_wearLevel),
       );
@@ -448,14 +492,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         if (photoOk) subidas++;
       }
       if (subidas < _pickedImages.length && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
               'Herramienta guardada, pero solo se subieron $subidas de ${_pickedImages.length} fotos: '
-              '${provider.error ?? "intenta subir el resto de nuevo desde Editar"}'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-        ));
+              '${provider.error ?? "intenta subir el resto de nuevo desde Editar"}',
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
       // El precio que se guardó arriba se calculó con el nivel de
       // "Condición física" elegido a mano (o el default "Nuevo"), NO con el
@@ -465,48 +512,59 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       // ya persistido en la herramienta por UploadPhoto) y se corrige.
       if (subidas > 0 && mounted) {
         final savedId = saved.id;
-        final freshTool = provider.tools
-            .cast<ToolEntity?>()
-            .firstWhere((t) => t?.id == savedId, orElse: () => null);
+        final freshTool = provider.tools.cast<ToolEntity?>().firstWhere(
+          (t) => t?.id == savedId,
+          orElse: () => null,
+        );
         final realScore = freshTool?.conditionScore;
         if (realScore != null) {
           final res = await provider.autoValuate(
             name: _nameCtrl.text.trim(),
             scoreCondicion: realScore,
             category: _catCtrl.text.trim(),
-            brand: _brandCtrl.text.trim().isEmpty ? 'Generico' : _brandCtrl.text.trim(),
+            brand: _brandCtrl.text.trim().isEmpty
+                ? 'Generico'
+                : _brandCtrl.text.trim(),
             ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
             precioBaseManual: _ticketValidado ? _ticketDetectedPrice : null,
             ticketValidado: _ticketValidado,
           );
           final realPrice = (res?['suggested_daily_rate'] as num?)?.toDouble();
-          if (realPrice != null && (realPrice - _finalPrice).abs() > 0.5 && mounted) {
+          if (realPrice != null &&
+              (realPrice - _finalPrice).abs() > 0.5 &&
+              mounted) {
             await provider.updateTool(id: saved.id, dailyRate: realPrice);
             if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
                     'Precio ajustado a \$${realPrice.toStringAsFixed(0)} MXN/día '
-                    'según el desgaste real detectado en tus fotos.'),
-                backgroundColor: const Color(0xFF2563EB),
-                behavior: SnackBarBehavior.floating,
-                duration: const Duration(seconds: 5),
-              ));
+                    'según el desgaste real detectado en tus fotos.',
+                  ),
+                  backgroundColor: const Color(0xFF2563EB),
+                  behavior: SnackBarBehavior.floating,
+                  duration: const Duration(seconds: 5),
+                ),
+              );
             }
           }
         }
       }
     }
     if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(_isEditing
-            ? 'Herramienta actualizada ✓'
-            : 'Herramienta creada ✓'),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isEditing ? 'Herramienta actualizada ✓' : 'Herramienta creada ✓',
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
       Navigator.pop(context);
     } else {
       final errorMsg = provider.error ?? 'Error al guardar';
-      final bool isPlanError = errorMsg.toLowerCase().contains('plan') ||
+      final bool isPlanError =
+          errorMsg.toLowerCase().contains('plan') ||
           errorMsg.toLowerCase().contains('limit') ||
           errorMsg.toLowerCase().contains('máximo') ||
           errorMsg.toLowerCase().contains('maximo') ||
@@ -522,75 +580,88 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           builder: (ctx) {
             final dialogCs = Theme.of(ctx).colorScheme;
             return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            icon: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: dialogCs.primaryContainer,
-                shape: BoxShape.circle,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
               ),
-              child: Icon(Icons.workspace_premium_rounded,
-                  size: 32, color: dialogCs.primary),
-            ),
-            title: const Text(
-              'Límite del Plan Gratuito',
-              textAlign: TextAlign.center,
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: dialogCs.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: dialogCs.primary.withValues(alpha: 0.3)),
+              icon: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: dialogCs.primaryContainer,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.workspace_premium_rounded,
+                  size: 32,
+                  color: dialogCs.primary,
+                ),
+              ),
+              title: const Text(
+                'Límite del Plan Gratuito',
+                textAlign: TextAlign.center,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: dialogCs.primaryContainer,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: dialogCs.primary.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Text(
+                      errorMsg,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: dialogCs.onPrimaryContainer,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  child: Text(
-                    errorMsg,
+                  const SizedBox(height: 14),
+                  Text(
+                    'El Plan Pro te permite publicar herramientas ilimitadas y de cualquier valor catálogo.',
                     style: TextStyle(
                       fontSize: 13,
-                      color: dialogCs.onPrimaryContainer,
+                      color: dialogCs.onSurfaceVariant,
                       height: 1.5,
                     ),
                     textAlign: TextAlign.center,
                   ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancelar'),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  'El Plan Pro te permite publicar herramientas ilimitadas y de cualquier valor catálogo.',
-                  style: TextStyle(fontSize: 13, color: dialogCs.onSurfaceVariant, height: 1.5),
-                  textAlign: TextAlign.center,
+                FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: dialogCs.primary,
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(ctx);
+                    await openProSubscriptionCheckout(context);
+                  },
+                  icon: const Icon(Icons.bolt_rounded, size: 16),
+                  label: const Text('Obtener Plan Pro'),
                 ),
               ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Cancelar'),
-              ),
-              FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: dialogCs.primary,
-                ),
-                onPressed: () async {
-                  Navigator.pop(ctx);
-                  await openProSubscriptionCheckout(context);
-                },
-                icon: const Icon(Icons.bolt_rounded, size: 16),
-                label: const Text('Obtener Plan Pro'),
-              ),
-            ],
-          );
+            );
           },
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(errorMsg),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
+        );
       }
     }
   }
@@ -598,7 +669,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<ToolProvider>();
-    final maxRateVal = _suggestedPrice * 2 > _minPrice ? _suggestedPrice * 2 : _minPrice + 10;
+    final maxRateVal = _suggestedPrice * 2 > _minPrice
+        ? _suggestedPrice * 2
+        : _minPrice + 10;
 
     return Scaffold(
       appBar: AppBar(
@@ -617,6 +690,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 minPhotos: _minRequiredPhotos,
                 onAdd: _addImage,
                 onRemove: _removeImage,
+                editable: !_isEditing,
               ),
               const SizedBox(height: 24),
 
@@ -625,6 +699,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 detectedPrice: _ticketDetectedPrice,
                 loading: _ticketLoading,
                 onPickTicket: _pickTicketImage,
+                editable: !_isEditing,
               ),
               const SizedBox(height: 24),
 
@@ -667,14 +742,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 pricingDesc: _pricingDesc,
                 requiresManualReview: _requiresManualReview,
                 onFinalPriceChanged: (v) => setState(() => _finalPrice = v),
+                editable: !_isEditing,
               ),
               const SizedBox(height: 20),
 
-              ToolAvailabilitySwitch(
-                value: _isAvailable,
-                onChanged: (v) => setState(() => _isAvailable = v),
-              ),
-              const SizedBox(height: 20),
+              if (_isEditing) ...[
+                ToolAvailabilitySwitch(
+                  value: _isAvailable,
+                  onChanged: (v) => setState(() => _isAvailable = v),
+                ),
+                const SizedBox(height: 20),
+              ],
 
               if (_isEditing) ...[
                 ToolShareBackupCard(
@@ -702,11 +780,17 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 onPressed: provider.loading ? null : _save,
                 icon: provider.loading
                     ? SizedBox(
-                        height: 18, width: 18,
+                        height: 18,
+                        width: 18,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Theme.of(context).colorScheme.onPrimary))
+                          strokeWidth: 2,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      )
                     : const Icon(Icons.save_outlined),
-                label: Text(_isEditing ? 'Guardar Cambios' : 'Publicar Herramienta'),
+                label: Text(
+                  _isEditing ? 'Guardar Cambios' : 'Publicar Herramienta',
+                ),
               ),
               const SizedBox(height: 12),
               OutlinedButton(

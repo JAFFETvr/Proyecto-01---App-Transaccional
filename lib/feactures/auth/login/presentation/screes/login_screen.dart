@@ -22,12 +22,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-
   Future<void> _handleLogin(String email, String password) async {
-    await context.read<LoginProvider>().login(
-      email: email,
-      password: password,
-    );
+    await context.read<LoginProvider>().login(email: email, password: password);
 
     if (!mounted) return;
 
@@ -40,13 +36,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final dest = provider.user!.isAdmin
         ? const AdminDashboardScreen()
         : provider.user!.isOwner
-            ? const DashboardScreen()
-            : const CatalogScreen();
+        ? const DashboardScreen()
+        : const CatalogScreen();
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => dest),
-      (_) => false,
-    );
+    Navigator.of(
+      context,
+    ).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => dest), (_) => false);
   }
 
   @override
@@ -66,14 +61,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     children: [
                       Container(
-                        width: 76, height: 76,
+                        width: 76,
+                        height: 76,
                         decoration: BoxDecoration(
                           gradient: AppColors.primaryGradient,
                           borderRadius: BorderRadius.circular(22),
                           boxShadow: AppColors.primaryButtonShadow,
                         ),
-                        child: const Icon(Icons.construction_rounded,
-                            color: Colors.white, size: 40),
+                        child: const Icon(
+                          Icons.construction_rounded,
+                          color: Colors.white,
+                          size: 40,
+                        ),
                       ),
                       const SizedBox(height: 14),
                       Text(
@@ -96,20 +95,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                Text(
-                  'Bienvenido',
-                  style: GoogleFonts.montserrat(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: context.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Inicia sesión para continuar',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: context.textSecondary,
+                Center(
+                  child: Column(
+                    children: [
+                      Text(
+                        'Bienvenido',
+                        style: GoogleFonts.montserrat(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Inicia sesión para continuar',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 32),
@@ -132,9 +137,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: TextButton(
                     onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const RegisterScreen())),
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                    ),
                     child: RichText(
                       text: TextSpan(
                         text: '¿No tienes cuenta? ',

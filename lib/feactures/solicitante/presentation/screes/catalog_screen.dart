@@ -14,9 +14,10 @@ import 'tool_detail_screen.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
-import '../../../checkout/presentation/screes/rental_tracking_requester_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 import 'catalog_map_screen.dart';
+import '../../../../../shared/widgets/account_tab.dart';
+import '../../../../../shared/widgets/app_bottom_nav_bar.dart';
 
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key});
@@ -65,6 +66,12 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final activeRentalCount = context
+        .watch<RentalProvider>()
+        .rentals
+        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
+        .length;
+
     return Scaffold(
       backgroundColor: context.bg,
       body: IndexedStack(
@@ -73,11 +80,31 @@ class _CatalogScreenState extends State<CatalogScreen> {
           _buildHomeTab(context),
           const CatalogMapScreen(embedded: true),
           const MyRentalsScreen(),
+          AccountTab(onLogout: _logout),
         ],
       ),
-      bottomNavigationBar: _BottomNavBar(
+      bottomNavigationBar: AppBottomNavBar(
         selectedIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
+        onTap: (i) {
+          setState(() => _selectedIndex = i);
+          if (i == 0) context.read<CatalogProvider>().fetchTools();
+        },
+        items: [
+          const AppBottomNavItem(
+            icon: Icons.home_rounded,
+            label: 'Disponibles',
+          ),
+          const AppBottomNavItem(
+            icon: Icons.location_on_rounded,
+            label: 'Mapa',
+          ),
+          AppBottomNavItem(
+            icon: Icons.access_time_rounded,
+            label: 'Rentas',
+            badgeCount: activeRentalCount,
+          ),
+          const AppBottomNavItem(icon: Icons.person_rounded, label: 'Cuenta'),
+        ],
       ),
     );
   }
@@ -85,460 +112,273 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Widget _buildHomeTab(BuildContext context) {
     final provider = context.watch<CatalogProvider>();
     final tools = provider.filtered;
-    final rentalProvider = context.watch<RentalProvider>();
-    final activeRentals = rentalProvider.rentals
-        .where((r) => !r.isCompleted && !r.isCancelled && !r.isDisputed)
-        .toList();
-    final bool hasActiveRental = activeRentals.isNotEmpty;
-    final activeRental = activeRentals.firstOrNull;
 
-    return CustomScrollView(
-      slivers: [
-        SliverAppBar(
-          pinned: true,
-          floating: true,
-          backgroundColor: context.surface,
-          surfaceTintColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          leading: IconButton(
-            icon: const Icon(Icons.logout_rounded),
-            color: context.textSecondary,
-            onPressed: _logout,
-          ),
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(0),
-            child: Container(height: 1, color: context.borderColor),
-          ),
-          title: Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.construction_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ToolShare',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                      color: context.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    '${provider.totalCount} herramientas',
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      color: context.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 4),
-              child: FilterChip(
-                label: Text(
-                  'Disponibles',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                selected: provider.onlyAvailable,
-                onSelected: (v) =>
-                    context.read<CatalogProvider>().setOnlyAvailable(v),
-                showCheckmark: false,
-                selectedColor: context.colors.tertiaryContainer,
-                labelStyle: GoogleFonts.inter(
-                  color: provider.onlyAvailable
-                      ? AppColors.success
-                      : context.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-                side: BorderSide(
-                  color: provider.onlyAvailable
-                      ? AppColors.success
-                      : context.borderColor,
-                ),
-              ),
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchTools(),
+      color: AppColors.orange500,
+      child: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            floating: true,
+            backgroundColor: context.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            automaticallyImplyLeading: false,
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(0),
+              child: Container(height: 1, color: context.borderColor),
             ),
-          ],
-        ),
-
-        if (hasActiveRental)
-          SliverToBoxAdapter(
-            child: GestureDetector(
-              onTap: () {
-                if (activeRentals.length > 1) {
-                  setState(() => _selectedIndex = 2);
-                } else if (activeRental != null) {
-                  rentalProvider.setCurrentRental(activeRental);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const RentalTrackingRequesterScreen(),
-                      settings: RouteSettings(arguments: activeRental),
-                    ),
-                  );
-                }
-              },
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFEA580C), Color(0xFFF97316)],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
+            title: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.orange500.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  child: const Icon(
+                    Icons.construction_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
-                child: Row(
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: const BoxDecoration(
-                        color: Colors.white24,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.timer_outlined,
-                        color: Colors.white,
-                        size: 20,
+                    Text(
+                      'ToolShare',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: context.textPrimary,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            activeRentals.length > 1
-                                ? 'Tienes ${activeRentals.length} rentas en proceso'
-                                : 'Tienes una renta activa',
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Text(
-                            activeRentals.length > 1
-                                ? 'Toca para ver la sección de tus rentas'
-                                : (activeRental!.isPending
-                                      ? 'Pendiente de entrega — Toca para ver'
-                                      : 'En curso — Toca para ver el seguimiento'),
-                            style: GoogleFonts.inter(
-                              color: Colors.white.withOpacity(0.9),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
+                    Text(
+                      '${provider.totalCount} herramientas',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        color: context.textSecondary,
                       ),
-                    ),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white,
-                      size: 22,
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
-          ),
-
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: context.surface,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: AppColors.cardShadow,
-              ),
-              child: TextField(
-                onChanged: (v) => context.read<CatalogProvider>().setSearch(v),
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: context.textPrimary,
-                ),
-                decoration: InputDecoration(
-                  hintText: 'Buscar herramientas…',
-                  hintStyle: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: context.textSecondary.withValues(alpha: 0.6),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: FilterChip(
+                  label: Text(
+                    'Disponibles',
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  prefixIcon: Icon(
-                    Icons.search_rounded,
-                    color: context.textSecondary,
-                    size: 20,
-                  ),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 13,
-                  ),
-                  isDense: true,
-                ),
-              ),
-            ),
-          ),
-        ),
-
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 44,
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              scrollDirection: Axis.horizontal,
-              itemCount: provider.categories.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (_, i) {
-                final cat = provider.categories[i];
-                final isSelected = provider.filterCategory == cat;
-                return FilterChip(
-                  label: Text(cat),
-                  selected: isSelected,
-                  onSelected: (_) =>
-                      context.read<CatalogProvider>().setCategory(cat),
+                  selected: provider.onlyAvailable,
+                  onSelected: (v) =>
+                      context.read<CatalogProvider>().setOnlyAvailable(v),
                   showCheckmark: false,
-                  selectedColor: AppColors.orange500.withOpacity(0.12),
+                  selectedColor: context.colors.tertiaryContainer,
                   labelStyle: GoogleFonts.inter(
-                    color: isSelected
-                        ? AppColors.orange600
+                    color: provider.onlyAvailable
+                        ? AppColors.success
                         : context.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     fontSize: 12,
                   ),
                   side: BorderSide(
-                    color: isSelected
-                        ? AppColors.orange500
+                    color: provider.onlyAvailable
+                        ? AppColors.success
                         : context.borderColor,
                   ),
-                );
-              },
-            ),
-          ),
-        ),
-
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
-            child: Text(
-              provider.loading
-                  ? 'Cargando…'
-                  : '${tools.length} resultado${tools.length != 1 ? 's' : ''}',
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: context.textSecondary,
-              ),
-            ),
-          ),
-        ),
-
-        if (provider.loading)
-          const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
-          )
-        else if (provider.error != null)
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.wifi_off_rounded,
-                    size: 48,
-                    color: context.colors.outline,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    provider.error!,
-                    style: GoogleFonts.inter(color: context.textSecondary),
-                  ),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () =>
-                        context.read<CatalogProvider>().fetchTools(),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(140, 44),
-                    ),
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else if (tools.isEmpty)
-          SliverFillRemaining(
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.search_off_rounded,
-                    size: 56,
-                    color: context.colors.outline,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Sin resultados',
-                    style: GoogleFonts.montserrat(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          SliverSafeArea(
-            top: false,
-            sliver: SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 16,
-                  crossAxisSpacing: 16,
-                  childAspectRatio: 0.72,
                 ),
-                delegate: SliverChildBuilderDelegate(
-                  (_, i) => ToolCard(
-                    tool: tools[i],
-                    onTap: () => _showDetail(context, tools[i]),
-                  ),
-                  childCount: tools.length,
-                ),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _BottomNavBar extends StatelessWidget {
-  final int selectedIndex;
-  final ValueChanged<int> onTap;
-
-  const _BottomNavBar({required this.selectedIndex, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: AppColors.cardShadow,
-        border: Border(top: BorderSide(color: context.borderColor)),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              _NavBarItem(
-                icon: Icons.home_rounded,
-                label: 'Disponibles',
-                selected: selectedIndex == 0,
-                onTap: () => onTap(0),
-              ),
-              _NavBarItem(
-                icon: Icons.location_on_rounded,
-                label: 'Mapa',
-                selected: selectedIndex == 1,
-                onTap: () => onTap(1),
-              ),
-              _NavBarItem(
-                icon: Icons.access_time_rounded,
-                label: 'Mis rentas',
-                selected: selectedIndex == 2,
-                onTap: () => onTap(2),
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
 
-class _NavBarItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NavBarItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? AppColors.orange500 : context.textSecondary;
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Container(
+                height: 46,
+                decoration: BoxDecoration(
+                  color: context.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: AppColors.cardShadow,
+                ),
+                child: TextField(
+                  onChanged: (v) =>
+                      context.read<CatalogProvider>().setSearch(v),
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    color: context.textPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Buscar herramientas…',
+                    hintStyle: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: context.textSecondary.withValues(alpha: 0.6),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: context.textSecondary,
+                      size: 20,
+                    ),
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 13,
+                    ),
+                    isDense: true,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              height: 2,
-              width: selected ? 22 : 0,
-              decoration: BoxDecoration(
-                color: AppColors.orange500,
-                borderRadius: BorderRadius.circular(2),
+          ),
+
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 44,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                scrollDirection: Axis.horizontal,
+                itemCount: provider.categories.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, i) {
+                  final cat = provider.categories[i];
+                  final isSelected = provider.filterCategory == cat;
+                  return FilterChip(
+                    label: Text(cat),
+                    selected: isSelected,
+                    onSelected: (_) =>
+                        context.read<CatalogProvider>().setCategory(cat),
+                    showCheckmark: false,
+                    selectedColor: AppColors.orange500.withOpacity(0.12),
+                    labelStyle: GoogleFonts.inter(
+                      color: isSelected
+                          ? AppColors.orange600
+                          : context.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                      fontSize: 12,
+                    ),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.orange500
+                          : context.borderColor,
+                    ),
+                  );
+                },
               ),
             ),
-          ],
-        ),
+          ),
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 8),
+              child: Text(
+                provider.loading
+                    ? 'Cargando…'
+                    : '${tools.length} resultado${tools.length != 1 ? 's' : ''}',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: context.textSecondary,
+                ),
+              ),
+            ),
+          ),
+
+          if (provider.loading)
+            const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (provider.error != null)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.wifi_off_rounded,
+                      size: 48,
+                      color: context.colors.outline,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      provider.error!,
+                      style: GoogleFonts.inter(color: context.textSecondary),
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () =>
+                          context.read<CatalogProvider>().fetchTools(),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(140, 44),
+                      ),
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (tools.isEmpty)
+            SliverFillRemaining(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.search_off_rounded,
+                      size: 56,
+                      color: context.colors.outline,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Sin resultados',
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: context.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            SliverSafeArea(
+              top: false,
+              sliver: SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    childAspectRatio: 0.72,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => ToolCard(
+                      tool: tools[i],
+                      onTap: () => _showDetail(context, tools[i]),
+                    ),
+                    childCount: tools.length,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

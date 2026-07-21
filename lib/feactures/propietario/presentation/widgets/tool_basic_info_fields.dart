@@ -49,6 +49,7 @@ class ToolBasicInfoFields extends StatelessWidget {
 
         TextFormField(
           controller: nameCtrl,
+          enabled: !isEditing,
           textCapitalization: TextCapitalization.sentences,
           textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
@@ -56,45 +57,50 @@ class ToolBasicInfoFields extends StatelessWidget {
             hintText: 'Ej. Taladro Percutor',
             prefixIcon: Icon(Icons.construction_outlined),
           ),
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Campo requerido' : null,
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
           onChanged: (_) => onFieldChanged(),
         ),
         const SizedBox(height: 14),
 
-        Row(children: [
-          Expanded(
-            child: TextFormField(
-              controller: brandCtrl,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Marca',
-                hintText: 'DeWalt',
-                prefixIcon: Icon(Icons.business_outlined),
+        Row(
+          children: [
+            Expanded(
+              child: TextFormField(
+                controller: brandCtrl,
+                enabled: !isEditing,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Marca',
+                  hintText: 'DeWalt',
+                  prefixIcon: Icon(Icons.business_outlined),
+                ),
+                onChanged: (_) => onFieldChanged(),
+                onEditingComplete: () {
+                  FocusScope.of(context).nextFocus();
+                },
               ),
-              onChanged: (_) => onFieldChanged(),
-              onEditingComplete: () {
-                FocusScope.of(context).nextFocus();
-              },
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextFormField(
-              controller: modelCtrl,
-              textInputAction: TextInputAction.next,
-              decoration: const InputDecoration(
-                labelText: 'Modelo',
-                hintText: 'DCD777',
+            const SizedBox(width: 12),
+            Expanded(
+              child: TextFormField(
+                controller: modelCtrl,
+                enabled: !isEditing,
+                textInputAction: TextInputAction.next,
+                decoration: const InputDecoration(
+                  labelText: 'Modelo',
+                  hintText: 'DCD777',
+                ),
+                onChanged: (_) => onFieldChanged(),
               ),
-              onChanged: (_) => onFieldChanged(),
             ),
-          ),
-        ]),
+          ],
+        ),
         const SizedBox(height: 14),
 
         TextFormField(
           controller: ageCtrl,
+          enabled: !isEditing,
           keyboardType: TextInputType.number,
           textInputAction: TextInputAction.next,
           decoration: const InputDecoration(
@@ -102,8 +108,8 @@ class ToolBasicInfoFields extends StatelessWidget {
             hintText: 'Ej. 12',
             prefixIcon: Icon(Icons.calendar_today_outlined),
           ),
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Campo requerido' : null,
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Campo requerido' : null,
           onChanged: (_) => onFieldChanged(),
         ),
 
@@ -121,16 +127,21 @@ class ToolBasicInfoFields extends StatelessWidget {
                 ? const Padding(
                     padding: EdgeInsets.all(14),
                     child: SizedBox(
-                      width: 16, height: 16,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
-                : Icon(Icons.lock_outline, size: 18, color: cs.onSurfaceVariant),
+                : Icon(
+                    Icons.lock_outline,
+                    size: 18,
+                    color: cs.onSurfaceVariant,
+                  ),
             helperText: isEditing
                 ? 'No editable después de publicar la herramienta'
                 : (ticketValidado
-                    ? 'Verificado con tu ticket de compra'
-                    : 'Calculado con el catálogo de referencia de ToolShare'),
+                      ? 'Verificado con tu ticket de compra'
+                      : 'Calculado con el catálogo de referencia de ToolShare'),
           ),
           validator: (v) {
             final val = double.tryParse(v ?? '');
@@ -144,6 +155,7 @@ class ToolBasicInfoFields extends StatelessWidget {
 
         TextFormField(
           controller: descCtrl,
+          enabled: !isEditing,
           maxLines: 3,
           maxLength: 300,
           textCapitalization: TextCapitalization.sentences,

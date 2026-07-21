@@ -12,6 +12,7 @@ class ToolPricingCard extends StatelessWidget {
   final bool fetchingPricing;
   final String pricingDesc;
   final bool requiresManualReview;
+  final bool editable;
   final ValueChanged<double> onFinalPriceChanged;
 
   const ToolPricingCard({
@@ -24,6 +25,7 @@ class ToolPricingCard extends StatelessWidget {
     required this.pricingDesc,
     required this.requiresManualReview,
     required this.onFinalPriceChanged,
+    this.editable = true,
   });
 
   @override
@@ -50,18 +52,24 @@ class ToolPricingCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text('Precio sugerido por IA:',
-                        style: tt.bodyMedium),
+                    child: Text(
+                      'Precio sugerido por IA:',
+                      style: tt.bodyMedium,
+                    ),
                   ),
                   fetchingPricing
                       ? const SizedBox(
-                          width: 16, height: 16,
+                          width: 16,
+                          height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text('\$${suggestedPrice.toStringAsFixed(0)} MXN/día',
+                      : Text(
+                          '\$${suggestedPrice.toStringAsFixed(0)} MXN/día',
                           style: tt.titleMedium?.copyWith(
-                              color: cs.primary,
-                              fontWeight: FontWeight.w700)),
+                            color: cs.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                 ],
               ),
               const SizedBox(height: 4),
@@ -73,12 +81,17 @@ class ToolPricingCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   pricingDesc,
-                  style: tt.bodySmall?.copyWith(color: cs.primary, fontStyle: FontStyle.italic),
+                  style: tt.bodySmall?.copyWith(
+                    color: cs.primary,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ],
               const Divider(height: 20),
-              Text('Tu precio final: \$${finalPrice.toStringAsFixed(0)} MXN/día',
-                  style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+              Text(
+                'Tu precio final: \$${finalPrice.toStringAsFixed(0)} MXN/día',
+                style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
               const SizedBox(height: 4),
               Text(
                 'Mínimo permitido: \$${minPrice.toStringAsFixed(0)} MXN/día (50%)',
@@ -91,17 +104,21 @@ class ToolPricingCard extends StatelessWidget {
                 max: maxRateVal,
                 divisions: 30,
                 label: '\$${finalPrice.toStringAsFixed(0)}',
-                onChanged: fetchingPricing ? null : onFinalPriceChanged,
+                onChanged: (editable && !fetchingPricing)
+                    ? onFinalPriceChanged
+                    : null,
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('\$${minPrice.toStringAsFixed(0)} (mín)',
-                      style: tt.labelSmall
-                          ?.copyWith(color: cs.onSurfaceVariant)),
-                  Text('\$${maxRateVal.toStringAsFixed(0)} (máx)',
-                      style: tt.labelSmall
-                          ?.copyWith(color: cs.onSurfaceVariant)),
+                  Text(
+                    '\$${minPrice.toStringAsFixed(0)} (mín)',
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                  Text(
+                    '\$${maxRateVal.toStringAsFixed(0)} (máx)',
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
                 ],
               ),
             ],
@@ -114,18 +131,27 @@ class ToolPricingCard extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+              border: Border.all(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+              ),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.warning_amber_rounded, color: Color(0xFFF59E0B), size: 18),
+                const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFF59E0B),
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'No encontramos una referencia de precio objetiva para esta herramienta. '
                     'Quedará marcada para revisión del administrador. Sube un ticket de compra para evitarlo.',
-                    style: tt.bodySmall?.copyWith(color: const Color(0xFFB45309), height: 1.4),
+                    style: tt.bodySmall?.copyWith(
+                      color: const Color(0xFFB45309),
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
