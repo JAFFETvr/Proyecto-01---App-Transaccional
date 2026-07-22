@@ -96,6 +96,9 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     _isAvailable = t?.isAvailable ?? true;
 
     if (t != null) {
+      // En edición, "Condición física" debe reflejar el score real que ya
+      // asignó la CNN al publicar, no el default 'Nuevo' del formulario vacío.
+      _wearLevel = _wearLevelForScore(t.conditionScore);
       _suggestedPrice = t.dailyRate;
       _minPrice = t.suggestedMinDailyRate;
       _finalPrice = t.dailyRate;
@@ -486,10 +489,23 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     if (!mounted) return;
     final ok = saved != null;
     if (ok && _pickedImages.isNotEmpty) {
-      var subidas = 0;
-      for (final img in _pickedImages) {
-        final photoOk = await provider.uploadPhoto(saved.id, img);
-        if (photoOk) subidas++;
+      // Las fotos ya se evaluaron con la CNN al agregarlas en esta pantalla
+      // (_addImage) y el precio final ya lo decidió el usuario dentro del
+      // rango sugerido — aquí solo hace falta persistir los archivos en el
+      // servidor. Se suben en paralelo (no una por una) para no alargar el
+      // tiempo de publicado, y NO se vuelve a recalcular ni a pisar el
+      // precio que el usuario ya eligió.
+      final toolId = saved.id;
+      final results = await Future.wait(
+        _pickedImages.map((img) => provider.uploadPhoto(toolId, img)),
+      );
+      final subidas = results.where((r) => r).length;
+      // Al subir en paralelo, la respuesta de cada foto puede no reflejar
+      // todavía a las demás (llegan casi al mismo tiempo). Un solo refresh
+      // de la lista deja la copia local consistente con el servidor sin
+      // añadir más que 1 petición extra.
+      if (subidas > 0 && mounted) {
+        await provider.fetchTools();
       }
       if (subidas < _pickedImages.length && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -503,52 +519,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
             duration: const Duration(seconds: 5),
           ),
         );
-      }
-      // El precio que se guardó arriba se calculó con el nivel de
-      // "Condición física" elegido a mano (o el default "Nuevo"), NO con el
-      // score real que acaba de calcular la CNN al subir las fotos — esa es
-      // la única evaluación que se hace (ver nota en _addImage). Aquí se
-      // recalcula el precio con ese score real (el peor de todas las fotos,
-      // ya persistido en la herramienta por UploadPhoto) y se corrige.
-      if (subidas > 0 && mounted) {
-        final savedId = saved.id;
-        final freshTool = provider.tools.cast<ToolEntity?>().firstWhere(
-          (t) => t?.id == savedId,
-          orElse: () => null,
-        );
-        final realScore = freshTool?.conditionScore;
-        if (realScore != null) {
-          final res = await provider.autoValuate(
-            name: _nameCtrl.text.trim(),
-            scoreCondicion: realScore,
-            category: _catCtrl.text.trim(),
-            brand: _brandCtrl.text.trim().isEmpty
-                ? 'Generico'
-                : _brandCtrl.text.trim(),
-            ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
-            precioBaseManual: _ticketValidado ? _ticketDetectedPrice : null,
-            ticketValidado: _ticketValidado,
-          );
-          final realPrice = (res?['suggested_daily_rate'] as num?)?.toDouble();
-          if (realPrice != null &&
-              (realPrice - _finalPrice).abs() > 0.5 &&
-              mounted) {
-            await provider.updateTool(id: saved.id, dailyRate: realPrice);
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Precio ajustado a \$${realPrice.toStringAsFixed(0)} MXN/día '
-                    'según el desgaste real detectado en tus fotos.',
-                  ),
-                  backgroundColor: const Color(0xFF2563EB),
-                  behavior: SnackBarBehavior.floating,
-                  duration: const Duration(seconds: 5),
-                ),
-              );
-            }
-          }
-        }
       }
     }
     if (ok) {
@@ -673,132 +643,149 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         ? _suggestedPrice * 2
         : _minPrice + 10;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_isEditing ? 'Editar Herramienta' : 'Nueva Herramienta'),
-      ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            children: [
-              ToolPhotoField(
-                pickedImages: _pickedImages,
-                existingPhotoUrl: widget.tool?.photoUrl,
-                loading: _imageLoading,
-                minPhotos: _minRequiredPhotos,
-                onAdd: _addImage,
-                onRemove: _removeImage,
-                editable: !_isEditing,
-              ),
-              const SizedBox(height: 24),
+    // provider.loading cubre create/update/uploadPhoto (ver ToolProvider) —
+    // mientras dura el guardado real en el servidor, no se puede salir de la
+    // pantalla ni por gesto ni por la flecha de la AppBar. Sin esto, el
+    // usuario podía navegar fuera a media subida: las llamadas seguían
+    // corriendo igual (ToolProvider vive arriba en el árbol, no se destruye
+    // con esta pantalla), pero él nunca veía la confirmación y podía volver
+    // a publicar por duplicado creyendo que no se había guardado.
+    return PopScope(
+      canPop: !provider.loading,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Espera a que termine de guardar...'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditing ? 'Editar Herramienta' : 'Nueva Herramienta'),
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              children: [
+                ToolPhotoField(
+                  pickedImages: _pickedImages,
+                  existingPhotoUrls: widget.tool?.photoUrls ?? const [],
+                  loading: _imageLoading,
+                  minPhotos: _minRequiredPhotos,
+                  onAdd: _addImage,
+                  onRemove: _removeImage,
+                  editable: !_isEditing,
+                ),
+                const SizedBox(height: 24),
 
-              TicketUploadField(
-                ticketValidado: _ticketValidado,
-                detectedPrice: _ticketDetectedPrice,
-                loading: _ticketLoading,
-                onPickTicket: _pickTicketImage,
-                editable: !_isEditing,
-              ),
-              const SizedBox(height: 24),
+                TicketUploadField(
+                  ticketValidado: _ticketValidado,
+                  detectedPrice: _ticketDetectedPrice,
+                  loading: _ticketLoading,
+                  onPickTicket: _pickTicketImage,
+                  editable: !_isEditing,
+                ),
+                const SizedBox(height: 24),
 
-              ToolBasicInfoFields(
-                nameCtrl: _nameCtrl,
-                brandCtrl: _brandCtrl,
-                modelCtrl: _modelCtrl,
-                ageCtrl: _ageCtrl,
-                catCtrl: _catCtrl,
-                estValCtrl: _estValCtrl,
-                descCtrl: _descCtrl,
-                isEditing: _isEditing,
-                ticketValidado: _ticketValidado,
-                fetchingPricing: _fetchingPricing,
-                categories: _categories,
-                onFieldChanged: _onFieldChanged,
-                onCategorySelected: (v) {
-                  _catCtrl.text = v;
-                  _updatePricingSuggestion();
-                },
-              ),
-              const SizedBox(height: 24),
+                ToolBasicInfoFields(
+                  nameCtrl: _nameCtrl,
+                  brandCtrl: _brandCtrl,
+                  modelCtrl: _modelCtrl,
+                  ageCtrl: _ageCtrl,
+                  catCtrl: _catCtrl,
+                  estValCtrl: _estValCtrl,
+                  descCtrl: _descCtrl,
+                  isEditing: _isEditing,
+                  ticketValidado: _ticketValidado,
+                  fetchingPricing: _fetchingPricing,
+                  categories: _categories,
+                  onFieldChanged: _onFieldChanged,
+                  onCategorySelected: (v) {
+                    _catCtrl.text = v;
+                    _updatePricingSuggestion();
+                  },
+                ),
+                const SizedBox(height: 24),
 
-              ToolConditionDropdown(
-                wearLevel: _wearLevel,
-                isEditing: _isEditing,
-                onChanged: (v) {
-                  setState(() => _wearLevel = v);
-                  _updatePricingSuggestion();
-                },
-              ),
-              const SizedBox(height: 24),
+                ToolConditionDropdown(
+                  wearLevel: _wearLevel,
+                  isEditing: _isEditing,
+                ),
+                const SizedBox(height: 24),
 
-              ToolPricingCard(
-                suggestedPrice: _suggestedPrice,
-                minPrice: _minPrice,
-                finalPrice: _finalPrice,
-                maxRateVal: maxRateVal,
-                fetchingPricing: _fetchingPricing,
-                pricingDesc: _pricingDesc,
-                requiresManualReview: _requiresManualReview,
-                onFinalPriceChanged: (v) => setState(() => _finalPrice = v),
-                editable: !_isEditing,
-              ),
-              const SizedBox(height: 20),
-
-              if (_isEditing) ...[
-                ToolAvailabilitySwitch(
-                  value: _isAvailable,
-                  onChanged: (v) => setState(() => _isAvailable = v),
+                ToolPricingCard(
+                  suggestedPrice: _suggestedPrice,
+                  minPrice: _minPrice,
+                  finalPrice: _finalPrice,
+                  maxRateVal: maxRateVal,
+                  fetchingPricing: _fetchingPricing,
+                  pricingDesc: _pricingDesc,
+                  requiresManualReview: _requiresManualReview,
+                  onFinalPriceChanged: (v) => setState(() => _finalPrice = v),
+                  editable: !_isEditing,
                 ),
                 const SizedBox(height: 20),
-              ],
 
-              if (_isEditing) ...[
-                ToolShareBackupCard(
-                  toolId: widget.tool!.id,
-                  estimatedValue: widget.tool!.estimatedValue,
-                  isAvailable: widget.tool!.isAvailable,
-                  insuranceActive: widget.tool!.wantsInsurance,
+                if (_isEditing) ...[
+                  ToolAvailabilitySwitch(
+                    value: _isAvailable,
+                    onChanged: (v) => setState(() => _isAvailable = v),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                if (_isEditing) ...[
+                  ToolShareBackupCard(
+                    toolId: widget.tool!.id,
+                    estimatedValue: widget.tool!.estimatedValue,
+                    isAvailable: widget.tool!.isAvailable,
+                    insuranceActive: widget.tool!.wantsInsurance,
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                ToolLocationField(
+                  latitude: _latitude,
+                  longitude: _longitude,
+                  onLocationPicked: (res) {
+                    setState(() {
+                      _latitude = res.latitude;
+                      _longitude = res.longitude;
+                    });
+                  },
                 ),
-                const SizedBox(height: 20),
-              ],
+                const SizedBox(height: 28),
 
-              ToolLocationField(
-                latitude: _latitude,
-                longitude: _longitude,
-                onLocationPicked: (res) {
-                  setState(() {
-                    _latitude = res.latitude;
-                    _longitude = res.longitude;
-                  });
-                },
-              ),
-              const SizedBox(height: 28),
-
-              FilledButton.icon(
-                onPressed: provider.loading ? null : _save,
-                icon: provider.loading
-                    ? SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                        ),
-                      )
-                    : const Icon(Icons.save_outlined),
-                label: Text(
-                  _isEditing ? 'Guardar Cambios' : 'Publicar Herramienta',
+                FilledButton.icon(
+                  onPressed: provider.loading ? null : _save,
+                  icon: provider.loading
+                      ? SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(
+                    _isEditing ? 'Guardar Cambios' : 'Publicar Herramienta',
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancelar'),
-              ),
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: provider.loading
+                      ? null
+                      : () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),

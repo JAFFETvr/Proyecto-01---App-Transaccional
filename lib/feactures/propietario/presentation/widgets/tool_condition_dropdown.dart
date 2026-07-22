@@ -2,20 +2,20 @@ import 'package:flutter/material.dart';
 
 import 'section_title.dart';
 
-/// Selector de condición física de la herramienta. Solo editable al publicar;
-/// después queda fija (la ajusta la IA a partir de la foto).
+/// Muestra la condición física de la herramienta. Nunca es editable a mano:
+/// la asigna la CNN a partir de las fotos (peor score entre todas — ver
+/// _actualizarCondicionDesdeFotos en tool_form_screen.dart). El dropdown
+/// solo sirve para visualizar el valor ya calculado.
 class ToolConditionDropdown extends StatelessWidget {
   static const options = ['Nuevo', 'Buen Estado', 'Desgastado'];
 
   final String wearLevel;
   final bool isEditing;
-  final ValueChanged<String> onChanged;
 
   const ToolConditionDropdown({
     super.key,
     required this.wearLevel,
     required this.isEditing,
-    required this.onChanged,
   });
 
   @override
@@ -31,7 +31,7 @@ class ToolConditionDropdown extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: isEditing ? cs.surfaceContainerHighest.withValues(alpha: 0.3) : null,
+            color: cs.surfaceContainerHighest.withValues(alpha: 0.3),
             border: Border.all(color: cs.outline),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -39,8 +39,7 @@ class ToolConditionDropdown extends StatelessWidget {
             child: DropdownButton<String>(
               value: wearLevel,
               isExpanded: true,
-              icon: Icon(isEditing ? Icons.lock_outline : Icons.expand_more,
-                  size: isEditing ? 18 : 24),
+              icon: const Icon(Icons.lock_outline, size: 18),
               items: options.map((w) {
                 final color = w == 'Nuevo'
                     ? const Color(0xFF16A34A)
@@ -60,17 +59,19 @@ class ToolConditionDropdown extends StatelessWidget {
                   ]),
                 );
               }).toList(),
-              onChanged: isEditing ? null : (v) => onChanged(v!),
+              // Siempre null: el usuario nunca elige la condición a mano, ni
+              // al crear ni al editar.
+              onChanged: null,
             ),
           ),
         ),
-        if (isEditing) ...[
-          const SizedBox(height: 6),
-          Text(
-            'La condición se define solo al publicar la herramienta.',
-            style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
-          ),
-        ],
+        const SizedBox(height: 6),
+        Text(
+          isEditing
+              ? 'La condición se definió al publicar la herramienta, según tus fotos.'
+              : 'La condición la calcula la IA a partir de las fotos que subas arriba.',
+          style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+        ),
       ],
     );
   }
