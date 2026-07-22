@@ -28,7 +28,7 @@ class TicketUploadField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionTitle('Comprobante de compra (opcional)'),
+        const SectionTitle('Comprobante de compra'),
         const SizedBox(height: 6),
         Text(
           'Sube una foto de tu ticket o factura: es la fuente de precio más confiable y evita que tu herramienta quede marcada para revisión manual.',
