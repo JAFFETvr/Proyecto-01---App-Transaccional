@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -69,6 +72,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           },
         ),
       );
+    if (Platform.isIOS) {
+      (_webViewController.platform as WebKitWebViewController)
+          .setInspectable(true);
+    }
   }
 
   @override

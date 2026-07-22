@@ -1,6 +1,9 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/mp_connect_provider.dart';
@@ -46,6 +49,10 @@ class _MpConnectScreenState extends State<MpConnectScreen> {
           return NavigationDecision.navigate;
         },
       ));
+    if (Platform.isIOS) {
+      (_webViewController.platform as WebKitWebViewController)
+          .setInspectable(true);
+    }
   }
 
   Future<void> _connect() async {

@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
@@ -82,6 +85,9 @@ class _ProSubscriptionCheckoutScreenState
         },
       ))
       ..loadRequest(Uri.parse(widget.initPoint));
+    if (Platform.isIOS) {
+      (_controller.platform as WebKitWebViewController).setInspectable(true);
+    }
   }
 
   @override
