@@ -9,9 +9,12 @@ class MainActivity : FlutterFragmentActivity() {
         super.onCreate(savedInstanceState)
         // FLAG_SECURE: el propio sistema operativo bloquea screenshots,
         // grabación de pantalla y oculta la vista en el selector de apps recientes.
-        window.setFlags(
-            WindowManager.LayoutParams.FLAG_SECURE,
-            WindowManager.LayoutParams.FLAG_SECURE
-        )
+        // Desactivado TEMPORALMENTE para poder tomar capturas durante pruebas.
+        // Antes de entregar/producción, reactivar (idealmente solo en las
+        // pantallas de KYC/pago, no en toda la app).
+        // window.setFlags(
+        //     WindowManager.LayoutParams.FLAG_SECURE,
+        //     WindowManager.LayoutParams.FLAG_SECURE
+        // )
     }
 }
