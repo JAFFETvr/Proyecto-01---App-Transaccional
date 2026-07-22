@@ -25,6 +25,10 @@ class ToolRemoteDatasource {
         description: j['description'] as String? ?? '',
         category:    j['category']    as String? ?? '',
         photoUrl:    j['photo_url']   as String? ?? '',
+        photoUrls: (j['photos'] as List<dynamic>?)
+                ?.map((p) => (p as Map<String, dynamic>)['photo_url'] as String)
+                .toList() ??
+            const [],
         estimatedValue: (j['estimated_value'] as num?)?.toDouble() ?? 0.0,
         dailyRate:      (j['daily_rate']      as num?)?.toDouble() ?? 0.0,
         suggestedMinDailyRate: (j['suggested_min_daily_rate'] as num?)?.toDouble() ?? 0.0,

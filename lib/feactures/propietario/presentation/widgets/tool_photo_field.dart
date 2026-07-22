@@ -10,7 +10,7 @@ import 'section_title.dart';
 /// puedan ocultar el desgaste real, mejor.
 class ToolPhotoField extends StatelessWidget {
   final List<File> pickedImages;
-  final String? existingPhotoUrl;
+  final List<String> existingPhotoUrls;
   final bool loading;
   final int minPhotos;
   final int maxPhotos;
@@ -21,7 +21,7 @@ class ToolPhotoField extends StatelessWidget {
   const ToolPhotoField({
     super.key,
     required this.pickedImages,
-    this.existingPhotoUrl,
+    this.existingPhotoUrls = const [],
     required this.loading,
     required this.onAdd,
     required this.onRemove,
@@ -30,15 +30,16 @@ class ToolPhotoField extends StatelessWidget {
     this.editable = true,
   });
 
-  bool get _hasExisting =>
-      existingPhotoUrl != null && existingPhotoUrl!.isNotEmpty;
-  int get _totalCount => pickedImages.length + (_hasExisting ? 1 : 0);
+  int get _totalCount => pickedImages.length + existingPhotoUrls.length;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final metMinimum = _totalCount >= minPhotos;
+    // Ya publicada (no editable): las fotos y su condición ya quedaron
+    // verificadas por la CNN al momento de subirlas — no hace falta seguir
+    // pidiendo el mínimo de nuevo, solo mostrar lo que ya se tiene.
+    final metMinimum = !editable || _totalCount >= minPhotos;
     final canAddMore = editable && pickedImages.length < maxPhotos && !loading;
 
     return Column(
@@ -55,9 +56,11 @@ class ToolPhotoField extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Text(
-              metMinimum
-                  ? '$_totalCount fotos — mínimo cumplido'
-                  : '$_totalCount de $minPhotos fotos — sube al menos $minPhotos ángulos distintos',
+              !editable
+                  ? '$_totalCount fotos verificadas por la IA'
+                  : metMinimum
+                      ? '$_totalCount fotos — mínimo cumplido'
+                      : '$_totalCount de $minPhotos fotos — sube al menos $minPhotos ángulos distintos',
               style: tt.bodySmall?.copyWith(
                 color: metMinimum ? const Color(0xFF16A34A) : cs.error,
                 fontWeight: FontWeight.w600,
@@ -78,10 +81,10 @@ class ToolPhotoField extends StatelessWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              if (_hasExisting)
+              for (final url in existingPhotoUrls)
                 _PhotoThumb(
                   image: Image.network(
-                    existingPhotoUrl!,
+                    url,
                     fit: BoxFit.cover,
                     errorBuilder: (ctx, error, stack) => Center(
                       child: Icon(

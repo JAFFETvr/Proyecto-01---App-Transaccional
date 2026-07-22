@@ -1,7 +1,7 @@
 import 'dart:io' show Platform;
 
 class EnvConfig {
-  static const bool useProduction = true;
+  static const bool useProduction = false;
 
   // IP de la Mac en la red WiFi local (necesaria para dispositivos físicos
   // como el iPhone; 'localhost' solo funciona en el Simulador de iOS).
