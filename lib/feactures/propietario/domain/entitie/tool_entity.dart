@@ -5,6 +5,7 @@ class ToolEntity {
   final String description;
   final String category;
   final String photoUrl;
+  final List<String> photoUrls;
   final double estimatedValue;
   final double dailyRate;
   final double suggestedMinDailyRate;
@@ -29,6 +30,7 @@ class ToolEntity {
     required this.description,
     required this.category,
     this.photoUrl = '',
+    this.photoUrls = const [],
     this.estimatedValue = 0.0,
     this.dailyRate = 0.0,
     this.suggestedMinDailyRate = 0.0,
