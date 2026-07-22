@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/theme_extensions.dart';
@@ -33,6 +34,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    await WebViewCookieManager().clearCookies();
     if (!mounted) return;
     context.read<LoginProvider>().logout();
     Navigator.of(context).pushAndRemoveUntil(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../providers/catalog_provider.dart';
 import '../components/tool_card.dart';
@@ -41,6 +42,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    // Limpia la sesión de Mercado Pago que quedó dentro del WebView (si no,
+    // el siguiente usuario que inicie sesión en este mismo dispositivo vería
+    // precargada la cuenta de MP de quien usó la app antes que él).
+    await WebViewCookieManager().clearCookies();
     if (!mounted) return;
     context.read<LoginProvider>().logout();
     context.read<RegisterProvider>().logout();

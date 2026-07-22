@@ -44,6 +44,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.initState();
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      // Mercado Pago detecta por el user-agent cuando su Checkout Pro se
+      // abre dentro de un WebView embebido genérico (en vez de un navegador
+      // real) y, por seguridad anti-fraude, deshabilita el formulario de
+      // pago (el botón "Pagar" queda inerte/gris). Usar un user-agent de
+      // Safari móvil real hace que MP lo trate como un navegador normal y
+      // habilite el checkout completo.
+      ..setUserAgent(
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) '
+        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageFinished: (_) => setState(() => _webViewReady = true),

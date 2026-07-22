@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import '../providers/tool_provider.dart';
 import '../components/tool_list_item.dart';
@@ -213,6 +214,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
+    await WebViewCookieManager().clearCookies();
     if (!mounted) return;
     context.read<LoginProvider>().logout();
     context.read<RegisterProvider>().logout();
