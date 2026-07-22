@@ -40,81 +40,83 @@ import '../../feactures/auth/register/di/register_di.dart';
 import '../../feactures/propietario/di/propietario_di.dart';
 import '../../feactures/solicitante/di/solicitante_di.dart';
 import '../../feactures/checkout/di/checkout_di.dart';
+import '../../feactures/admin/di/admin_di.dart';
 import '../../feactures/review/di/review_di.dart';
 import '../../feactures/payment_methods/di/payment_methods_di.dart';
 import '../../feactures/mp_connect/di/mp_connect_di.dart';
 
 class InjectionContainer {
   static List<SingleChildWidget> get providers => [
-        ChangeNotifierProvider<LoginProvider>(
-          create: (_) => LoginProvider(
-            loginUseCase: LoginDI.provideLoginUseCase(),
-          ),
-        ),
-        ChangeNotifierProvider<RegisterProvider>(
-          create: (_) => RegisterProvider(
-            registerUseCase: RegisterDI.provideRegisterUseCase(),
-            verifyKycUseCase: RegisterDI.provideVerifyKycUseCase(),
-          ),
-        ),
-        ChangeNotifierProvider<ToolProvider>(
-          create: (_) => ToolProvider(
-            getTools: PropietarioDI.provideGetTools(),
-            createTool: PropietarioDI.provideCreateTool(),
-            updateTool: PropietarioDI.provideUpdateTool(),
-            deleteTool: PropietarioDI.provideDeleteTool(),
-            getPricingSuggestion: PropietarioDI.provideGetPricingSuggestion(),
-            predictCondition: PropietarioDI.providePredictCondition(),
-            autoValuate: PropietarioDI.provideAutoValuate(),
-            extractTicketPrice: PropietarioDI.provideExtractTicketPrice(),
-            uploadToolPhoto: PropietarioDI.provideUploadToolPhoto(),
-            getSubscriptionPreference:
-                PropietarioDI.provideGetSubscriptionPreference(),
-            confirmSubscriptionPayment:
-                PropietarioDI.provideConfirmSubscriptionPayment(),
-            refreshIsPro: PropietarioDI.provideRefreshIsPro(),
-            getInsurancePreference: PropietarioDI.provideGetInsurancePreference(),
-            confirmInsurancePayment: PropietarioDI.provideConfirmInsurancePayment(),
-            cancelInsurance: PropietarioDI.provideCancelInsurance(),
-          ),
-        ),
-        ChangeNotifierProvider<CatalogProvider>(
-          create: (_) => CatalogProvider(
-            getCatalog: SolicitanteDI.provideGetCatalog(),
-          ),
-        ),
-        ChangeNotifierProvider<RentalProvider>(
-          create: (_) => RentalProvider(
-            createRental: CheckoutDI.provideCreateRental(),
-            getRentals: CheckoutDI.provideGetRentals(),
-            getRental: CheckoutDI.provideGetRental(),
-            confirmDelivery: CheckoutDI.provideConfirmDelivery(),
-            confirmReturn: CheckoutDI.provideConfirmReturn(),
-            disputeRental: CheckoutDI.provideDisputeRental(),
-            cancelRental: CheckoutDI.provideCancelRental(),
-            verifyContract: CheckoutDI.provideVerifyContract(),
-            getPreference: CheckoutDI.provideGetPreference(),
-            streamRental: CheckoutDI.provideStreamRental(),
-          ),
-        ),
-        ChangeNotifierProvider<ChatProvider>(
-          create: (_) => ChatProvider(CheckoutDI.repository),
-        ),
-        ChangeNotifierProvider<AdminProvider>(
-          create: (_) => AdminProvider(),
-        ),
-        ChangeNotifierProvider<ReviewProvider>(
-          create: (_) => ReviewProvider(
-            submitReview: ReviewDI.provideSubmitReview(),
-            getToolReviews: ReviewDI.provideGetToolReviews(),
-            getUserReviews: ReviewDI.provideGetUserReviews(),
-          ),
-        ),
-        ChangeNotifierProvider<CardProvider>(
-          create: (_) => PaymentMethodsDI.provideCardProvider(),
-        ),
-        ChangeNotifierProvider<MpConnectProvider>(
-          create: (_) => MpConnectDI.provideMpConnectProvider(),
-        ),
-      ];
+    ChangeNotifierProvider<LoginProvider>(
+      create: (_) => LoginProvider(loginUseCase: LoginDI.provideLoginUseCase()),
+    ),
+    ChangeNotifierProvider<RegisterProvider>(
+      create: (_) => RegisterProvider(
+        registerUseCase: RegisterDI.provideRegisterUseCase(),
+        verifyKycUseCase: RegisterDI.provideVerifyKycUseCase(),
+      ),
+    ),
+    ChangeNotifierProvider<ToolProvider>(
+      create: (_) => ToolProvider(
+        getTools: PropietarioDI.provideGetTools(),
+        createTool: PropietarioDI.provideCreateTool(),
+        updateTool: PropietarioDI.provideUpdateTool(),
+        deleteTool: PropietarioDI.provideDeleteTool(),
+        getPricingSuggestion: PropietarioDI.provideGetPricingSuggestion(),
+        predictCondition: PropietarioDI.providePredictCondition(),
+        autoValuate: PropietarioDI.provideAutoValuate(),
+        extractTicketPrice: PropietarioDI.provideExtractTicketPrice(),
+        uploadToolPhoto: PropietarioDI.provideUploadToolPhoto(),
+        getSubscriptionPreference:
+            PropietarioDI.provideGetSubscriptionPreference(),
+        confirmSubscriptionPayment:
+            PropietarioDI.provideConfirmSubscriptionPayment(),
+        refreshIsPro: PropietarioDI.provideRefreshIsPro(),
+        getInsurancePreference: PropietarioDI.provideGetInsurancePreference(),
+        confirmInsurancePayment: PropietarioDI.provideConfirmInsurancePayment(),
+        cancelInsurance: PropietarioDI.provideCancelInsurance(),
+      ),
+    ),
+    ChangeNotifierProvider<CatalogProvider>(
+      create: (_) =>
+          CatalogProvider(getCatalog: SolicitanteDI.provideGetCatalog()),
+    ),
+    ChangeNotifierProvider<RentalProvider>(
+      create: (_) => RentalProvider(
+        createRental: CheckoutDI.provideCreateRental(),
+        getRentals: CheckoutDI.provideGetRentals(),
+        getRental: CheckoutDI.provideGetRental(),
+        confirmDelivery: CheckoutDI.provideConfirmDelivery(),
+        confirmReturn: CheckoutDI.provideConfirmReturn(),
+        disputeRental: CheckoutDI.provideDisputeRental(),
+        cancelRental: CheckoutDI.provideCancelRental(),
+        verifyContract: CheckoutDI.provideVerifyContract(),
+        getPreference: CheckoutDI.provideGetPreference(),
+        streamRental: CheckoutDI.provideStreamRental(),
+      ),
+    ),
+    ChangeNotifierProvider<ChatProvider>(
+      create: (_) => ChatProvider(CheckoutDI.repository),
+    ),
+    ChangeNotifierProvider<AdminProvider>(
+      create: (_) => AdminProvider(
+        getStats: AdminDI.provideGetAdminStats(),
+        getRentals: AdminDI.provideGetAdminRentals(),
+        resolveDispute: AdminDI.provideResolveDispute(),
+      ),
+    ),
+    ChangeNotifierProvider<ReviewProvider>(
+      create: (_) => ReviewProvider(
+        submitReview: ReviewDI.provideSubmitReview(),
+        getToolReviews: ReviewDI.provideGetToolReviews(),
+        getUserReviews: ReviewDI.provideGetUserReviews(),
+      ),
+    ),
+    ChangeNotifierProvider<CardProvider>(
+      create: (_) => PaymentMethodsDI.provideCardProvider(),
+    ),
+    ChangeNotifierProvider<MpConnectProvider>(
+      create: (_) => MpConnectDI.provideMpConnectProvider(),
+    ),
+  ];
 }

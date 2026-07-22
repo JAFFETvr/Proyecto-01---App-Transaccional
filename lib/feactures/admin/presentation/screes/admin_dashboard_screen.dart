@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/theme_extensions.dart';
+import '../../../auth/login/presentation/providers/login_provider.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 import '../providers/admin_provider.dart';
@@ -22,8 +24,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AdminProvider>().fetchDashboardData(statusFilter: _currentFilter);
+      context.read<AdminProvider>().fetchDashboardData(
+        statusFilter: _currentFilter,
+      );
     });
+  }
+
+  Future<void> _logout() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    if (!mounted) return;
+    context.read<LoginProvider>().logout();
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
   }
 
   void _changeFilter(String newFilter) {
@@ -62,7 +77,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     borderRadius: BorderRadius.circular(14),
                     boxShadow: AppColors.primaryButtonShadow,
                   ),
-                  child: const Icon(Icons.gavel_rounded, color: Colors.white, size: 24),
+                  child: const Icon(
+                    Icons.gavel_rounded,
+                    color: Colors.white,
+                    size: 24,
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -79,7 +98,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       Text(
                         'Contrato Renta #${rental.id.length > 8 ? rental.id.substring(0, 8) : rental.id}',
-                        style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: context.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -100,7 +122,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.report_problem_rounded, color: AppColors.danger, size: 18),
+                      const Icon(
+                        Icons.report_problem_rounded,
+                        color: AppColors.danger,
+                        size: 18,
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Motivo de Disputa Reportado:',
@@ -114,8 +140,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    rental.disputeReason.isNotEmpty ? rental.disputeReason : 'Sin descripción proporcionada.',
-                    style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary, height: 1.4),
+                    rental.disputeReason.isNotEmpty
+                        ? rental.disputeReason
+                        : 'Sin descripción proporcionada.',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      color: context.textPrimary,
+                      height: 1.4,
+                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -126,7 +158,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     children: [
                       Text(
                         'Garantía Retenida en MP:',
-                        style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: context.textSecondary,
+                        ),
                       ),
                       Text(
                         '\$${rental.deductibleAmount.toStringAsFixed(2)} MXN',
@@ -155,10 +190,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             TextField(
               controller: notesCtrl,
               maxLines: 3,
-              style: GoogleFonts.inter(fontSize: 14, color: context.textPrimary),
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                color: context.textPrimary,
+              ),
               decoration: InputDecoration(
-                hintText: 'Ej. Daño verificado por visión artificial post-entrega. Se procede a cobrar garantía...',
-                hintStyle: GoogleFonts.inter(color: context.colors.outline, fontSize: 13),
+                hintText:
+                    'Ej. Daño verificado por visión artificial post-entrega. Se procede a cobrar garantía...',
+                hintStyle: GoogleFonts.inter(
+                  color: context.colors.outline,
+                  fontSize: 13,
+                ),
                 filled: true,
                 fillColor: context.bg,
                 enabledBorder: OutlineInputBorder(
@@ -167,7 +209,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.orange500, width: 1.5),
+                  borderSide: const BorderSide(
+                    color: AppColors.orange500,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -179,14 +224,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: OutlinedButton(
                     onPressed: () async {
                       Navigator.pop(ctx);
-                      final ok = await context.read<AdminProvider>().resolveDispute(
-                        rentalId: rental.id,
-                        action: 'refund',
-                        notes: notesCtrl.text.trim(),
-                      );
+                      final ok = await context
+                          .read<AdminProvider>()
+                          .resolveDispute(
+                            rentalId: rental.id,
+                            action: 'refund',
+                            notes: notesCtrl.text.trim(),
+                          );
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(ok ? 'Reembolso liberado al Solicitante ✓' : 'Error al dictaminar')),
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Reembolso liberado al Solicitante ✓'
+                                  : 'Error al dictaminar',
+                            ),
+                          ),
                         );
                       }
                     },
@@ -194,12 +247,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       foregroundColor: context.textPrimary,
                       side: BorderSide(color: context.colors.outline),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                     child: Text(
                       'Favor Solicitante\n(Reembolsar todo)',
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -214,14 +272,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(ctx);
-                        final ok = await context.read<AdminProvider>().resolveDispute(
-                          rentalId: rental.id,
-                          action: 'capture',
-                          notes: notesCtrl.text.trim(),
-                        );
+                        final ok = await context
+                            .read<AdminProvider>()
+                            .resolveDispute(
+                              rentalId: rental.id,
+                              action: 'capture',
+                              notes: notesCtrl.text.trim(),
+                            );
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(ok ? 'Garantía cobrada a favor del Propietario ✓' : 'Error al dictaminar')),
+                            SnackBar(
+                              content: Text(
+                                ok
+                                    ? 'Garantía cobrada a favor del Propietario ✓'
+                                    : 'Error al dictaminar',
+                              ),
+                            ),
                           );
                         }
                       },
@@ -230,12 +296,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         foregroundColor: Colors.white,
                         shadowColor: Colors.transparent,
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
                       ),
                       child: Text(
                         'Favor Propietario\n(Cobrar garantía)',
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -277,7 +348,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     borderRadius: BorderRadius.circular(10),
                     boxShadow: AppColors.primaryButtonShadow,
                   ),
-                  child: const Icon(Icons.shield_rounded, color: Colors.white, size: 20),
+                  child: const Icon(
+                    Icons.shield_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -295,18 +370,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 icon: const Icon(Icons.refresh_rounded),
                 color: context.textSecondary,
                 tooltip: 'Actualizar datos',
-                onPressed: () => provider.fetchDashboardData(statusFilter: _currentFilter),
+                onPressed: () =>
+                    provider.fetchDashboardData(statusFilter: _currentFilter),
               ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded),
                 color: context.textSecondary,
                 tooltip: 'Cerrar sesión',
-                onPressed: () {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
-                    (_) => false,
-                  );
-                },
+                onPressed: _logout,
               ),
             ],
           ),
@@ -349,7 +420,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Expanded(
                         child: _MetricCard(
                           title: 'Fondos Congelados',
-                          value: '\$${stats?.frozenFunds.toStringAsFixed(0) ?? '0'} MXN',
+                          value:
+                              '\$${stats?.frozenFunds.toStringAsFixed(0) ?? '0'} MXN',
                           icon: Icons.lock_rounded,
                           iconColor: AppColors.emerald600,
                         ),
@@ -380,7 +452,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       Expanded(
                         child: _MetricCard(
                           title: 'Contratos Activos',
-                          value: '${stats?.activeRentals ?? 0} / ${stats?.totalRentals ?? 0}',
+                          value:
+                              '${stats?.activeRentals ?? 0} / ${stats?.totalRentals ?? 0}',
                           icon: Icons.assignment_turned_in_rounded,
                           iconColor: AppColors.purple600,
                         ),
@@ -417,7 +490,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           if (provider.loading)
             const SliverFillRemaining(
               hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator(color: AppColors.orange500)),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.orange500),
+              ),
             )
           else if (provider.rentals.isEmpty)
             SliverFillRemaining(
@@ -432,7 +507,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         color: context.colors.surfaceContainerHigh,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.done_all_rounded, size: 48, color: context.colors.outline),
+                      child: Icon(
+                        Icons.done_all_rounded,
+                        size: 48,
+                        color: context.colors.outline,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(
@@ -465,7 +544,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       borderRadius: BorderRadius.circular(18),
                       boxShadow: AppColors.cardShadow,
                       border: Border.all(
-                        color: isDisputed ? AppColors.orange500 : context.borderColor,
+                        color: isDisputed
+                            ? AppColors.orange500
+                            : context.borderColor,
                         width: isDisputed ? 1.5 : 1.0,
                       ),
                     ),
@@ -478,30 +559,47 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               _StatusBadge(status: r.status),
-                              Text(
-                                '\$${r.totalAmount.toStringAsFixed(0)} MXN',
-                                style: GoogleFonts.montserrat(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 17,
-                                  color: context.textPrimary,
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  '\$${r.totalAmount.toStringAsFixed(0)} MXN',
+                                  textAlign: TextAlign.right,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.montserrat(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 17,
+                                    color: context.textPrimary,
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 12),
-                            child: Divider(height: 1, color: context.colors.surfaceContainerHigh),
+                            child: Divider(
+                              height: 1,
+                              color: context.colors.surfaceContainerHigh,
+                            ),
                           ),
                           Row(
                             children: [
-                              Icon(Icons.qr_code_rounded, size: 16, color: context.colors.outline),
+                              Icon(
+                                Icons.qr_code_rounded,
+                                size: 16,
+                                color: context.colors.outline,
+                              ),
                               const SizedBox(width: 6),
-                              Text(
-                                'Contrato #${r.id}',
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.textSecondary,
+                              Expanded(
+                                child: Text(
+                                  'Contrato #${r.id.length > 8 ? r.id.substring(0, 8) : r.id}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: context.textSecondary,
+                                  ),
                                 ),
                               ),
                             ],
@@ -509,11 +607,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           const SizedBox(height: 6),
                           Row(
                             children: [
-                              Icon(Icons.calendar_today_rounded, size: 14, color: context.colors.outline),
+                              Icon(
+                                Icons.calendar_today_rounded,
+                                size: 14,
+                                color: context.colors.outline,
+                              ),
                               const SizedBox(width: 6),
-                              Text(
-                                '${r.startDate.split('T')[0]}  →  ${r.endDate.split('T')[0]}',
-                                style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
+                              Expanded(
+                                child: Text(
+                                  '${r.startDate.split('T')[0]}  →  ${r.endDate.split('T')[0]}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    color: context.textPrimary,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -525,7 +634,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               decoration: BoxDecoration(
                                 color: AppColors.dangerBg,
                                 borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                                border: Border.all(
+                                  color: AppColors.danger.withOpacity(0.3),
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -541,7 +652,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     r.disputeReason,
-                                    style: GoogleFonts.inter(fontSize: 13, color: context.textPrimary),
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      color: context.textPrimary,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -560,14 +674,21 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 icon: const Icon(Icons.gavel_rounded, size: 18),
                                 label: Text(
                                   'Dictaminar Arbitraje AI',
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w700, fontSize: 13),
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.transparent,
                                   foregroundColor: Colors.white,
                                   shadowColor: Colors.transparent,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                                 onPressed: () => _showResolveDialog(r),
                               ),
@@ -725,10 +846,17 @@ class _StatusBadge extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(8),
+      ),
       child: Text(
         status.toUpperCase(),
-        style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w800, color: fg),
+        style: GoogleFonts.inter(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: fg,
+        ),
       ),
     );
   }

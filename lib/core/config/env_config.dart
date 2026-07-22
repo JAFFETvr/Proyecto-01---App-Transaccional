@@ -3,7 +3,7 @@ class EnvConfig {
 
   // IP de la Mac en la red WiFi local (necesaria para dispositivos físicos
   // como el iPhone; 'localhost' solo funciona en el Simulador de iOS).
-  static const String serverIp = '192.168.1.60';
+  static const String serverIp = '192.168.0.7';
   static const String port = '8080';
 
   static String get baseUrl {
