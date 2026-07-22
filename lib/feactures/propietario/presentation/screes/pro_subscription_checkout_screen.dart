@@ -67,7 +67,9 @@ class _ProSubscriptionCheckoutScreenState
       ..setNavigationDelegate(NavigationDelegate(
         onPageFinished: (_) => setState(() => _ready = true),
         onNavigationRequest: (req) {
-          if (req.url.startsWith('toolshare://')) {
+          if (req.url.startsWith('toolshare://') ||
+              req.url.startsWith(
+                  'https://toolshare-api.up.railway.app/payment')) {
             final paymentId = Uri.parse(req.url).queryParameters['payment_id'];
             Navigator.of(context).pop(paymentId);
             return NavigationDecision.prevent;

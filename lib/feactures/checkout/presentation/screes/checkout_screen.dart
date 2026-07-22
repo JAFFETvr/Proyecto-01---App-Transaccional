@@ -48,7 +48,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         NavigationDelegate(
           onPageFinished: (_) => setState(() => _webViewReady = true),
           onNavigationRequest: (req) {
-            if (req.url.startsWith('toolshare://')) {
+            if (req.url.startsWith('toolshare://') ||
+                req.url.startsWith(
+                    'https://toolshare-api.up.railway.app/payment')) {
               _navigateToTracking();
               return NavigationDecision.prevent;
             }
