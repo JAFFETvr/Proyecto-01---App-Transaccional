@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entitie/tool_entity.dart';
@@ -27,6 +28,45 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
   late final TextEditingController _daysCtrl = TextEditingController(
     text: _days.toString(),
   );
+  String? _distanceLabel;
+
+  // Ubicación silenciosa: si no hay permiso o falla, no se muestra distancia
+  // (mejor que un número inventado).
+  Future<void> _loadDistance() async {
+    try {
+      if (widget.tool.latitude == 0.0 && widget.tool.longitude == 0.0) return;
+
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      final meters = Geolocator.distanceBetween(
+        pos.latitude,
+        pos.longitude,
+        widget.tool.latitude,
+        widget.tool.longitude,
+      );
+      final label = meters < 1000
+          ? '~${meters.round()} m'
+          : '~${(meters / 1000).toStringAsFixed(1)} km';
+      if (mounted) setState(() => _distanceLabel = label);
+    } catch (_) {
+      // Sin ubicación disponible: no se muestra distancia.
+    }
+  }
 
   double get _effectiveRate =>
       widget.tool.dailyRate > 0 ? widget.tool.dailyRate : widget.pricePerDay;
@@ -63,6 +103,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ReviewProvider>().fetchToolReviews(widget.tool.id);
     });
+    _loadDistance();
   }
 
   @override
@@ -239,20 +280,22 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
 
                   Row(
                     children: [
-                      Icon(
-                        Icons.location_on_outlined,
-                        size: 14,
-                        color: context.textSecondary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '~2.3 km · Zona Norte',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
+                      if (_distanceLabel != null) ...[
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
                           color: context.textSecondary,
                         ),
-                      ),
-                      const SizedBox(width: 16),
+                        const SizedBox(width: 4),
+                        Text(
+                          _distanceLabel!,
+                          style: GoogleFonts.inter(
+                            fontSize: 13,
+                            color: context.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
                       if (reviewsResult.reviewCount > 0) ...[
                         Icon(
                           Icons.star_rounded,

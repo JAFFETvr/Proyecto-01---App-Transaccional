@@ -7,13 +7,13 @@ import '../../../../../shared/theme/theme_extensions.dart';
 class ToolCard extends StatelessWidget {
   final ToolEntity tool;
   final VoidCallback onTap;
-  final String zone;
+  final String? zone;
 
   const ToolCard({
     super.key,
     required this.tool,
     required this.onTap,
-    this.zone = '~2.3 km',
+    this.zone,
   });
 
   Widget _placeholderBg() {
@@ -183,22 +183,24 @@ class ToolCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 5),
-                    Row(children: [
-                      Icon(Icons.location_on_outlined,
-                          size: 11, color: context.textSecondary),
-                      const SizedBox(width: 2),
-                      Flexible(
-                        child: Text(
-                          zone,
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            color: context.textSecondary,
+                    if (zone != null) ...[
+                      const SizedBox(height: 5),
+                      Row(children: [
+                        Icon(Icons.location_on_outlined,
+                            size: 11, color: context.textSecondary),
+                        const SizedBox(width: 2),
+                        Flexible(
+                          child: Text(
+                            zone!,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: context.textSecondary,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ]),
+                      ]),
+                    ],
                   ],
                 ),
               ),

@@ -134,55 +134,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     color: AppColors.success,
                   ),
                 ),
-                const SizedBox(height: 14),
-                _SummaryRow(
-                  icon: Icons.handyman_outlined,
-                  label: toolName,
-                  value: '',
-                ),
-                _SummaryRow(
-                  icon: Icons.calendar_today_outlined,
-                  label: '$days día${days > 1 ? 's' : ''}',
-                  value: '\$${(priceDay * days).toStringAsFixed(0)} MXN',
-                ),
-                _SummaryRow(
-                  icon: Icons.storefront_outlined,
-                  label: 'Comisión de servicio (5%)',
-                  value: '\$${(commission as double).toStringAsFixed(0)} MXN',
-                ),
-                _SummaryRow(
-                  icon: Icons.security_outlined,
-                  label: (deposit as double) > 0
-                      ? 'Depósito de garantía (10% del valor de la herramienta)'
-                      : 'Depósito de garantía',
-                  value: (deposit as double) > 0
-                      ? '\$${deposit.toStringAsFixed(0)} MXN'
-                      : 'No requerido',
-                ),
-                const SizedBox(height: 10),
-                Divider(color: context.borderColor),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total:',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: context.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      '\$${(total as double).toStringAsFixed(0)} MXN',
-                      style: GoogleFonts.montserrat(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.orange500,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),
@@ -369,7 +320,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const SizedBox(height: 16),
 
             SizedBox(
-              height: 320,
+              height: _showWebView
+                  ? MediaQuery.of(context).size.height * 0.65
+                  : 320,
               child: _showWebView
                   ? Stack(
                       children: [
