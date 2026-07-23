@@ -79,6 +79,13 @@ class _RentalTrackingOwnerScreenState
     });
   }
 
+  // Se guarda la referencia al provider porque en dispose() ya no es seguro
+  // hacer context.read<T>(): si toda la pantalla se está desmontando junto
+  // con sus ancestros (ej. al navegar con pushAndRemoveUntil), buscar un
+  // ancestro InheritedWidget en ese momento truena con "Looking up a
+  // deactivated widget's ancestor is unsafe".
+  late final RentalProvider _rentalProvider;
+
   @override
   void initState() {
     super.initState();
@@ -177,13 +184,19 @@ class _RentalTrackingOwnerScreenState
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _rentalProvider = context.read<RentalProvider>();
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      context.read<RentalProvider>().stopListeningRental();
+      _rentalProvider.stopListeningRental();
       _unreadTimer?.cancel();
     } else if (state == AppLifecycleState.resumed) {
       if (_rentalId != null) {
-        context.read<RentalProvider>().listenToRental(_rentalId!);
+        _rentalProvider.listenToRental(_rentalId!);
         _startUnreadWatch();
       }
     }
@@ -193,7 +206,7 @@ class _RentalTrackingOwnerScreenState
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _unreadTimer?.cancel();
-    context.read<RentalProvider>().stopListeningRental();
+    _rentalProvider.stopListeningRental();
     super.dispose();
   }
 
