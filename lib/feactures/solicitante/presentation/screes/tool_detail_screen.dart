@@ -164,7 +164,10 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
 
     return Scaffold(
       backgroundColor: context.bg,
-      body: CustomScrollView(
+      body: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
@@ -484,6 +487,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                                   child: TextField(
                                     controller: _daysCtrl,
                                     keyboardType: TextInputType.number,
+                                    textInputAction: TextInputAction.done,
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.montserrat(
                                       fontSize: 20,
@@ -506,6 +510,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                                     onSubmitted: (v) {
                                       final parsed = int.tryParse(v);
                                       _setDays(parsed ?? _days);
+                                      FocusScope.of(context).unfocus();
                                     },
                                   ),
                                 ),
@@ -649,6 +654,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
             ),
           ),
         ],
+        ),
       ),
 
       bottomNavigationBar: SafeArea(

@@ -9,6 +9,7 @@ import '../domain/usesCases/dispute_rental_usecase.dart';
 import '../domain/usesCases/cancel_rental_usecase.dart';
 import '../domain/usesCases/verify_contract_usecase.dart';
 import '../domain/usesCases/get_preference_usecase.dart';
+import '../domain/usesCases/confirm_payment_usecase.dart';
 import '../domain/usesCases/stream_rental_usecase.dart';
 
 class CheckoutDI {
@@ -24,6 +25,7 @@ class CheckoutDI {
   static CancelRentalUseCase provideCancelRental() => CancelRentalUseCase(_repository);
   static VerifyContractUseCase provideVerifyContract() => VerifyContractUseCase(_repository);
   static GetPreferenceUseCase provideGetPreference() => GetPreferenceUseCase(_repository);
+  static ConfirmPaymentUseCase provideConfirmPayment() => ConfirmPaymentUseCase(_repository);
   static StreamRentalUseCase provideStreamRental() => StreamRentalUseCase(_repository);
   static get repository => _repository;
 }

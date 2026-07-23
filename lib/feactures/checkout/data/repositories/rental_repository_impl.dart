@@ -65,4 +65,8 @@ class RentalRepositoryImpl implements RentalRepository {
   @override
   Future<String> getPreference(String rentalId, String payerEmail) =>
       _datasource.getPreference(rentalId, payerEmail);
+
+  @override
+  Future<RentalEntity> confirmPayment(String rentalId, String paymentId) =>
+      _datasource.confirmPayment(rentalId, paymentId);
 }

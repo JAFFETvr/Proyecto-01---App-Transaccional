@@ -33,5 +33,6 @@ abstract class RentalRepository {
   Future<MessageEntity> sendMessage(String rentalId, String message);
 
   Future<String> getPreference(String rentalId, String payerEmail);
+  Future<RentalEntity> confirmPayment(String rentalId, String paymentId);
   Future<Map<String, dynamic>> verifyContract(String id);
 }

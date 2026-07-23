@@ -42,6 +42,61 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  // Respaldo del webhook de Mercado Pago: en vez de solo confiar en que
+  // "llegamos a la URL de éxito" significa que se pagó, se le pide al
+  // backend que vuelva a verificar ese payment_id directo con MP antes de
+  // marcar la renta como pagada. Si el webhook ya lo hizo, esto no rompe
+  // nada (el backend es idempotente); si el webhook se tarda o falla, esto
+  // evita que la herramienta se quede "Disponible" con el pago ya cobrado.
+  Future<void> _confirmPaymentAndNavigate(String returnUrl) async {
+    final rentalProv = context.read<RentalProvider>();
+    final rental = rentalProv.currentRental;
+    if (rental != null) {
+      final uri = Uri.tryParse(returnUrl);
+      final paymentId = uri?.queryParameters['payment_id'] ??
+          uri?.queryParameters['collection_id'];
+      if (paymentId != null && paymentId.isNotEmpty) {
+        await rentalProv.confirmPayment(rental.id, paymentId);
+      }
+    }
+    _navigateToTracking();
+  }
+
+  // El pago se canceló o fue rechazado: NO se debe navegar a tracking como
+  // si la renta hubiera arrancado. Se cierra el WebView y se deja al
+  // solicitante reintentar desde la misma pantalla de checkout.
+  void _onPaymentFailed() {
+    if (!mounted) return;
+    setState(() {
+      _showWebView = false;
+      _webViewReady = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('El pago no se completó. Puedes intentarlo de nuevo.'),
+        backgroundColor: AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _onPaymentPending() {
+    if (!mounted) return;
+    setState(() {
+      _showWebView = false;
+      _webViewReady = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'Tu pago quedó pendiente de aprobación. Te avisaremos cuando se confirme.',
+        ),
+        backgroundColor: Color(0xFFF59E0B),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -61,11 +116,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         NavigationDelegate(
           onPageFinished: (_) => setState(() => _webViewReady = true),
           onNavigationRequest: (req) {
-            if (req.url.startsWith('toolshare://') ||
+            // OJO: los tres back_urls que manda el backend (success/failure/
+            // pending) comparten el mismo prefijo ".../payment". Antes se
+            // trataban todos como éxito y se navegaba a tracking aunque el
+            // pago hubiera sido cancelado o rechazado — hay que distinguir
+            // el resultado exacto, no solo el prefijo.
+            if (req.url.startsWith('toolshare://success') ||
                 req.url.startsWith(
-                  'https://toolshare-api.up.railway.app/payment',
+                  'https://toolshare-api.up.railway.app/payment/success',
                 )) {
-              _navigateToTracking();
+              _confirmPaymentAndNavigate(req.url);
+              return NavigationDecision.prevent;
+            }
+            if (req.url.startsWith('toolshare://failure') ||
+                req.url.startsWith(
+                  'https://toolshare-api.up.railway.app/payment/failure',
+                )) {
+              _onPaymentFailed();
+              return NavigationDecision.prevent;
+            }
+            if (req.url.startsWith('toolshare://pending') ||
+                req.url.startsWith(
+                  'https://toolshare-api.up.railway.app/payment/pending',
+                )) {
+              _onPaymentPending();
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;

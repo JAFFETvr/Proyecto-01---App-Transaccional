@@ -252,6 +252,24 @@ class RentalRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
+  // Respaldo del webhook: se llama en cuanto Mercado Pago redirige al
+  // WebView a la URL de éxito, para no depender solo de que el webhook
+  // llegue. El backend vuelve a verificar el pago directo con MP antes de
+  // marcar nada como rentado.
+  Future<RentalEntity> confirmPayment(String rentalId, String paymentId) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.post(
+        Uri.parse('$_baseUrl/rentals/$rentalId/confirm-payment'),
+        headers: headers,
+        body: json.encode({'payment_id': paymentId}),
+      );
+      _throwIfError(res);
+      return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
   Future<Map<String, dynamic>> verifyContract(String id) async {
     try {
       final headers = await _authHeaders;

@@ -11,6 +11,7 @@ import '../../domain/usesCases/dispute_rental_usecase.dart';
 import '../../domain/usesCases/cancel_rental_usecase.dart';
 import '../../domain/usesCases/verify_contract_usecase.dart';
 import '../../domain/usesCases/get_preference_usecase.dart';
+import '../../domain/usesCases/confirm_payment_usecase.dart';
 import '../../domain/usesCases/stream_rental_usecase.dart';
 
 class RentalProvider extends ChangeNotifier {
@@ -23,6 +24,7 @@ class RentalProvider extends ChangeNotifier {
   final CancelRentalUseCase _cancelRental;
   final VerifyContractUseCase _verifyContract;
   final GetPreferenceUseCase _getPreference;
+  final ConfirmPaymentUseCase _confirmPayment;
   final StreamRentalUseCase _streamRental;
 
   StreamSubscription<RentalEntity>? _rentalSubscription;
@@ -47,6 +49,7 @@ class RentalProvider extends ChangeNotifier {
     required CancelRentalUseCase cancelRental,
     required VerifyContractUseCase verifyContract,
     required GetPreferenceUseCase getPreference,
+    required ConfirmPaymentUseCase confirmPayment,
     required StreamRentalUseCase streamRental,
   })  : _createRental = createRental,
         _getRentals = getRentals,
@@ -57,6 +60,7 @@ class RentalProvider extends ChangeNotifier {
         _cancelRental = cancelRental,
         _verifyContract = verifyContract,
         _getPreference = getPreference,
+        _confirmPayment = confirmPayment,
         _streamRental = streamRental;
 
   void listenToRental(String id) {
@@ -279,6 +283,26 @@ class RentalProvider extends ChangeNotifier {
     } finally {
       _loading = false;
       notifyListeners();
+    }
+  }
+
+  // Respaldo del webhook: se llama en cuanto MP redirige al WebView a la
+  // URL de éxito. El backend vuelve a verificar el pago directo con MP
+  // antes de tocar nada, así que esto es seguro de intentar aunque el
+  // webhook ya lo haya hecho (es idempotente del lado del servidor).
+  Future<bool> confirmPayment(String rentalId, String paymentId) async {
+    try {
+      final rental = await _confirmPayment.execute(rentalId, paymentId);
+      _currentRental = rental;
+      final idx = _rentals.indexWhere((r) => r.id == rentalId);
+      if (idx != -1) {
+        _rentals[idx] = rental;
+      }
+      notifyListeners();
+      return true;
+    } catch (_) {
+      // Si falla, no es fatal: el webhook debería terminar de confirmarlo.
+      return false;
     }
   }
 
