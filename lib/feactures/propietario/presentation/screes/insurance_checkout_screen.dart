@@ -8,6 +8,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
+import '../../../../../shared/utils/webview_scheme_guard.dart';
 import '../providers/tool_provider.dart';
 
 /// Abre el flujo de pago del seguro mensual para una herramienta específica.
@@ -82,7 +83,7 @@ class _InsuranceCheckoutScreenState extends State<InsuranceCheckoutScreen> {
             Navigator.of(context).pop(paymentId);
             return NavigationDecision.prevent;
           }
-          return NavigationDecision.navigate;
+          return handleNonHttpScheme(req.url);
         },
       ))
       ..loadRequest(Uri.parse(widget.initPoint));

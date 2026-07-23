@@ -28,6 +28,12 @@ class RentalProvider extends ChangeNotifier {
   final StreamRentalUseCase _streamRental;
 
   StreamSubscription<RentalEntity>? _rentalSubscription;
+  // Renta que se está siguiendo en vivo, y timer para reconectar el stream
+  // si se cae (red, timeout del proxy de Railway, etc.). Sin esto, el
+  // seguimiento de renta se quedaba "congelado" hasta salir y volver a
+  // entrar a la pantalla en cuanto el stream SSE se cortaba una vez.
+  String? _listeningRentalId;
+  Timer? _reconnectTimer;
 
   List<RentalEntity> _rentals = [];
   RentalEntity? _currentRental;
@@ -64,6 +70,8 @@ class RentalProvider extends ChangeNotifier {
         _streamRental = streamRental;
 
   void listenToRental(String id) {
+    _listeningRentalId = id;
+    _reconnectTimer?.cancel();
     _rentalSubscription?.cancel();
     _rentalSubscription = _streamRental.execute(id).listen(
       (updatedRental) {
@@ -83,17 +91,34 @@ class RentalProvider extends ChangeNotifier {
           _error = 'Error de conexión con el servidor.';
         }
         notifyListeners();
+        _scheduleReconnect(id);
       },
+      onDone: () => _scheduleReconnect(id),
     );
   }
 
+  // Reintenta la conexión del stream a los 3s, solo si seguimos interesados
+  // en esa misma renta (nadie llamó a stopListeningRental ni cambió a otra).
+  void _scheduleReconnect(String id) {
+    if (_listeningRentalId != id) return;
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 3), () {
+      if (_listeningRentalId == id) {
+        listenToRental(id);
+      }
+    });
+  }
+
   void stopListeningRental() {
+    _listeningRentalId = null;
+    _reconnectTimer?.cancel();
     _rentalSubscription?.cancel();
     _rentalSubscription = null;
   }
 
   @override
   void dispose() {
+    _reconnectTimer?.cancel();
     _rentalSubscription?.cancel();
     super.dispose();
   }

@@ -16,7 +16,6 @@ import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/account_tab.dart';
 import '../../../../../shared/widgets/app_bottom_nav_bar.dart';
 import '../../../checkout/presentation/providers/rental_provider.dart';
-import '../../../payment_methods/presentation/screes/saved_cards_screen.dart';
 import '../../../checkout/presentation/screes/my_rentals_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -241,7 +240,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         children: [
           _buildHomeTab(context),
           const MyRentalsScreen(),
-          const SavedCardsScreen(),
           AccountTab(onLogout: _logout),
         ],
       ),
@@ -260,10 +258,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             icon: Icons.access_time_rounded,
             label: 'Rentas',
             badgeCount: activeRentalCount,
-          ),
-          const AppBottomNavItem(
-            icon: Icons.credit_card_rounded,
-            label: 'Pagos',
           ),
           const AppBottomNavItem(icon: Icons.person_rounded, label: 'Cuenta'),
         ],

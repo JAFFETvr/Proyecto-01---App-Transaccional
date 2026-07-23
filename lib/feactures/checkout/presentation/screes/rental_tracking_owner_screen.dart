@@ -12,8 +12,6 @@ import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
 import '../../../../../shared/components/contract_verification_widget.dart';
 import '../../../../../core/services/biometric_service.dart';
-import '../../../review/presentation/providers/review_provider.dart';
-import '../../../review/presentation/components/submit_review_sheet.dart';
 
 class RentalTrackingOwnerScreen extends StatefulWidget {
   const RentalTrackingOwnerScreen({super.key});
@@ -365,9 +363,11 @@ class _RentalTrackingOwnerScreenState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      rental.requesterConfirmedReturn
-                          ? 'El solicitante solicita confirmación de devolución:'
-                          : 'Esperando que el solicitante inicie el retorno físico...',
+                      rental.ownerConfirmedReturn
+                          ? 'Ya confirmaste la devolución. Esperando al solicitante...'
+                          : (rental.requesterConfirmedReturn
+                              ? 'El solicitante solicita confirmación de devolución:'
+                              : 'Esperando que el solicitante inicie el retorno físico...'),
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: context.textSecondary,
@@ -375,44 +375,56 @@ class _RentalTrackingOwnerScreenState
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
-                    _loading
-                        ? const Center(child: CircularProgressIndicator())
-                        : Row(
-                            children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.danger,
-                                    side: const BorderSide(color: AppColors.danger),
-                                    minimumSize: const Size(0, 48),
-                                  ),
-                                  onPressed: () => _reportDispute(rental.id),
-                                  icon: const Icon(Icons.report_problem_outlined, size: 18),
-                                  label: const Text('Disputa'),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: AppColors.primaryGradient,
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
-                                      foregroundColor: Colors.white,
-                                      shadowColor: Colors.transparent,
+                    if (rental.ownerConfirmedReturn)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Center(
+                          child: SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      )
+                    else
+                      _loading
+                          ? const Center(child: CircularProgressIndicator())
+                          : Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.danger,
+                                      side: const BorderSide(color: AppColors.danger),
                                       minimumSize: const Size(0, 48),
                                     ),
-                                    onPressed: () => _confirmReturn(rental.id),
-                                    icon: const Icon(Icons.check_rounded, size: 18),
-                                    label: const Text('Aceptar Retorno'),
+                                    onPressed: () => _reportDispute(rental.id),
+                                    icon: const Icon(Icons.report_problem_outlined, size: 18),
+                                    label: const Text('Disputa'),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: AppColors.primaryGradient,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: ElevatedButton.icon(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        foregroundColor: Colors.white,
+                                        shadowColor: Colors.transparent,
+                                        minimumSize: const Size(0, 48),
+                                      ),
+                                      onPressed: () => _confirmReturn(rental.id),
+                                      icon: const Icon(Icons.check_rounded, size: 18),
+                                      label: const Text('Aceptar Retorno'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                   ],
                 ),
               ),
@@ -591,9 +603,6 @@ class _OwnerPhase2Accepted extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reviewProvider = context.watch<ReviewProvider>();
-    final alreadyReviewed = reviewProvider.hasReviewed(rental.id, role: 'owner');
-
     return SingleChildScrollView(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -627,20 +636,6 @@ class _OwnerPhase2Accepted extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 24),
-          if (!alreadyReviewed) ...[
-            OutlinedButton.icon(
-              icon: const Icon(Icons.star_outline_rounded),
-              label: const Text('Calificar al solicitante'),
-              onPressed: () => SubmitReviewSheet.show(
-                context,
-                rentalId: rental.id,
-                role: 'owner',
-                title: 'Califica al solicitante',
-                subtitle: '¿Cómo fue tu experiencia con quien rentó tu herramienta?',
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
           PrimaryGradientButton(
             label: 'Volver a mi Panel',
             onPressed: () => Navigator.of(context).pushReplacementNamed('/propietario'),

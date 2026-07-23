@@ -1,58 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
 import '../../feactures/checkout/domain/entitie/rental_entity.dart';
-import '../../feactures/checkout/presentation/providers/rental_provider.dart';
 import '../theme/app_colors.dart';
 
-class ContractVerificationWidget extends StatefulWidget {
+class ContractVerificationWidget extends StatelessWidget {
   final RentalEntity rental;
 
   const ContractVerificationWidget({
     super.key,
     required this.rental,
   });
-
-  @override
-  State<ContractVerificationWidget> createState() => _ContractVerificationWidgetState();
-}
-
-class _ContractVerificationWidgetState extends State<ContractVerificationWidget> {
-  bool _verifying = false;
-  bool? _isValid;
-  String? _recalculatedHash;
-  String? _error;
-
-  Future<void> _verify() async {
-    setState(() {
-      _verifying = true;
-      _isValid = null;
-      _recalculatedHash = null;
-      _error = null;
-    });
-
-    try {
-      final res = await context.read<RentalProvider>().verifyContract(widget.rental.id);
-      if (res != null) {
-        setState(() {
-          _isValid = res['valid'] as bool? ?? false;
-          _recalculatedHash = res['recalculated_hash'] as String?;
-        });
-      } else {
-        setState(() {
-          _error = context.read<RentalProvider>().error ?? 'Error de conexión';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _error = 'Error inesperado al validar.';
-      });
-    } finally {
-      setState(() {
-        _verifying = false;
-      });
-    }
-  }
 
   void _showLegalContract(BuildContext context) {
     showDialog(
@@ -127,27 +84,27 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                         ),
                       ),
                       const Divider(height: 24, thickness: 1),
-                      
+
                       _buildClauseTitle('DECLARACIONES Y CLÁUSULAS'),
                       const SizedBox(height: 8),
                       _buildClauseText(
                         '1. VALIDEZ DE IDENTIDAD: Las partes declaran haber completado satisfactoriamente el registro biométrico y escaneo de INE (KYC), vinculando legalmente sus firmas a la presente transacción.',
                       ),
                       _buildClauseText(
-                        '2. TARIFA DIARIA Y TOTAL: Se establece una tarifa de renta de \$${widget.rental.dailyRate.toStringAsFixed(0)} MXN/día. El importe total de la renta devengado es de \$${widget.rental.totalAmount.toStringAsFixed(0)} MXN.',
+                        '2. TARIFA DIARIA Y TOTAL: Se establece una tarifa de renta de \$${rental.dailyRate.toStringAsFixed(0)} MXN/día. El importe total de la renta devengado es de \$${rental.totalAmount.toStringAsFixed(0)} MXN.',
                       ),
                       _buildClauseText(
-                        '3. COBERTURA DE SEGURO (IA): El inquilino acepta un cargo en garantía de \$${widget.rental.deductibleAmount.toStringAsFixed(0)} MXN, correspondiente al 10% del valor de catálogo del activo, que servirá de deducible en caso de siniestro. Este monto se libera automáticamente si no hay disputa.',
+                        '3. COBERTURA DE SEGURO (IA): El inquilino acepta un cargo en garantía de \$${rental.deductibleAmount.toStringAsFixed(0)} MXN, correspondiente al 10% del valor de catálogo del activo, que servirá de deducible en caso de siniestro. Este monto se libera automáticamente si no hay disputa.',
                       ),
                       _buildClauseText(
-                        '3.1 COMISIÓN DE SERVICIO: ToolShare cobra una comisión de servicio no reembolsable de \$${widget.rental.commissionAmount.toStringAsFixed(0)} MXN, correspondiente al 5% del importe total de la renta.',
+                        '3.1 COMISIÓN DE SERVICIO: ToolShare cobra una comisión de servicio no reembolsable de \$${rental.commissionAmount.toStringAsFixed(0)} MXN, correspondiente al 5% del importe total de la renta.',
                       ),
                       _buildClauseText(
                         '4. INTEGRIDAD: El contrato se firma digitalmente usando la marca de tiempo de entrega, geolocalización de encuentro e identificador de hardware.',
                       ),
-                      
+
                       const SizedBox(height: 14),
-                      
+
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -159,26 +116,26 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildMetaRow('Folio de Renta:', widget.rental.id),
+                            _buildMetaRow('Folio de Renta:', rental.id),
                             _buildMetaRow(
                               'Arrendador (Dueño):',
-                              widget.rental.ownerName.isNotEmpty
-                                  ? '${widget.rental.ownerName}\n(${widget.rental.ownerId})'
-                                  : widget.rental.ownerId,
+                              rental.ownerName.isNotEmpty
+                                  ? '${rental.ownerName}\n(${rental.ownerId})'
+                                  : rental.ownerId,
                             ),
                             _buildMetaRow(
                               'Arrendatario (Usuario):',
-                              widget.rental.requesterName.isNotEmpty
-                                  ? '${widget.rental.requesterName}\n(${widget.rental.requesterId})'
-                                  : widget.rental.requesterId,
+                              rental.requesterName.isNotEmpty
+                                  ? '${rental.requesterName}\n(${rental.requesterId})'
+                                  : rental.requesterId,
                             ),
-                            if (widget.rental.deliveryLat != 0)
-                              _buildMetaRow('Punto Encuentro:', '${widget.rental.deliveryLat.toStringAsFixed(5)}, ${widget.rental.deliveryLng.toStringAsFixed(5)}'),
+                            if (rental.deliveryLat != 0)
+                              _buildMetaRow('Punto Encuentro:', '${rental.deliveryLat.toStringAsFixed(5)}, ${rental.deliveryLng.toStringAsFixed(5)}'),
                           ],
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -186,8 +143,8 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                             child: Column(
                               children: [
                                 Text(
-                                  widget.rental.ownerName.isNotEmpty
-                                      ? widget.rental.ownerName.toUpperCase()
+                                  rental.ownerName.isNotEmpty
+                                      ? rental.ownerName.toUpperCase()
                                       : 'ARRENDADOR',
                                   style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 8, color: const Color(0xFF64748B)),
                                   textAlign: TextAlign.center,
@@ -206,8 +163,8 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                             child: Column(
                               children: [
                                 Text(
-                                  widget.rental.requesterName.isNotEmpty
-                                      ? widget.rental.requesterName.toUpperCase()
+                                  rental.requesterName.isNotEmpty
+                                      ? rental.requesterName.toUpperCase()
                                       : 'ARRENDATARIO',
                                   style: GoogleFonts.montserrat(fontWeight: FontWeight.bold, fontSize: 8, color: const Color(0xFF64748B)),
                                   textAlign: TextAlign.center,
@@ -226,7 +183,7 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                       const SizedBox(height: 20),
                       const Divider(thickness: 1),
                       const SizedBox(height: 8),
-                      
+
                       Center(
                         child: Text(
                           'FIRMA CRIPTOGRÁFICA DIGITAL (SHA-256)',
@@ -247,7 +204,7 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
                           border: Border.all(color: const Color(0xFFCBD5E1)),
                         ),
                         child: SelectableText(
-                          widget.rental.contractHash,
+                          rental.contractHash,
                           style: GoogleFonts.shareTechMono(
                             fontSize: 10,
                             color: const Color(0xFF334155),
@@ -323,10 +280,7 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
 
   @override
   Widget build(BuildContext context) {
-    if (widget.rental.contractHash.isEmpty) return const SizedBox.shrink();
-
-    final isSuccess = _isValid == true;
-    final isFailure = _isValid == false;
+    if (rental.contractHash.isEmpty) return const SizedBox.shrink();
 
     final cs = Theme.of(context).colorScheme;
 
@@ -334,50 +288,20 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isSuccess
-            ? cs.tertiaryContainer
-            : isFailure
-                ? cs.errorContainer
-                : cs.tertiaryContainer,
+        color: cs.tertiaryContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isSuccess
-              ? const Color(0xFF10B981).withValues(alpha: 0.3)
-              : isFailure
-                  ? const Color(0xFFEF4444).withValues(alpha: 0.3)
-                  : AppColors.success.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
-          Icon(
-            isSuccess
-                ? Icons.shield_outlined
-                : isFailure
-                    ? Icons.gpp_bad_outlined
-                    : Icons.verified_outlined,
-            color: isSuccess
-                ? const Color(0xFF10B981)
-                : isFailure
-                    ? const Color(0xFFEF4444)
-                    : AppColors.success,
-            size: 32,
-          ),
+          const Icon(Icons.verified_outlined, color: AppColors.success, size: 32),
           const SizedBox(height: 8),
           Text(
-            isSuccess
-                ? '¡Firma e Integridad Criptográfica Verificada!'
-                : isFailure
-                    ? '¡ADVERTENCIA: Contrato Manipulado!'
-                    : 'Contrato digital inmutable generado',
+            'Contrato digital inmutable generado',
             style: GoogleFonts.inter(
               fontWeight: FontWeight.w700,
               fontSize: 12.5,
-              color: isSuccess
-                  ? cs.onTertiaryContainer
-                  : isFailure
-                      ? cs.onErrorContainer
-                      : cs.onTertiaryContainer,
+              color: cs.onTertiaryContainer,
             ),
             textAlign: TextAlign.center,
           ),
@@ -386,96 +310,34 @@ class _ContractVerificationWidgetState extends State<ContractVerificationWidget>
             'Hash del contrato:',
             style: GoogleFonts.inter(
               fontSize: 11,
-              color: isFailure ? cs.onErrorContainer : cs.onTertiaryContainer,
+              color: cs.onTertiaryContainer,
               fontWeight: FontWeight.w500,
             ),
           ),
           SelectableText(
-            widget.rental.contractHash,
+            rental.contractHash,
             style: GoogleFonts.inter(
               fontSize: 10,
-              color: isFailure ? cs.onErrorContainer : cs.onTertiaryContainer,
+              color: cs.onTertiaryContainer,
               fontWeight: FontWeight.w600,
             ),
             textAlign: TextAlign.center,
           ),
-          if (_recalculatedHash != null && _recalculatedHash != widget.rental.contractHash) ...[
-            const SizedBox(height: 6),
-            Text(
-              'Hash recalculado (datos actuales en base de datos):',
-              style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFFB91C1C), fontWeight: FontWeight.w500),
-            ),
-            SelectableText(
-              _recalculatedHash!,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                color: const Color(0xFF991B1B),
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
           const SizedBox(height: 12),
-          if (_verifying)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          else if (_error != null)
-            Text(
-              _error!,
-              style: GoogleFonts.inter(fontSize: 11, color: AppColors.danger, fontWeight: FontWeight.w600),
-            )
-          else ...[
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.success,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  icon: const Icon(Icons.security, size: 14),
-                  label: Text(
-                    'Verificar Integridad',
-                    style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: _verify,
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF475569),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                  icon: const Icon(Icons.article_outlined, size: 14),
-                  label: Text(
-                    'Ver Contrato',
-                    style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                  onPressed: () => _showLegalContract(context),
-                ),
-              ],
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF475569),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-          ],
-          if (_isValid != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              isSuccess
-                  ? '✓ Todos los datos coinciden exactamente con la firma SHA-256.'
-                  : '✗ Alerta: Los datos del contrato han sido alterados.',
-              style: GoogleFonts.inter(
-                fontSize: 10.5,
-                color: isSuccess ? const Color(0xFF047857) : const Color(0xFFB91C1C),
-                fontWeight: FontWeight.w600,
-              ),
-              textAlign: TextAlign.center,
+            icon: const Icon(Icons.article_outlined, size: 14),
+            label: Text(
+              'Ver Contrato',
+              style: GoogleFonts.inter(fontSize: 10, fontWeight: FontWeight.bold),
             ),
-          ]
+            onPressed: () => _showLegalContract(context),
+          ),
         ],
       ),
     );

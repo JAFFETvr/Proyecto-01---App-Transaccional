@@ -12,6 +12,7 @@ import '../providers/rental_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
+import '../../../../../shared/utils/webview_scheme_guard.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -142,7 +143,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               _onPaymentPending();
               return NavigationDecision.prevent;
             }
-            return NavigationDecision.navigate;
+            return handleNonHttpScheme(req.url);
           },
         ),
       );
