@@ -68,4 +68,89 @@ class RentalEntity {
   bool get isDisputed => status == 'disputed';
   bool get isCancelled => status == 'cancelled';
   bool get isPending => status == 'pending';
+
+  bool get isCash => paymentMethod == 'cash';
+  bool get isCard => paymentMethod == 'card';
+
+  // En tarjeta, los fondos solo están realmente retenidos cuando Mercado Pago
+  // confirmó el pago. Antes de eso la renta existe en la BD pero nadie ha
+  // pagado nada, así que NO se debe mostrar como "Fondos retenidos".
+  // En efectivo nunca hay fondos retenidos en la plataforma (el dinero se
+  // intercambia directo entre las dos personas).
+  bool get isPaidCard {
+    if (!isCard) return false;
+    const paidStates = {
+      'authorized',
+      'approved',
+      'accredited',
+      'captured',
+      'captured_admin',
+    };
+    return paidStates.contains(paymentStatus);
+  }
+
+  // Tarjeta creada pero aún sin pago confirmado por Mercado Pago.
+  bool get isAwaitingCardPayment => isCard && !isPaidCard;
+
+  DateTime? get endDateTime => DateTime.tryParse(endDate)?.toLocal();
+
+  Duration? get timeUntilReturn {
+    final end = endDateTime;
+    if (end == null) return null;
+    return end.difference(DateTime.now());
+  }
+
+  // Falta 12 h o menos para la fecha de devolución (y la renta sigue en curso).
+  bool get returnDueSoon {
+    if (!isActive) return false;
+    final left = timeUntilReturn;
+    if (left == null) return false;
+    return left <= const Duration(hours: 12) && left > Duration.zero;
+  }
+
+  bool get returnOverdue {
+    if (!isActive) return false;
+    final left = timeUntilReturn;
+    if (left == null) return false;
+    return left <= Duration.zero;
+  }
+
+  // Texto tipo "8 h" / "40 min" con lo que falta para devolver.
+  String get timeLeftLabel {
+    final left = timeUntilReturn;
+    if (left == null) return '';
+    if (left <= Duration.zero) return 'vencida';
+    if (left.inHours >= 1) return '${left.inHours} h';
+    return '${left.inMinutes} min';
+  }
+
+  // La renta aún no arranca formalmente y puede cancelarse por cualquiera de
+  // las dos partes: ninguno confirmó la entrega todavía.
+  bool get canCancel =>
+      isPending && !ownerConfirmedDelivery && !requesterConfirmedDelivery;
+
+  // El admin ya dictaminó la disputa; su fallo queda anexado al motivo con el
+  // prefijo "[Dictamen Admin - <acción>]".
+  bool get disputeResolvedByAdmin => disputeReason.contains('[Dictamen Admin');
+
+  // 'capture' => se cobró el depósito a favor del propietario (el propietario
+  // gana). 'refund' => se reembolsó al solicitante (el solicitante gana).
+  // null si la disputa aún no tiene fallo.
+  String? get disputeAdminAction {
+    if (!disputeResolvedByAdmin) return null;
+    if (disputeReason.contains('- capture]')) return 'capture';
+    if (disputeReason.contains('- refund]')) return 'refund';
+    return null;
+  }
+
+  // Solo el dictamen/notas del admin, sin el motivo original ni el prefijo.
+  String get disputeAdminNotes {
+    if (!disputeResolvedByAdmin) return '';
+    final start = disputeReason.indexOf(']:');
+    if (start == -1) return '';
+    var notes = disputeReason.substring(start + 2);
+    final motivoIdx = notes.indexOf('(Motivo:');
+    if (motivoIdx != -1) notes = notes.substring(0, motivoIdx);
+    return notes.trim();
+  }
 }

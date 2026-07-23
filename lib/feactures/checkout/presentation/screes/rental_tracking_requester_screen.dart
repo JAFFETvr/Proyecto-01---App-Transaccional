@@ -5,11 +5,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/rental_provider.dart';
+import '../providers/chat_provider.dart';
 import '../../domain/entitie/rental_entity.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../components/rental_chat_sheet.dart';
+import '../components/rental_widgets.dart';
 import '../../../../../shared/components/contract_verification_widget.dart';
 import '../../../../../core/services/biometric_service.dart';
 import '../../../review/presentation/providers/review_provider.dart';
@@ -27,9 +29,12 @@ class _RentalTrackingRequesterScreenState
     extends State<RentalTrackingRequesterScreen> with WidgetsBindingObserver {
   int _localPhase = 0;
   bool _loading = false;
-  Timer? _pollTimer;
   String? _rentalId;
+  String? _requesterId;
   bool _notifiedActive = false;
+  bool _hasUnreadChat = false;
+  Timer? _unreadTimer;
+
   // Se guarda la referencia al provider porque en dispose() ya no es seguro
   // hacer context.read<T>(): si toda la pantalla se está desmontando junto
   // con sus ancestros (ej. al navegar con pushAndRemoveUntil), buscar un
@@ -46,6 +51,7 @@ class _RentalTrackingRequesterScreenState
           ModalRoute.of(context)?.settings.arguments as RentalEntity?;
       if (initialRental != null) {
         _rentalId = initialRental.id;
+        _requesterId = initialRental.requesterId;
         final skipIntro = initialRental.requesterConfirmedDelivery ||
             initialRental.ownerConfirmedDelivery ||
             initialRental.isActive ||
@@ -56,8 +62,94 @@ class _RentalTrackingRequesterScreenState
           setState(() => _localPhase = 1);
         }
         context.read<RentalProvider>().listenToRental(initialRental.id);
+        _startUnreadWatch();
       }
     });
+  }
+
+  // Revisa periódicamente si hay mensajes nuevos de la otra persona para
+  // mostrar el punto rojo en el icono de chat (no hay push, así que se
+  // consulta cada pocos segundos mientras la pantalla está abierta).
+  void _startUnreadWatch() {
+    _unreadTimer?.cancel();
+    _refreshUnread();
+    _unreadTimer =
+        Timer.periodic(const Duration(seconds: 6), (_) => _refreshUnread());
+  }
+
+  Future<void> _refreshUnread() async {
+    final rentalId = _rentalId;
+    final userId = _requesterId;
+    if (rentalId == null || userId == null) return;
+    final unread =
+        await context.read<ChatProvider>().hasUnreadFor(rentalId, userId);
+    if (mounted && unread != _hasUnreadChat) {
+      setState(() => _hasUnreadChat = unread);
+    }
+  }
+
+  Future<void> _openChat(RentalEntity rental) async {
+    await RentalChatSheet.show(
+      context,
+      rentalId: rental.id,
+      currentUserId: rental.requesterId,
+      title: 'Chat de Renta',
+    );
+    if (!mounted) return;
+    await context.read<ChatProvider>().markChatSeen(rental.id);
+    if (mounted) setState(() => _hasUnreadChat = false);
+  }
+
+  Future<void> _cancelRental(String rentalId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Cancelar renta',
+            style: GoogleFonts.montserrat(fontWeight: FontWeight.w700)),
+        content: Text(
+          'Aún nadie ha confirmado la entrega, así que puedes cancelar. '
+          'Si pagaste con tarjeta, la retención de fondos se libera.',
+          style: GoogleFonts.inter(fontSize: 13, color: context.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, seguir'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Sí, cancelar'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    setState(() => _loading = true);
+    final ok = await context.read<RentalProvider>().cancelRental(rentalId);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Renta cancelada.'),
+          backgroundColor: Color(0xFF64748B),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.of(context).pushReplacementNamed('/solicitante');
+    } else {
+      final err = context.read<RentalProvider>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err ?? 'No se pudo cancelar la renta'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -70,9 +162,11 @@ class _RentalTrackingRequesterScreenState
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _rentalProvider.stopListeningRental();
+      _unreadTimer?.cancel();
     } else if (state == AppLifecycleState.resumed) {
       if (_rentalId != null) {
         _rentalProvider.listenToRental(_rentalId!);
+        _startUnreadWatch();
       }
     }
   }
@@ -80,6 +174,7 @@ class _RentalTrackingRequesterScreenState
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _unreadTimer?.cancel();
     _rentalProvider.stopListeningRental();
     super.dispose();
   }
@@ -250,6 +345,16 @@ class _RentalTrackingRequesterScreenState
           behavior: SnackBarBehavior.floating,
         ),
       );
+    } else {
+      final err = context.read<RentalProvider>().error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(err ?? 'No se pudo reportar la disputa. Intenta de nuevo.'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
   }
 
@@ -345,15 +450,11 @@ class _RentalTrackingRequesterScreenState
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat_bubble_outline_rounded, color: AppColors.orange500),
+          ChatIconWithBadge(
+            hasUnread: _hasUnreadChat,
+            color: AppColors.orange500,
             tooltip: 'Chat con propietario',
-            onPressed: () => RentalChatSheet.show(
-              context,
-              rentalId: rental.id,
-              currentUserId: rental.requesterId,
-              title: 'Chat de Renta',
-            ),
+            onPressed: () => _openChat(rental),
           ),
           if (!rental.isCompleted && !rental.isCancelled && !rental.isDisputed)
             TextButton.icon(
@@ -378,7 +479,13 @@ class _RentalTrackingRequesterScreenState
             const SizedBox(height: 8),
             Expanded(
               child: _localPhase == 0 && phaseIndicatorIndex == 0
-                  ? _Phase1Widget(onNext: () => setState(() => _localPhase = 1))
+                  ? _Phase1Widget(
+                      rental: rental,
+                      onNext: () => setState(() => _localPhase = 1),
+                      onCancel: rental.canCancel
+                          ? () => _cancelRental(rental.id)
+                          : null,
+                    )
                   : _buildMainContent(rental),
             ),
           ],
@@ -394,6 +501,9 @@ class _RentalTrackingRequesterScreenState
     if (rental.isCompleted) {
       return _buildCompletedWidget(rental);
     }
+    if (rental.isCancelled) {
+      return _buildCancelledWidget(rental);
+    }
 
     if (rental.isPending) {
       if (rental.requesterConfirmedDelivery) {
@@ -403,6 +513,7 @@ class _RentalTrackingRequesterScreenState
         loading: _loading,
         rental: rental,
         onConfirm: () => _confirmDelivery(rental.id),
+        onCancel: () => _cancelRental(rental.id),
       );
     }
 
@@ -510,6 +621,8 @@ class _RentalTrackingRequesterScreenState
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (rental.disputeResolvedByAdmin)
+            DisputeResultCard(rental: rental, isOwner: false),
           Container(
             width: 100, height: 100,
             decoration: const BoxDecoration(
@@ -561,14 +674,79 @@ class _RentalTrackingRequesterScreenState
       ),
     );
   }
+
+  Widget _buildCancelledWidget(RentalEntity rental) {
+    // Una disputa resuelta con "refund" deja la renta en cancelled: en ese
+    // caso se muestra el resultado (ganó/perdió) en vez de un simple
+    // "cancelada".
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (rental.disputeResolvedByAdmin)
+            DisputeResultCard(rental: rental, isOwner: false),
+          Container(
+            width: 100, height: 100,
+            decoration: BoxDecoration(
+              color: const Color(0xFF94A3B8).withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.cancel_outlined,
+                size: 50, color: Color(0xFF64748B)),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            rental.disputeResolvedByAdmin
+                ? 'Disputa resuelta'
+                : 'Renta cancelada',
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: context.textPrimary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            rental.disputeResolvedByAdmin
+                ? 'El administrador ya emitió su dictamen sobre esta renta.'
+                : 'Esta renta fue cancelada. Si pagaste con tarjeta, la retención de fondos se liberó.',
+            style: GoogleFonts.inter(
+              fontSize: 14,
+              color: context.textSecondary,
+              height: 1.6,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          PrimaryGradientButton(
+            label: 'Volver al Catálogo',
+            onPressed: () =>
+                Navigator.of(context).pushReplacementNamed('/solicitante'),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Phase1Widget extends StatelessWidget {
+  final RentalEntity rental;
   final VoidCallback onNext;
-  const _Phase1Widget({required this.onNext});
+  final VoidCallback? onCancel;
+  const _Phase1Widget({
+    required this.rental,
+    required this.onNext,
+    this.onCancel,
+  });
 
   @override
   Widget build(BuildContext context) {
+    // En efectivo no hay fondos retenidos: el dinero es directo entre las dos
+    // personas. Solo en tarjeta (con pago confirmado) tiene sentido decir
+    // "fondos retenidos".
+    final cash = rental.isCash;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -576,26 +754,30 @@ class _Phase1Widget extends StatelessWidget {
         children: [
           Container(
             width: 100, height: 100,
-            decoration: const BoxDecoration(
-              color: AppColors.successBg,
+            decoration: BoxDecoration(
+              color: cash
+                  ? AppColors.orange500.withValues(alpha: 0.12)
+                  : AppColors.successBg,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.lock_rounded,
-                size: 50, color: AppColors.success),
+            child: Icon(cash ? Icons.payments_outlined : Icons.lock_rounded,
+                size: 50, color: cash ? AppColors.orange500 : AppColors.success),
           ),
           const SizedBox(height: 28),
           Text(
-            'Fondos retenidos con éxito',
+            cash ? 'Reserva registrada' : 'Fondos retenidos con éxito',
             style: GoogleFonts.montserrat(
               fontSize: 22,
               fontWeight: FontWeight.w800,
-              color: AppColors.success,
+              color: cash ? AppColors.orange500 : AppColors.success,
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            'Tu pago (incluida la comisión de servicio) se procesó de forma segura.\nAhora coordina el encuentro con el propietario.',
+            cash
+                ? 'Pagarás en efectivo directamente al propietario. ToolShare no retiene fondos ni cobra comisión.\nAhora coordina el encuentro.'
+                : 'Tu pago (incluida la comisión de servicio) se procesó de forma segura.\nAhora coordina el encuentro con el propietario.',
             style: GoogleFonts.inter(
               fontSize: 14,
               color: context.textSecondary,
@@ -636,6 +818,19 @@ class _Phase1Widget extends StatelessWidget {
             height: 55,
             onPressed: onNext,
           ),
+          if (onCancel != null) ...[
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onCancel,
+              icon: const Icon(Icons.close_rounded,
+                  size: 18, color: AppColors.danger),
+              label: Text(
+                'Cancelar renta',
+                style: GoogleFonts.inter(
+                    color: AppColors.danger, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -646,11 +841,13 @@ class _Phase2RequesterWidget extends StatelessWidget {
   final bool loading;
   final RentalEntity rental;
   final VoidCallback onConfirm;
+  final VoidCallback? onCancel;
 
   const _Phase2RequesterWidget({
     required this.loading,
     required this.rental,
     required this.onConfirm,
+    this.onCancel,
   });
 
   @override
@@ -726,6 +923,19 @@ class _Phase2RequesterWidget extends StatelessWidget {
                   fontSize: 16,
                   onPressed: rental.requesterConfirmedDelivery ? null : onConfirm,
                 ),
+          if (onCancel != null && rental.canCancel && !loading) ...[
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: onCancel,
+              icon: const Icon(Icons.close_rounded,
+                  size: 18, color: AppColors.danger),
+              label: Text(
+                'Cancelar renta',
+                style: GoogleFonts.inter(
+                    color: AppColors.danger, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -751,6 +961,7 @@ class _Phase3RequesterWidget extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
+          ReturnDueBanner(rental: rental),
           if (rental.contractHash.isNotEmpty) ...[
             ContractVerificationWidget(
               rental: rental,

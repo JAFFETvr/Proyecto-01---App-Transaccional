@@ -253,6 +253,10 @@ class _RentalCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
+            if (rental.returnDueSoon || rental.returnOverdue) ...[
+              _ReturnReminderBanner(rental: rental),
+              const SizedBox(height: 12),
+            ],
             Divider(height: 1, color: context.borderColor),
             const SizedBox(height: 12),
             Row(
@@ -296,9 +300,26 @@ class _RentalCard extends StatelessWidget {
   }
 
   String _getStatusText(RentalEntity rental) {
+    if (rental.isCancelled) return '❌ Cancelada';
+    if (rental.isCompleted) {
+      return rental.disputeResolvedByAdmin
+          ? '⚖️ Disputa resuelta'
+          : '✅ Completada';
+    }
+    if (rental.isDisputed) return '⚠️ En disputa';
+
     if (rental.isPending) {
+      // Tarjeta sin pago confirmado: la renta existe pero nadie ha pagado,
+      // así que NO se debe ver como "Fondos retenidos".
+      if (rental.isAwaitingCardPayment) return '💳 Pago pendiente';
+      // Efectivo: no hay fondos retenidos en la plataforma.
+      if (rental.isCash &&
+          !rental.requesterConfirmedDelivery &&
+          !rental.ownerConfirmedDelivery) {
+        return '🔖 Reservada (efectivo)';
+      }
       if (!rental.requesterConfirmedDelivery && !rental.ownerConfirmedDelivery) {
-        return '⏳ Fondos retenidos';
+        return '🔒 Fondos retenidos';
       }
       if (rental.requesterConfirmedDelivery && !rental.ownerConfirmedDelivery) {
         return '⏳ Esperando al propietario';
@@ -308,19 +329,76 @@ class _RentalCard extends StatelessWidget {
       }
       return '⏳ Pendiente de entrega';
     }
-    if (rental.isActive) return '🟢 Renta en curso';
-    if (rental.isCompleted) return '✅ Completada';
-    if (rental.isDisputed) return '⚠️ En disputa';
-    if (rental.isCancelled) return '❌ Cancelada';
+    if (rental.isActive) {
+      if (rental.returnOverdue) return '⏰ Devolución vencida';
+      if (rental.returnDueSoon) return '⏰ Devuelve pronto (${rental.timeLeftLabel})';
+      return '🟢 Renta en curso';
+    }
     return rental.status;
   }
 
   Color _getStatusColor(RentalEntity rental) {
-    if (rental.isPending) return const Color(0xFFD97706);
-    if (rental.isActive) return const Color(0xFF10B981);
+    if (rental.isCancelled) return const Color(0xFF94A3B8);
     if (rental.isCompleted) return const Color(0xFF64748B);
     if (rental.isDisputed) return const Color(0xFFEF4444);
-    if (rental.isCancelled) return const Color(0xFF94A3B8);
+    if (rental.isPending) {
+      if (rental.isAwaitingCardPayment) return const Color(0xFF64748B);
+      if (rental.isCash &&
+          !rental.requesterConfirmedDelivery &&
+          !rental.ownerConfirmedDelivery) {
+        return const Color(0xFF2563EB);
+      }
+      return const Color(0xFFD97706);
+    }
+    if (rental.isActive) {
+      if (rental.returnOverdue) return const Color(0xFFEF4444);
+      if (rental.returnDueSoon) return const Color(0xFFF59E0B);
+      return const Color(0xFF10B981);
+    }
     return const Color(0xFF64748B);
+  }
+}
+
+/// Aviso visible cuando faltan 12 h o menos para la fecha de devolución (o ya
+/// se venció). Como no hay push, esta es la forma de "avisar" que hay que
+/// devolver la herramienta: se hace visible en la sección de rentas.
+class _ReturnReminderBanner extends StatelessWidget {
+  final RentalEntity rental;
+  const _ReturnReminderBanner({required this.rental});
+
+  @override
+  Widget build(BuildContext context) {
+    final overdue = rental.returnOverdue;
+    final color = overdue ? const Color(0xFFEF4444) : const Color(0xFFF59E0B);
+    final text = overdue
+        ? 'La fecha de devolución ya venció. Coordina la entrega cuanto antes.'
+        : 'Quedan ${rental.timeLeftLabel} para devolver la herramienta.';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        children: [
+          Icon(overdue ? Icons.warning_amber_rounded : Icons.alarm_rounded,
+              size: 16, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: GoogleFonts.inter(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: color,
+                height: 1.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

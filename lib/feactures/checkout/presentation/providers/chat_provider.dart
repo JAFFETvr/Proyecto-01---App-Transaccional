@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/entitie/message_entity.dart';
 import '../../domain/repositories/rental_repository.dart';
@@ -81,6 +82,53 @@ class ChatProvider extends ChangeNotifier {
     } finally {
       _sending = false;
       notifyListeners();
+    }
+  }
+
+  // --- Indicador de mensajes sin leer (punto rojo en el icono de chat) ---
+  //
+  // No hay push (FCM está deshabilitado), así que el "sin leer" se calcula
+  // comparando el último mensaje de la OTRA persona contra una marca de
+  // tiempo local ("visto") que se guarda cada vez que se abre/cierra el chat.
+  static String _seenKey(String rentalId) => 'chat_seen_$rentalId';
+
+  /// Marca el chat de [rentalId] como visto justo ahora. Se llama al abrir y
+  /// al cerrar el chat, para que el punto rojo desaparezca.
+  Future<void> markChatSeen(String rentalId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _seenKey(rentalId),
+      DateTime.now().toUtc().toIso8601String(),
+    );
+  }
+
+  /// Devuelve true si hay algún mensaje de la otra persona más reciente que la
+  /// última vez que este usuario abrió el chat. No toca el estado del chat
+  /// activo (se puede llamar en segundo plano desde la pantalla de
+  /// seguimiento sin interferir con el sheet abierto).
+  Future<bool> hasUnreadFor(String rentalId, String currentUserId) async {
+    try {
+      final msgs = await _repository.getMessages(rentalId);
+      if (msgs.isEmpty) return false;
+
+      DateTime? lastFromOther;
+      for (final m in msgs) {
+        if (m.senderId == currentUserId) continue;
+        final t = DateTime.tryParse(m.createdAt);
+        if (t == null) continue;
+        if (lastFromOther == null || t.isAfter(lastFromOther)) {
+          lastFromOther = t;
+        }
+      }
+      if (lastFromOther == null) return false;
+
+      final prefs = await SharedPreferences.getInstance();
+      final seenRaw = prefs.getString(_seenKey(rentalId));
+      final seen = seenRaw != null ? DateTime.tryParse(seenRaw) : null;
+      if (seen == null) return true;
+      return lastFromOther.isAfter(seen);
+    } catch (_) {
+      return false;
     }
   }
 

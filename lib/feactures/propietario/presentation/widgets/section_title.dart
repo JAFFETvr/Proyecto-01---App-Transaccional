@@ -15,7 +15,14 @@ class SectionTitle extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           )),
       const SizedBox(width: 8),
-      Text(text, style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+      // Expanded para que títulos largos hagan wrap en pantallas angostas
+      // (Android) en vez de desbordar la fila.
+      Expanded(
+        child: Text(
+          text,
+          style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+      ),
     ]);
   }
 }

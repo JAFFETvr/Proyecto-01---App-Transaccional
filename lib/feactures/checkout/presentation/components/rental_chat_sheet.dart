@@ -18,8 +18,8 @@ class RentalChatSheet extends StatefulWidget {
     required this.title,
   });
 
-  static void show(BuildContext context, {required String rentalId, required String currentUserId, required String title}) {
-    showModalBottomSheet(
+  static Future<void> show(BuildContext context, {required String rentalId, required String currentUserId, required String title}) {
+    return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -43,7 +43,11 @@ class _RentalChatSheetState extends State<RentalChatSheet> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatProvider>().startChat(widget.rentalId);
+      final chat = context.read<ChatProvider>();
+      chat.startChat(widget.rentalId);
+      // Al abrir el chat se marca como visto, para que el punto rojo del
+      // icono de mensajes desaparezca.
+      chat.markChatSeen(widget.rentalId);
     });
   }
 

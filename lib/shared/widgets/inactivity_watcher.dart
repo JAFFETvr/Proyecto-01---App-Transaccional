@@ -15,7 +15,7 @@ import '../../core/services/session_service.dart';
 /// cierre de sesión si ya se excedió el límite, en vez de reiniciar el
 /// conteo desde cero.
 class InactivityWatcher extends StatefulWidget {
-  static const Duration timeout = Duration(minutes: 1);
+  static const Duration timeout = Duration(minutes: 5);
 
   final Widget child;
 

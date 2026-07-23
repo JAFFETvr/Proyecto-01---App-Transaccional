@@ -163,6 +163,18 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     final commission = _args['commission'] ?? 0.0;
     final priceDay = _args['pricePerDay'] ?? 0.0;
 
+    // En efectivo el dinero se intercambia directo entre solicitante y
+    // propietario: ToolShare no cobra comisión de servicio ni retiene depósito
+    // (no pasa nada por la pasarela). El precio queda fijo en la tarifa de la
+    // renta. Solo en tarjeta se suman comisión + depósito al total.
+    final bool isCash = _paymentMethod == 'cash';
+    final double rentOnly =
+        (priceDay as num).toDouble() * (days as num).toInt();
+    final double displayCommission = isCash ? 0.0 : (commission as num).toDouble();
+    final double displayDeposit = isCash ? 0.0 : (deposit as num).toDouble();
+    final double displayTotal =
+        isCash ? rentOnly : (total as num).toDouble();
+
     final rentalProvider = context.watch<RentalProvider>();
 
     return Scaffold(
@@ -247,22 +259,30 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   _SummaryRow(
                     icon: Icons.calendar_today_outlined,
                     label: '$days día${days > 1 ? 's' : ''}',
-                    value: '\$${(priceDay * days).toStringAsFixed(0)} MXN',
+                    value: '\$${rentOnly.toStringAsFixed(0)} MXN',
                   ),
-                  _SummaryRow(
-                    icon: Icons.storefront_outlined,
-                    label: 'Comisión de servicio (10%)',
-                    value: '\$${(commission as double).toStringAsFixed(0)} MXN',
-                  ),
-                  _SummaryRow(
-                    icon: Icons.security_outlined,
-                    label: (deposit as double) > 0
-                        ? 'Depósito de garantía (10% del valor de la herramienta)'
-                        : 'Depósito de garantía',
-                    value: (deposit as double) > 0
-                        ? '\$${deposit.toStringAsFixed(0)} MXN'
-                        : 'No requerido',
-                  ),
+                  if (isCash)
+                    _SummaryRow(
+                      icon: Icons.storefront_outlined,
+                      label: 'Comisión de servicio',
+                      value: 'No aplica (efectivo)',
+                    )
+                  else ...[
+                    _SummaryRow(
+                      icon: Icons.storefront_outlined,
+                      label: 'Comisión de servicio',
+                      value: '\$${displayCommission.toStringAsFixed(0)} MXN',
+                    ),
+                    _SummaryRow(
+                      icon: Icons.security_outlined,
+                      label: displayDeposit > 0
+                          ? 'Depósito de garantía (10% del valor de la herramienta)'
+                          : 'Depósito de garantía',
+                      value: displayDeposit > 0
+                          ? '\$${displayDeposit.toStringAsFixed(0)} MXN'
+                          : 'No requerido',
+                    ),
+                  ],
                   const SizedBox(height: 10),
                   Divider(color: context.borderColor),
                   const SizedBox(height: 10),
@@ -270,7 +290,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Total:',
+                        isCash ? 'Total a pagar en efectivo:' : 'Total:',
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
@@ -278,7 +298,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                         ),
                       ),
                       Text(
-                        '\$${(total as double).toStringAsFixed(0)} MXN',
+                        '\$${displayTotal.toStringAsFixed(0)} MXN',
                         style: GoogleFonts.montserrat(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
@@ -303,7 +323,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
-                      'Solo se capturan los fondos al confirmar la entrega física.',
+                      isCash
+                          ? 'En efectivo pagas directamente al propietario. ToolShare no cobra comisión ni retiene depósito.'
+                          : 'Solo se capturan los fondos al confirmar la entrega física.',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         color: context.textSecondary,
@@ -498,7 +520,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               : PrimaryGradientButton(
                   label: _showWebView
                       ? 'Esperando pago en MercadoPago…'
-                      : 'Confirmar — \$${(total is double ? total : (total as num).toDouble()).toStringAsFixed(0)} MXN',
+                      : 'Confirmar — \$${displayTotal.toStringAsFixed(0)} MXN',
                   icon: Icons.lock_outline,
                   height: 55,
                   onPressed: _showWebView
@@ -515,7 +537,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                               .toUtc()
                               .toIso8601String();
                           final endDateStr = DateTime.now()
-                              .add(Duration(days: days))
+                              .add(Duration(days: days.toInt()))
                               .toUtc()
                               .toIso8601String();
 

@@ -760,28 +760,36 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                 ),
                 const SizedBox(height: 28),
 
-                FilledButton.icon(
-                  onPressed: provider.loading ? null : _save,
-                  icon: provider.loading
-                      ? SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Theme.of(context).colorScheme.onPrimary,
-                          ),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(
-                    _isEditing ? 'Guardar Cambios' : 'Publicar Herramienta',
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: provider.loading ? null : _save,
+                    icon: provider.loading
+                        ? SizedBox(
+                            height: 18,
+                            width: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(
+                      _isEditing ? 'Guardar Cambios' : 'Publicar Herramienta',
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton(
-                  onPressed: provider.loading
-                      ? null
-                      : () => Navigator.pop(context),
-                  child: const Text('Cancelar'),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: provider.loading
+                        ? null
+                        : () => Navigator.pop(context),
+                    child: const Text('Cancelar'),
+                  ),
                 ),
                 const SizedBox(height: 32),
               ],
