@@ -12,6 +12,7 @@ import '../../domain/usesCases/cancel_rental_usecase.dart';
 import '../../domain/usesCases/verify_contract_usecase.dart';
 import '../../domain/usesCases/get_preference_usecase.dart';
 import '../../domain/usesCases/confirm_payment_usecase.dart';
+import '../../domain/usesCases/reconcile_payment_usecase.dart';
 import '../../domain/usesCases/stream_rental_usecase.dart';
 
 class RentalProvider extends ChangeNotifier {
@@ -25,6 +26,7 @@ class RentalProvider extends ChangeNotifier {
   final VerifyContractUseCase _verifyContract;
   final GetPreferenceUseCase _getPreference;
   final ConfirmPaymentUseCase _confirmPayment;
+  final ReconcilePaymentUseCase _reconcilePayment;
   final StreamRentalUseCase _streamRental;
 
   StreamSubscription<RentalEntity>? _rentalSubscription;
@@ -56,6 +58,7 @@ class RentalProvider extends ChangeNotifier {
     required VerifyContractUseCase verifyContract,
     required GetPreferenceUseCase getPreference,
     required ConfirmPaymentUseCase confirmPayment,
+    required ReconcilePaymentUseCase reconcilePayment,
     required StreamRentalUseCase streamRental,
   })  : _createRental = createRental,
         _getRentals = getRentals,
@@ -67,6 +70,7 @@ class RentalProvider extends ChangeNotifier {
         _verifyContract = verifyContract,
         _getPreference = getPreference,
         _confirmPayment = confirmPayment,
+        _reconcilePayment = reconcilePayment,
         _streamRental = streamRental;
 
   void listenToRental(String id) {
@@ -328,6 +332,26 @@ class RentalProvider extends ChangeNotifier {
     } catch (_) {
       // Si falla, no es fatal: el webhook debería terminar de confirmarlo.
       return false;
+    }
+  }
+
+  // Reconcilia el pago sin payment_id (el backend lo busca en MP por
+  // external_reference). Devuelve la renta actualizada, o null si falló la
+  // llamada. Se usa desde el botón "Ya completé el pago" y al reanudar la app.
+  Future<RentalEntity?> reconcilePayment(String rentalId) async {
+    try {
+      final rental = await _reconcilePayment.execute(rentalId);
+      _currentRental = rental;
+      final idx = _rentals.indexWhere((r) => r.id == rentalId);
+      if (idx != -1) {
+        _rentals[idx] = rental;
+      } else {
+        _rentals.add(rental);
+      }
+      notifyListeners();
+      return rental;
+    } catch (_) {
+      return null;
     }
   }
 

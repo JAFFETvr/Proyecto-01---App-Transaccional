@@ -54,7 +54,14 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     if (rental == null) return;
 
     setState(() => _reconciling = true);
-    await rentalProv.fetchRental(rental.id);
+    // reconcilePayment pega al backend que BUSCA el pago en Mercado Pago por
+    // external_reference (no requiere payment_id), así funciona aunque el
+    // redirect del checkout haya terminado en Safari. Si falla la llamada,
+    // cae a un refetch simple del estado de la renta.
+    final reconciled = await rentalProv.reconcilePayment(rental.id);
+    if (reconciled == null) {
+      await rentalProv.fetchRental(rental.id);
+    }
     if (!mounted) {
       _reconciling = false;
       return;
