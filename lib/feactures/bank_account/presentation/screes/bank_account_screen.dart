@@ -23,13 +23,26 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
   final _clabeCtrl = TextEditingController();
   final _holderCtrl = TextEditingController();
   final _bankCtrl = TextEditingController();
-  bool _prefilled = false;
 
   @override
   void initState() {
     super.initState();
+    // Se espera la respuesta del GET y se llenan los controllers
+    // directamente aquí, en vez de depender de que build() reaccione al
+    // cambio del provider — así el formulario siempre se prellena al entrar
+    // a la pantalla, sin importar el timing del primer rebuild.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await context.read<BankAccountProvider>().fetch();
+      final provider = context.read<BankAccountProvider>();
+      await provider.fetch();
+      if (!mounted) return;
+      final account = provider.account;
+      if (account != null && account.registered) {
+        setState(() {
+          _clabeCtrl.text = account.clabe;
+          _holderCtrl.text = account.accountHolder;
+          _bankCtrl.text = account.bankName;
+        });
+      }
     });
   }
 
@@ -39,16 +52,6 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
     _holderCtrl.dispose();
     _bankCtrl.dispose();
     super.dispose();
-  }
-
-  void _prefillIfNeeded(BankAccountProvider provider) {
-    if (_prefilled) return;
-    final account = provider.account;
-    if (account == null || !account.registered) return;
-    _clabeCtrl.text = account.clabe;
-    _holderCtrl.text = account.accountHolder;
-    _bankCtrl.text = account.bankName;
-    _prefilled = true;
   }
 
   Future<void> _save() async {
@@ -76,7 +79,6 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<BankAccountProvider>();
-    _prefillIfNeeded(provider);
 
     return Scaffold(
       backgroundColor: context.bg,
