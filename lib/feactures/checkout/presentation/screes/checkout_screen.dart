@@ -1,18 +1,14 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'rental_tracking_requester_screen.dart';
 import '../providers/rental_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
-import '../../../../../shared/utils/webview_scheme_guard.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -23,12 +19,17 @@ class CheckoutScreen extends StatefulWidget {
 
 class _CheckoutScreenState extends State<CheckoutScreen>
     with WidgetsBindingObserver {
-  bool _webViewReady = false;
-  late final WebViewController _webViewController;
   bool _processingPayment = false;
-  bool _showWebView = false;
+  // El pago con tarjeta se abre en un navegador real (no en un WebView
+  // embebido): Mercado Pago deshabilita el botón "Pagar" cuando detecta un
+  // WKWebView genérico por seguridad anti-fraude. Mientras el usuario está en
+  // ese navegador, la app queda en este estado de "esperando pago".
+  bool _awaitingExternalPayment = false;
   bool _reconciling = false;
   String _paymentMethod = 'card';
+  // Se guarda el init_point de MP para poder reabrir el checkout ("Reabrir
+  // pago") si el usuario cerró el navegador sin terminar.
+  String _lastInitPoint = '';
 
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
@@ -42,8 +43,36 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   // navega al seguimiento; si fue rechazado, se avisa.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && _showWebView) {
+    if (state == AppLifecycleState.resumed && _awaitingExternalPayment) {
       _reconcilePayment();
+    }
+  }
+
+  // Abre el checkout de Mercado Pago en un navegador real in-app
+  // (SFSafariViewController en iOS / Custom Tab en Android). Es la forma
+  // recomendada por MP: en un WebView embebido su anti-fraude deja el botón
+  // "Pagar" inerte. Al regresar a la app se reconcilia el pago con el backend
+  // (que lo busca en MP por external_reference), así no dependemos de
+  // interceptar el redirect de retorno.
+  Future<void> _openExternalCheckout(String initPoint) async {
+    final uri = Uri.tryParse(initPoint);
+    if (uri == null) return;
+
+    var ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    if (!ok) {
+      ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _awaitingExternalPayment = true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el pago de Mercado Pago.'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -101,56 +130,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     );
   }
 
-  // Respaldo del webhook de Mercado Pago: en vez de solo confiar en que
-  // "llegamos a la URL de éxito" significa que se pagó, se le pide al
-  // backend que vuelva a verificar ese payment_id directo con MP antes de
-  // marcar la renta como pagada. Si el webhook ya lo hizo, esto no rompe
-  // nada (el backend es idempotente); si el webhook se tarda o falla, esto
-  // evita que la herramienta se quede "Disponible" con el pago ya cobrado.
-  Future<void> _confirmPaymentAndNavigate(String returnUrl) async {
-    final rentalProv = context.read<RentalProvider>();
-    final rental = rentalProv.currentRental;
-    if (rental != null) {
-      final uri = Uri.tryParse(returnUrl);
-      final paymentId = uri?.queryParameters['payment_id'] ??
-          uri?.queryParameters['collection_id'];
-      if (paymentId != null && paymentId.isNotEmpty) {
-        await rentalProv.confirmPayment(rental.id, paymentId);
-      }
-    }
-    _navigateToTracking();
-  }
-
-  // El pago se canceló o fue rechazado: NO se debe navegar a tracking como
-  // si la renta hubiera arrancado. Se cierra el WebView y se deja al
-  // solicitante reintentar desde la misma pantalla de checkout.
+  // El pago se canceló o fue rechazado: NO se navega a tracking como si la
+  // renta hubiera arrancado. Se sale del estado de espera y se deja reintentar.
   void _onPaymentFailed() {
     if (!mounted) return;
-    setState(() {
-      _showWebView = false;
-      _webViewReady = false;
-    });
+    setState(() => _awaitingExternalPayment = false);
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('El pago no se completó. Puedes intentarlo de nuevo.'),
         backgroundColor: AppColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _onPaymentPending() {
-    if (!mounted) return;
-    setState(() {
-      _showWebView = false;
-      _webViewReady = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Tu pago quedó pendiente de aprobación. Te avisaremos cuando se confirme.',
-        ),
-        backgroundColor: Color(0xFFF59E0B),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -166,56 +154,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _webViewController = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      // Mercado Pago detecta por el user-agent cuando su Checkout Pro se
-      // abre dentro de un WebView embebido genérico (en vez de un navegador
-      // real) y, por seguridad anti-fraude, deshabilita el formulario de
-      // pago (el botón "Pagar" queda inerte/gris). Usar un user-agent de
-      // Safari móvil real hace que MP lo trate como un navegador normal y
-      // habilite el checkout completo.
-      ..setUserAgent(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) '
-        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
-      )
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onPageFinished: (_) => setState(() => _webViewReady = true),
-          onNavigationRequest: (req) {
-            // OJO: los tres back_urls que manda el backend (success/failure/
-            // pending) comparten el mismo prefijo ".../payment". Antes se
-            // trataban todos como éxito y se navegaba a tracking aunque el
-            // pago hubiera sido cancelado o rechazado — hay que distinguir
-            // el resultado exacto, no solo el prefijo.
-            if (req.url.startsWith('toolshare://success') ||
-                req.url.startsWith(
-                  'https://toolshare-api.up.railway.app/payment/success',
-                )) {
-              _confirmPaymentAndNavigate(req.url);
-              return NavigationDecision.prevent;
-            }
-            if (req.url.startsWith('toolshare://failure') ||
-                req.url.startsWith(
-                  'https://toolshare-api.up.railway.app/payment/failure',
-                )) {
-              _onPaymentFailed();
-              return NavigationDecision.prevent;
-            }
-            if (req.url.startsWith('toolshare://pending') ||
-                req.url.startsWith(
-                  'https://toolshare-api.up.railway.app/payment/pending',
-                )) {
-              _onPaymentPending();
-              return NavigationDecision.prevent;
-            }
-            return handleNonHttpScheme(req.url);
-          },
-        ),
-      );
-    if (Platform.isIOS) {
-      (_webViewController.platform as WebKitWebViewController)
-          .setInspectable(true);
-    }
   }
 
   @override
@@ -423,7 +361,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                           icon: Icons.credit_card_rounded,
                           label: 'Tarjeta',
                           selected: _paymentMethod == 'card',
-                          onTap: _showWebView
+                          onTap: _awaitingExternalPayment
                               ? null
                               : () => setState(() => _paymentMethod = 'card'),
                         ),
@@ -434,7 +372,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                           icon: Icons.payments_outlined,
                           label: 'Efectivo',
                           selected: _paymentMethod == 'cash',
-                          onTap: _showWebView
+                          onTap: _awaitingExternalPayment
                               ? null
                               : () => setState(() => _paymentMethod = 'cash'),
                         ),
@@ -482,93 +420,56 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             const SizedBox(height: 16),
 
             SizedBox(
-              height: _showWebView
-                  ? MediaQuery.of(context).size.height * 0.65
-                  : 320,
-              child: _showWebView
-                  ? Stack(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          decoration: BoxDecoration(
-                            color: context.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.fromBorderSide(
-                              BorderSide(color: context.borderColor),
-                            ),
-                            boxShadow: AppColors.cardShadow,
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: WebViewWidget(controller: _webViewController),
-                        ),
-                        if (!_webViewReady)
-                          Container(
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            decoration: BoxDecoration(
-                              color: context.surface,
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Image.network(
-                                  'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/5.21.22/mercadopago/logo__large@2x.png',
-                                  height: 40,
-                                  errorBuilder: (_, __, ___) => Icon(
-                                    Icons.payment_outlined,
-                                    size: 48,
-                                    color: context.colors.outline,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                const CircularProgressIndicator(),
-                                const SizedBox(height: 12),
-                                Text(
-                                  'Cargando pasarela de pago…',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    color: context.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                      ],
-                    )
-                  : Container(
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                      decoration: BoxDecoration(
-                        color: context.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.fromBorderSide(
-                          BorderSide(color: context.borderColor),
-                        ),
-                        boxShadow: AppColors.cardShadow,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            _paymentMethod == 'cash'
-                                ? Icons.payments_outlined
-                                : Icons.credit_card_rounded,
-                            size: 48,
-                            color: context.colors.outline,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            _paymentMethod == 'cash'
-                                ? 'Presiona "Confirmar" para\nreservar y pagar en efectivo'
-                                : 'Presiona "Confirmar" para\niniciar el pago seguro',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              color: context.textSecondary,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
+              height: 320,
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                decoration: BoxDecoration(
+                  color: context.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.fromBorderSide(
+                    BorderSide(color: context.borderColor),
+                  ),
+                  boxShadow: AppColors.cardShadow,
+                ),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _awaitingExternalPayment
+                          ? Icons.open_in_new_rounded
+                          : (_paymentMethod == 'cash'
+                              ? Icons.payments_outlined
+                              : Icons.credit_card_rounded),
+                      size: 48,
+                      color: _awaitingExternalPayment
+                          ? AppColors.orange500
+                          : context.colors.outline,
                     ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _awaitingExternalPayment
+                          ? 'Completa tu pago en Mercado Pago.\nAl terminar, vuelve a la app y presiona\n"Ya completé el pago".'
+                          : (_paymentMethod == 'cash'
+                              ? 'Presiona "Confirmar" para\nreservar y pagar en efectivo'
+                              : 'Presiona "Confirmar" para\niniciar el pago seguro'),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: context.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    if (_awaitingExternalPayment) ...[
+                      const SizedBox(height: 16),
+                      TextButton.icon(
+                        onPressed: () => _openExternalCheckout(_lastInitPoint),
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: const Text('Reabrir pago'),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -582,10 +483,10 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   height: 55,
                   child: Center(child: CircularProgressIndicator()),
                 )
-              : _showWebView
-              // Con el WebView abierto, el botón sirve para que el usuario
-              // confirme manualmente cuando ya pagó (útil si el pago terminó
-              // en Safari y el WebView no alcanzó a interceptar el retorno).
+              : _awaitingExternalPayment
+              // Mientras esperamos que el usuario pague en el navegador, el
+              // botón sirve para verificar el pago al volver (el backend lo
+              // busca en MP por external_reference, no requiere payment_id).
               ? PrimaryGradientButton(
                   label: 'Ya completé el pago — verificar',
                   icon: Icons.refresh_rounded,
@@ -668,8 +569,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             return;
                           }
 
-                          _webViewController.loadRequest(Uri.parse(initPoint));
-                          setState(() => _showWebView = true);
+                          _lastInitPoint = initPoint;
+                          await _openExternalCheckout(initPoint);
                         },
                 ),
         ),
