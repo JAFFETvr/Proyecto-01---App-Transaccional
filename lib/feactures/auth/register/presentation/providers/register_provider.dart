@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../core/error/app_error.dart';
+import '../../../../../core/services/secure_session_store.dart';
+import '../../../../../core/services/sensitive_data_store.dart';
 import '../../domain/entitie/user_entity.dart';
 import '../../domain/usesCases/register_usecase.dart';
 import '../../domain/usesCases/verify_kyc_usecase.dart';
@@ -90,6 +92,16 @@ class RegisterProvider extends ChangeNotifier {
       await prefs.setString('user_role',  _user!.role);
       await prefs.setString('user_phone', _user!.phone);
       await prefs.setString('user_ine',   _user!.ine);
+
+      await SecureSessionStore.saveToken(_user!.token);
+      await SecureSessionStore.saveLastActive(DateTime.now());
+
+      await SensitiveDataStore.saveAll(
+        name: _user!.name,
+        email: _user!.email,
+        phone: _user!.phone,
+        ine: _user!.ine,
+      );
 
     } on AppError catch (e) {
       _errorMessage = e.userMessage;

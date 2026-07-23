@@ -11,6 +11,8 @@ import '../../../../propietario/presentation/screes/dashboard_screen.dart';
 import '../../../../solicitante/presentation/screes/catalog_screen.dart';
 import '../../../../propietario/presentation/providers/tool_provider.dart';
 import '../../../../checkout/presentation/providers/rental_provider.dart';
+import '../../../login/presentation/providers/login_provider.dart';
+import '../../../login/domain/entitie/user_entity.dart' as login_domain;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -257,7 +259,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     final provider = context.read<RegisterProvider>();
-    if (provider.user == null) return;
+    final registered = provider.user;
+    if (registered == null) return;
+
+    // El registro solo llena RegisterProvider.user; el resto de la app (tab
+    // de Cuenta, Mis Rentas, etc.) lee la sesión desde LoginProvider, así que
+    // sin esto quedaría en null y esas pantallas aparecerían vacías hasta
+    // cerrar sesión y volver a entrar manualmente.
+    context.read<LoginProvider>().setUser(
+      login_domain.UserEntity(
+        id: registered.id,
+        name: registered.name,
+        email: registered.email,
+        role: registered.role,
+        token: registered.token,
+        isPro: registered.isPro,
+        phone: registered.phone,
+        ine: registered.ine,
+      ),
+    );
 
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();
