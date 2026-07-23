@@ -1,11 +1,11 @@
 import '../repositories/admin_repository.dart';
-import '../../../checkout/domain/entitie/rental_entity.dart';
+import '../entitie/resolve_dispute_result_entity.dart';
 
 class ResolveDisputeUseCase {
   final AdminRepository _repository;
   const ResolveDisputeUseCase(this._repository);
 
-  Future<RentalEntity> execute({
+  Future<ResolveDisputeResultEntity> execute({
     required String rentalId,
     required String action,
     required String notes,

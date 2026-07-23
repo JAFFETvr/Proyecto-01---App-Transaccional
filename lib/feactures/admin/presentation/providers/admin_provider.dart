@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/error/app_error.dart';
 import '../../domain/entitie/admin_stats_entity.dart';
+import '../../domain/entitie/insurance_claim_entity.dart';
 import '../../domain/usesCases/get_admin_stats_usecase.dart';
 import '../../domain/usesCases/get_admin_rentals_usecase.dart';
 import '../../domain/usesCases/resolve_dispute_usecase.dart';
@@ -24,11 +25,16 @@ class AdminProvider extends ChangeNotifier {
   List<RentalEntity> _rentals = [];
   bool _loading = false;
   String? _error;
+  // Se llena tras resolveDispute() si la herramienta tenía seguro activo y
+  // el propietario ganó la disputa, para que la pantalla muestre el monto y
+  // los datos bancarios a transferir manualmente.
+  InsuranceClaimEntity? _lastInsuranceClaim;
 
   AdminStatsEntity? get stats => _stats;
   List<RentalEntity> get rentals => List.unmodifiable(_rentals);
   bool get loading => _loading;
   String? get error => _error;
+  InsuranceClaimEntity? get lastInsuranceClaim => _lastInsuranceClaim;
 
   Future<void> fetchDashboardData({String? statusFilter}) async {
     _loading = true;
@@ -62,11 +68,12 @@ class AdminProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _resolveDispute.execute(
+      final result = await _resolveDispute.execute(
         rentalId: rentalId,
         action: action,
         notes: notes,
       );
+      _lastInsuranceClaim = result.insuranceClaim;
       await fetchDashboardData();
       return true;
     } on AppError catch (e) {
