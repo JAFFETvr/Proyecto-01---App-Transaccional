@@ -288,6 +288,15 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
+  // El OCR del ticket puede tardar decenas de segundos (arranque en frío del
+  // worker de PaddleOCR en el servicio de ML) — una sola petición HTTP tan
+  // larga se topaba con el timeout del proxy de Railway y se cortaba a
+  // medias aunque el servidor sí hubiera terminado bien. Ahora el POST
+  // arranca el OCR en segundo plano y responde de inmediato con un job_id;
+  // aquí se pregunta el estatus cada 2s hasta que termine. El resultado
+  // final tiene el mismo formato (valid/detected_price/confidence/error)
+  // que antes devolvía el POST directo, para no tocar nada en
+  // _pickTicketImage.
   Future<Map<String, dynamic>> extractTicketPrice(File photo) async {
     try {
       final uri = Uri.parse('$_baseUrl/tools/extract-ticket-price');
@@ -300,10 +309,39 @@ class ToolRemoteDatasource {
       request.files.add(await http.MultipartFile.fromPath('photo', photo.path));
 
       final streamedResponse = await request.send();
-      final response = await http.Response.fromStream(streamedResponse);
+      final startResponse = await http.Response.fromStream(streamedResponse);
+      _throwIfError(startResponse);
 
-      _throwIfError(response);
-      return json.decode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+      final jobId = (json.decode(utf8.decode(startResponse.bodyBytes))
+          as Map<String, dynamic>)['job_id'] as String;
+
+      // 45 intentos x 2s = 90s máximo, igual al timeout que Go ya usa hacia
+      // ML para esta misma operación.
+      for (var intento = 0; intento < 45; intento++) {
+        await Future.delayed(const Duration(seconds: 2));
+
+        final statusRes = await http.get(
+          Uri.parse('$_baseUrl/tools/extract-ticket-price/$jobId'),
+          headers: await _authHeaders,
+        );
+        _throwIfError(statusRes);
+        final statusBody =
+            json.decode(utf8.decode(statusRes.bodyBytes)) as Map<String, dynamic>;
+
+        if (statusBody['status'] == 'processing') continue;
+
+        return {
+          'valid': statusBody['valid'] ?? false,
+          'detected_price': statusBody['detected_price'],
+          'confidence': statusBody['confidence'],
+          'error': statusBody['error'],
+        };
+      }
+
+      throw const AppError(
+        statusCode: 0,
+        message: 'La lectura del ticket tardó demasiado. Intenta de nuevo.',
+      );
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al leer el ticket.'); }
   }
