@@ -373,6 +373,21 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al confirmar el pago del seguro.'); }
   }
 
+  // Reconcilia el seguro sin payment_id: el backend lo busca en MP por
+  // external_reference ("ins:<toolId>"). Se usa al regresar del checkout
+  // cuando no se pudo interceptar el payment_id (pago en navegador externo).
+  Future<ToolEntity> reconcileInsurance(String toolId) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/tools/$toolId/insurance/reconcile'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al verificar el seguro.'); }
+  }
+
   Future<ToolEntity> cancelInsurance(String toolId) async {
     try {
       final res = await http.post(

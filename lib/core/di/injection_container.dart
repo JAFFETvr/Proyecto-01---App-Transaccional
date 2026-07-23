@@ -74,6 +74,7 @@ class InjectionContainer {
         refreshIsPro: PropietarioDI.provideRefreshIsPro(),
         getInsurancePreference: PropietarioDI.provideGetInsurancePreference(),
         confirmInsurancePayment: PropietarioDI.provideConfirmInsurancePayment(),
+        reconcileInsurance: PropietarioDI.provideReconcileInsurance(),
         cancelInsurance: PropietarioDI.provideCancelInsurance(),
       ),
     ),

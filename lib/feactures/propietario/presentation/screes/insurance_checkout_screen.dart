@@ -1,19 +1,20 @@
-import 'dart:io' show Platform;
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../shared/theme/app_colors.dart';
 import '../../../../../shared/theme/theme_extensions.dart';
-import '../../../../../shared/utils/webview_scheme_guard.dart';
+import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../providers/tool_provider.dart';
 
-/// Abre el flujo de pago del seguro mensual para una herramienta específica.
-/// Sigue el mismo patrón que openProSubscriptionCheckout: crea la preferencia
-/// en Mercado Pago, abre el WebView, y confirma el pago al regresar.
+/// Abre el flujo de pago del seguro mensual para una herramienta.
+///
+/// Igual que la renta: el checkout de Mercado Pago se abre en un navegador
+/// real (no en un WebView embebido, donde MP deja el botón "Pagar" inerte por
+/// anti-fraude). Al volver a la app se reconcilia el pago con el backend
+/// (que lo busca en MP por external_reference), sin depender de interceptar el
+/// redirect de retorno.
 Future<void> openInsuranceCheckout(BuildContext context, String toolId) async {
   final toolProvider = context.read<ToolProvider>();
   final initPoint = await toolProvider.getInsurancePreference(toolId);
@@ -30,23 +31,21 @@ Future<void> openInsuranceCheckout(BuildContext context, String toolId) async {
     return;
   }
 
-  final paymentId = await Navigator.of(context).push<String>(
+  final activated = await Navigator.of(context).push<bool>(
     MaterialPageRoute(
-      builder: (_) => InsuranceCheckoutScreen(initPoint: initPoint),
+      builder: (_) => InsuranceCheckoutScreen(
+        initPoint: initPoint,
+        toolId: toolId,
+      ),
     ),
   );
 
-  if (paymentId == null || !context.mounted) return;
-
-  final activated = await toolProvider.confirmInsurancePayment(toolId, paymentId);
-  if (!context.mounted) return;
+  if (activated != true || !context.mounted) return;
 
   ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(activated
-          ? '¡Seguro contratado! Tu herramienta ya está protegida 🛡️'
-          : toolProvider.error ?? 'El pago no se pudo confirmar todavía.'),
-      backgroundColor: activated ? const Color(0xFF10B981) : AppColors.danger,
+    const SnackBar(
+      content: Text('¡Seguro contratado! Tu herramienta ya está protegida 🛡️'),
+      backgroundColor: Color(0xFF10B981),
       behavior: SnackBarBehavior.floating,
     ),
   );
@@ -54,41 +53,84 @@ Future<void> openInsuranceCheckout(BuildContext context, String toolId) async {
 
 class InsuranceCheckoutScreen extends StatefulWidget {
   final String initPoint;
-  const InsuranceCheckoutScreen({super.key, required this.initPoint});
+  final String toolId;
+  const InsuranceCheckoutScreen({
+    super.key,
+    required this.initPoint,
+    required this.toolId,
+  });
 
   @override
   State<InsuranceCheckoutScreen> createState() => _InsuranceCheckoutScreenState();
 }
 
-class _InsuranceCheckoutScreenState extends State<InsuranceCheckoutScreen> {
-  late final WebViewController _controller;
-  bool _ready = false;
+class _InsuranceCheckoutScreenState extends State<InsuranceCheckoutScreen>
+    with WidgetsBindingObserver {
+  bool _awaiting = false;
+  bool _reconciling = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setUserAgent(
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) '
-        'AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
-      )
-      ..setNavigationDelegate(NavigationDelegate(
-        onPageFinished: (_) => setState(() => _ready = true),
-        onNavigationRequest: (req) {
-          if (req.url.startsWith('toolshare://') ||
-              req.url.startsWith(
-                  'https://toolshare-api.up.railway.app/payment')) {
-            final paymentId = Uri.parse(req.url).queryParameters['payment_id'];
-            Navigator.of(context).pop(paymentId);
-            return NavigationDecision.prevent;
-          }
-          return handleNonHttpScheme(req.url);
-        },
-      ))
-      ..loadRequest(Uri.parse(widget.initPoint));
-    if (Platform.isIOS) {
-      (_controller.platform as WebKitWebViewController).setInspectable(true);
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openCheckout());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _awaiting) {
+      _reconcile();
+    }
+  }
+
+  Future<void> _openCheckout() async {
+    final uri = Uri.tryParse(widget.initPoint);
+    if (uri == null) return;
+    var ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+    if (!ok) {
+      ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _awaiting = true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el pago del seguro.'),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _reconcile({bool manual = false}) async {
+    if (_reconciling) return;
+    setState(() => _reconciling = true);
+    final activated =
+        await context.read<ToolProvider>().reconcileInsurance(widget.toolId);
+    if (!mounted) return;
+    setState(() => _reconciling = false);
+
+    if (activated) {
+      Navigator.of(context).pop(true);
+    } else if (manual) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Todavía no confirmamos el pago del seguro. Si ya pagaste, '
+            'espera unos segundos y vuelve a intentar.',
+          ),
+          backgroundColor: Color(0xFFF59E0B),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -112,19 +154,66 @@ class _InsuranceCheckoutScreenState extends State<InsuranceCheckoutScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.close_rounded),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(context).pop(false),
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (!_ready)
-            Container(
-              color: context.bg,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 92,
+                height: 92,
+                decoration: BoxDecoration(
+                  color: AppColors.orange500.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.shield_outlined,
+                    size: 46, color: AppColors.orange500),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Pago del seguro',
+                style: GoogleFonts.montserrat(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: context.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Completa el pago del seguro en Mercado Pago.\n'
+                'Al terminar, vuelve a la app y presiona "Ya completé el pago".',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  height: 1.5,
+                  color: context.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 28),
+              if (_reconciling)
+                const CircularProgressIndicator()
+              else ...[
+                PrimaryGradientButton(
+                  label: 'Ya completé el pago — verificar',
+                  icon: Icons.refresh_rounded,
+                  height: 52,
+                  onPressed: () => _reconcile(manual: true),
+                ),
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: _openCheckout,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
+                  label: const Text('Reabrir pago'),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
