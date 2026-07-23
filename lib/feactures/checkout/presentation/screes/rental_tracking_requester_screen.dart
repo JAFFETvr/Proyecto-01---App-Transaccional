@@ -346,20 +346,13 @@ class _RentalTrackingRequesterScreenState
         ),
       );
     } else {
-      // NOTA: hoy el backend solo permite abrir disputa al PROPIETARIO
-      // (rental_service.go: Dispute exige ownerID == rental.OwnerID). Hasta
-      // que se habilite la disputa del solicitante en el backend, esto
-      // fallará con "no tienes permiso". Ver el TODO documentado.
       final err = context.read<RentalProvider>().error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            err ?? 'Por ahora la disputa la debe abrir el propietario. '
-                'Usa el chat o contacta a soporte.',
-          ),
+          content: Text(err ?? 'No se pudo reportar la disputa. Intenta de nuevo.'),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 5),
+          duration: const Duration(seconds: 4),
         ),
       );
     }
