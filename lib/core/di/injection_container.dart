@@ -92,6 +92,7 @@ class InjectionContainer {
         cancelRental: CheckoutDI.provideCancelRental(),
         verifyContract: CheckoutDI.provideVerifyContract(),
         getPreference: CheckoutDI.provideGetPreference(),
+        confirmPayment: CheckoutDI.provideConfirmPayment(),
         streamRental: CheckoutDI.provideStreamRental(),
       ),
     ),
