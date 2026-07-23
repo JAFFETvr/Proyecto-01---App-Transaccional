@@ -10,6 +10,7 @@ import '../providers/mp_connect_provider.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/theme_extensions.dart';
 import '../../../../shared/widgets/primary_gradient_button.dart';
+import '../../../../shared/utils/webview_scheme_guard.dart';
 
 /// Pantalla para que el propietario vincule su propia cuenta de Mercado Pago
 /// (Marketplace/OAuth). Una vez vinculada, cada renta que cobre se divide
@@ -46,7 +47,7 @@ class _MpConnectScreenState extends State<MpConnectScreen> {
               await context.read<MpConnectProvider>().fetchStatus();
             });
           }
-          return NavigationDecision.navigate;
+          return handleNonHttpScheme(req.url);
         },
       ));
     if (Platform.isIOS) {
