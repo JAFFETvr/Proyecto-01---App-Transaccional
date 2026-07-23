@@ -84,6 +84,8 @@ class ToolRepositoryImpl implements ToolRepository {
       _datasource.getInsurancePreference(toolId);
   @override Future<ToolEntity> confirmInsurancePayment(String toolId, String paymentId) =>
       _datasource.confirmInsurancePayment(toolId, paymentId);
+  @override Future<ToolEntity> reconcileInsurance(String toolId) =>
+      _datasource.reconcileInsurance(toolId);
   @override Future<ToolEntity> cancelInsurance(String toolId) =>
       _datasource.cancelInsurance(toolId);
 }

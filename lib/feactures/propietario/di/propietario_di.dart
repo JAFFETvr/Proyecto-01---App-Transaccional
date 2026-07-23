@@ -13,6 +13,7 @@ import '../domain/usesCases/get_pricing_suggestion_usecase.dart';
 import '../domain/usesCases/subscribe_usecase.dart';
 import '../domain/usesCases/get_insurance_preference_usecase.dart';
 import '../domain/usesCases/confirm_insurance_payment_usecase.dart';
+import '../domain/usesCases/reconcile_insurance_usecase.dart';
 import '../domain/usesCases/cancel_insurance_usecase.dart';
 
 class PropietarioDI {
@@ -43,6 +44,8 @@ class PropietarioDI {
       GetInsurancePreferenceUseCase(_repository);
   static ConfirmInsurancePaymentUseCase provideConfirmInsurancePayment() =>
       ConfirmInsurancePaymentUseCase(_repository);
+  static ReconcileInsuranceUseCase provideReconcileInsurance() =>
+      ReconcileInsuranceUseCase(_repository);
   static CancelInsuranceUseCase provideCancelInsurance() =>
       CancelInsuranceUseCase(_repository);
 }

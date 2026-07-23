@@ -9,6 +9,7 @@ import '../../../../shared/theme/theme_extensions.dart';
 import '../../../auth/login/presentation/providers/login_provider.dart';
 import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
+import '../../domain/entitie/insurance_claim_entity.dart';
 import '../providers/admin_provider.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -274,23 +275,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     child: ElevatedButton(
                       onPressed: () async {
                         Navigator.pop(ctx);
-                        final ok = await context
-                            .read<AdminProvider>()
-                            .resolveDispute(
-                              rentalId: rental.id,
-                              action: 'capture',
-                              notes: notesCtrl.text.trim(),
-                            );
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                ok
-                                    ? 'Garantía cobrada a favor del Propietario ✓'
-                                    : 'Error al dictaminar',
-                              ),
+                        final adminProvider = context.read<AdminProvider>();
+                        final ok = await adminProvider.resolveDispute(
+                          rentalId: rental.id,
+                          action: 'capture',
+                          notes: notesCtrl.text.trim(),
+                        );
+                        if (!mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              ok
+                                  ? 'Garantía cobrada a favor del Propietario ✓'
+                                  : 'Error al dictaminar',
                             ),
-                          );
+                          ),
+                        );
+                        final claim = adminProvider.lastInsuranceClaim;
+                        if (ok && claim != null) {
+                          _showInsuranceClaimDialog(context, claim);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -317,6 +320,109 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // La herramienta tenía el seguro ToolShare activo: además de la garantía
+  // ya cobrada por Mercado Pago, el seguro le cubre un 30% adicional del
+  // valor estimado al propietario. No hay forma de transferir ese monto
+  // automático (Mercado Pago no ofrece una API de envío de dinero con esta
+  // integración), así que se le muestran al admin los datos bancarios del
+  // propietario para que haga la transferencia manual por fuera de la app.
+  void _showInsuranceClaimDialog(
+    BuildContext context,
+    InsuranceClaimEntity claim,
+  ) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            const Icon(Icons.shield_outlined, color: AppColors.orange500),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Seguro activo — pago manual pendiente',
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Esta herramienta tiene el seguro ToolShare activo. Transfiere '
+              'este monto al propietario por fuera de la app:',
+              style: GoogleFonts.inter(fontSize: 13),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '\$${claim.amount.toStringAsFixed(2)} MXN',
+              style: GoogleFonts.montserrat(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: AppColors.orange500,
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (!claim.bankAccountRegistered)
+              Text(
+                'El propietario todavía no registró sus datos bancarios. '
+                'Contáctalo para conseguirlos y hacer la transferencia.',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            else ...[
+              _bankDataRow('CLABE', claim.bankClabe),
+              _bankDataRow('Titular', claim.bankAccountHolder),
+              _bankDataRow('Banco', claim.bankName),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cerrar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _bankDataRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 60,
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          Expanded(
+            child: SelectableText(
+              value.isEmpty ? '—' : value,
+              style: GoogleFonts.inter(fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }

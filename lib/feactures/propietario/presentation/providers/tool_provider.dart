@@ -16,6 +16,7 @@ import '../../domain/usesCases/extract_ticket_price_usecase.dart';
 import '../../domain/usesCases/upload_tool_photo_usecase.dart';
 import '../../domain/usesCases/get_insurance_preference_usecase.dart';
 import '../../domain/usesCases/confirm_insurance_payment_usecase.dart';
+import '../../domain/usesCases/reconcile_insurance_usecase.dart';
 import '../../domain/usesCases/cancel_insurance_usecase.dart';
 
 class ToolProvider extends ChangeNotifier {
@@ -33,6 +34,7 @@ class ToolProvider extends ChangeNotifier {
   final RefreshIsProUseCase _refreshIsPro;
   final GetInsurancePreferenceUseCase _getInsurancePreference;
   final ConfirmInsurancePaymentUseCase _confirmInsurancePayment;
+  final ReconcileInsuranceUseCase _reconcileInsurance;
   final CancelInsuranceUseCase _cancelInsurance;
 
   List<ToolEntity> _tools = [];
@@ -72,6 +74,7 @@ class ToolProvider extends ChangeNotifier {
     required RefreshIsProUseCase refreshIsPro,
     required GetInsurancePreferenceUseCase getInsurancePreference,
     required ConfirmInsurancePaymentUseCase confirmInsurancePayment,
+    required ReconcileInsuranceUseCase reconcileInsurance,
     required CancelInsuranceUseCase cancelInsurance,
   })  : _getTools = getTools,
         _createTool = createTool,
@@ -87,6 +90,7 @@ class ToolProvider extends ChangeNotifier {
         _refreshIsPro = refreshIsPro,
         _getInsurancePreference = getInsurancePreference,
         _confirmInsurancePayment = confirmInsurancePayment,
+        _reconcileInsurance = reconcileInsurance,
         _cancelInsurance = cancelInsurance;
 
   Future<void> checkSubscriptionStatus() async {
@@ -412,6 +416,24 @@ class ToolProvider extends ChangeNotifier {
       return false;
     } catch (_) {
       _error = 'El pago no se pudo confirmar todavía.';
+      return false;
+    }
+  }
+
+  /// Reconcilia el seguro sin payment_id (el backend lo busca en MP por
+  /// external_reference). Devuelve true si el seguro quedó activo. Se usa al
+  /// regresar del navegador de pago.
+  Future<bool> reconcileInsurance(String toolId) async {
+    try {
+      final updated = await _reconcileInsurance.execute(toolId);
+      final idx = _tools.indexWhere((t) => t.id == toolId);
+      if (idx != -1) _tools[idx] = updated;
+      notifyListeners();
+      return updated.wantsInsurance;
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return false;
+    } catch (_) {
       return false;
     }
   }

@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/theme_extensions.dart';
 import '../../feactures/auth/login/presentation/providers/login_provider.dart';
 import '../../feactures/mp_connect/presentation/screes/mp_connect_screen.dart';
+import '../../feactures/bank_account/presentation/screes/bank_account_screen.dart';
 
 class AccountTab extends StatelessWidget {
   final Future<void> Function() onLogout;
@@ -37,7 +38,7 @@ class AccountTab extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,8 +181,54 @@ class AccountTab extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      leading: const Icon(
+                        Icons.account_balance_outlined,
+                        color: AppColors.orange500,
+                      ),
+                      title: Text(
+                        'Datos bancarios',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Para pagos manuales de disputas con seguro',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                      trailing: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: context.colors.outline,
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const BankAccountScreen()),
+                      ),
+                    ),
+                  ),
+                ),
               ],
-              const Spacer(),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 52,

@@ -30,6 +30,16 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Deep link toolshare://... : lo usa Mercado Pago para regresar
+                 a la app tras el pago (la página /payment/success rebota aquí).
+                 Con launchMode=singleTop la app existente pasa a primer plano
+                 y se dispara la reconciliación del pago (onResume). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="toolshare"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

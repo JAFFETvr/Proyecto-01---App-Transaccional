@@ -51,5 +51,6 @@ abstract class ToolRepository {
   Future<bool> refreshIsPro();
   Future<String> getInsurancePreference(String toolId);
   Future<ToolEntity> confirmInsurancePayment(String toolId, String paymentId);
+  Future<ToolEntity> reconcileInsurance(String toolId);
   Future<ToolEntity> cancelInsurance(String toolId);
 }

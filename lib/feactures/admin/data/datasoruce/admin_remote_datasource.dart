@@ -5,6 +5,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/admin_stats_entity.dart';
+import '../../domain/entitie/insurance_claim_entity.dart';
+import '../../domain/entitie/resolve_dispute_result_entity.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 
 class AdminRemoteDatasource {
@@ -103,7 +105,7 @@ class AdminRemoteDatasource {
     }
   }
 
-  Future<RentalEntity> resolveDispute({
+  Future<ResolveDisputeResultEntity> resolveDispute({
     required String rentalId,
     required String action,
     required String notes,
@@ -115,8 +117,23 @@ class AdminRemoteDatasource {
         body: json.encode({'action': action, 'notes': notes}),
       );
       _throwIfError(res);
-      return _rentalFromJson(
-        json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>,
+      final body =
+          json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      final rental = _rentalFromJson(body['rental'] as Map<String, dynamic>);
+      final claimJson = body['insurance_claim'] as Map<String, dynamic>?;
+      return ResolveDisputeResultEntity(
+        rental: rental,
+        insuranceClaim: claimJson == null
+            ? null
+            : InsuranceClaimEntity(
+                amount: (claimJson['amount'] as num?)?.toDouble() ?? 0.0,
+                bankClabe: claimJson['bank_clabe'] as String? ?? '',
+                bankAccountHolder:
+                    claimJson['bank_account_holder'] as String? ?? '',
+                bankName: claimJson['bank_name'] as String? ?? '',
+                bankAccountRegistered:
+                    claimJson['bank_account_registered'] as bool? ?? false,
+              ),
       );
     } on AppError {
       rethrow;

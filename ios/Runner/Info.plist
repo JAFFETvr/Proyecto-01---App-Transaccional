@@ -14,6 +14,20 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<!-- Esquema toolshare:// para que Mercado Pago pueda regresar a la app tras
+	     el pago (la página /payment/success rebota a toolshare://payment/success).
+	     Al reabrirse la app se dispara la reconciliación del pago. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.jaffetvicente.toolshare</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>toolshare</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleName</key>
 	<string>flutter_application_29_05_2026</string>
 	<key>CFBundlePackageType</key>
