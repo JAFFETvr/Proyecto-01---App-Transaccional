@@ -270,6 +270,22 @@ class RentalRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
+  // Reconcilia el pago sin payment_id: el backend lo busca en Mercado Pago por
+  // external_reference (= ID de la renta). Se usa cuando el redirect del
+  // checkout terminó en el navegador externo y la app nunca lo interceptó.
+  Future<RentalEntity> reconcilePayment(String rentalId) async {
+    try {
+      final headers = await _authHeaders;
+      final res = await http.post(
+        Uri.parse('$_baseUrl/rentals/$rentalId/reconcile-payment'),
+        headers: headers,
+      );
+      _throwIfError(res);
+      return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError { rethrow; }
+    catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
+  }
+
   Future<Map<String, dynamic>> verifyContract(String id) async {
     try {
       final headers = await _authHeaders;

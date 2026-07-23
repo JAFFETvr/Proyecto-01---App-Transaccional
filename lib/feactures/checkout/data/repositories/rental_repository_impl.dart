@@ -69,4 +69,8 @@ class RentalRepositoryImpl implements RentalRepository {
   @override
   Future<RentalEntity> confirmPayment(String rentalId, String paymentId) =>
       _datasource.confirmPayment(rentalId, paymentId);
+
+  @override
+  Future<RentalEntity> reconcilePayment(String rentalId) =>
+      _datasource.reconcilePayment(rentalId);
 }
