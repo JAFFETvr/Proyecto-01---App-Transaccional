@@ -29,6 +29,17 @@ class LoginProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sincroniza el estado de sesión con un usuario ya autenticado por otro
+  /// flujo (p. ej. justo después de un registro exitoso), sin volver a
+  /// pegarle al backend. Sin esto, `user` queda en null tras registrarse y
+  /// toda la UI que lee la sesión desde aquí (cuenta, mis rentas) aparece
+  /// vacía hasta el siguiente login manual.
+  void setUser(UserEntity user) {
+    _user = user;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
   Future<void> login({
     required String email,
     required String password,
