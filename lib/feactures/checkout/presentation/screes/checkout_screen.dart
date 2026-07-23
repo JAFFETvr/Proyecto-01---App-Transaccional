@@ -21,15 +21,66 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends State<CheckoutScreen>
+    with WidgetsBindingObserver {
   bool _webViewReady = false;
   late final WebViewController _webViewController;
   bool _processingPayment = false;
   bool _showWebView = false;
+  bool _reconciling = false;
   String _paymentMethod = 'card';
 
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
+
+  // Cuando el usuario regresa a la app tras pagar en Mercado Pago, el checkout
+  // pudo haber escapado al navegador externo (Safari) porque MP abrió la app
+  // del banco / de MP por deep link. En ese caso el WebView nunca intercepta
+  // el redirect de éxito y no se dispara confirm-payment. Al reanudarse la
+  // app se le pregunta al backend por el estado real de la renta: si el pago
+  // ya se confirmó (el backend lo confirma al cargar /payment/success), se
+  // navega al seguimiento; si fue rechazado, se avisa.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _showWebView) {
+      _reconcilePayment();
+    }
+  }
+
+  Future<void> _reconcilePayment({bool manual = false}) async {
+    if (_reconciling) return;
+    final rentalProv = context.read<RentalProvider>();
+    final rental = rentalProv.currentRental;
+    if (rental == null) return;
+
+    setState(() => _reconciling = true);
+    await rentalProv.fetchRental(rental.id);
+    if (!mounted) {
+      _reconciling = false;
+      return;
+    }
+    setState(() => _reconciling = false);
+
+    final updated = rentalProv.currentRental;
+    if (updated == null) return;
+
+    if (updated.isPaidCard || updated.isActive) {
+      _navigateToTracking();
+    } else if (updated.isCancelled) {
+      _onPaymentFailed();
+    } else if (manual) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Todavía no confirmamos tu pago. Si ya pagaste, espera unos '
+            'segundos y vuelve a intentar.',
+          ),
+          backgroundColor: Color(0xFFF59E0B),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
 
   void _navigateToTracking() {
     final rental = context.read<RentalProvider>().currentRental;
@@ -99,8 +150,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   }
 
   @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       // Mercado Pago detecta por el user-agent cuando su Checkout Pro se
@@ -512,20 +570,26 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-          child: _processingPayment || rentalProvider.loading
+          child: _processingPayment || rentalProvider.loading || _reconciling
               ? const SizedBox(
                   height: 55,
                   child: Center(child: CircularProgressIndicator()),
                 )
+              : _showWebView
+              // Con el WebView abierto, el botón sirve para que el usuario
+              // confirme manualmente cuando ya pagó (útil si el pago terminó
+              // en Safari y el WebView no alcanzó a interceptar el retorno).
+              ? PrimaryGradientButton(
+                  label: 'Ya completé el pago — verificar',
+                  icon: Icons.refresh_rounded,
+                  height: 55,
+                  onPressed: () => _reconcilePayment(manual: true),
+                )
               : PrimaryGradientButton(
-                  label: _showWebView
-                      ? 'Esperando pago en MercadoPago…'
-                      : 'Confirmar — \$${displayTotal.toStringAsFixed(0)} MXN',
+                  label: 'Confirmar — \$${displayTotal.toStringAsFixed(0)} MXN',
                   icon: Icons.lock_outline,
                   height: 55,
-                  onPressed: _showWebView
-                      ? null
-                      : () async {
+                  onPressed: () async {
                           if (tool == null) return;
                           setState(() => _processingPayment = true);
 
