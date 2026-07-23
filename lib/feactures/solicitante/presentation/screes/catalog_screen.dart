@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +30,7 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   int _selectedIndex = 0;
+  Position? _myPosition;
 
   @override
   void initState() {
@@ -37,6 +39,51 @@ class _CatalogScreenState extends State<CatalogScreen> {
       context.read<CatalogProvider>().fetchTools();
       context.read<RentalProvider>().fetchRentals();
     });
+    _loadMyPosition();
+  }
+
+  // Ubicación silenciosa: si no hay permiso o falla, simplemente no se
+  // muestra distancia en las tarjetas (mejor que mostrar un número falso).
+  Future<void> _loadMyPosition() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return;
+
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) {
+        perm = await Geolocator.requestPermission();
+      }
+      if (perm == LocationPermission.deniedForever ||
+          perm == LocationPermission.denied) {
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      if (mounted) setState(() => _myPosition = pos);
+    } catch (_) {
+      // Sin ubicación disponible: las tarjetas simplemente no muestran distancia.
+    }
+  }
+
+  // Distancia real entre el usuario y la herramienta, o null si no se puede
+  // calcular (sin ubicación propia o sin coordenadas guardadas en la herramienta).
+  String? _distanceLabel(ToolEntity tool) {
+    final pos = _myPosition;
+    if (pos == null) return null;
+    if (tool.latitude == 0.0 && tool.longitude == 0.0) return null;
+
+    final meters = Geolocator.distanceBetween(
+      pos.latitude,
+      pos.longitude,
+      tool.latitude,
+      tool.longitude,
+    );
+    if (meters < 1000) return '~${meters.round()} m';
+    return '~${(meters / 1000).toStringAsFixed(1)} km';
   }
 
   Future<void> _logout() async {
@@ -377,6 +424,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     (_, i) => ToolCard(
                       tool: tools[i],
                       onTap: () => _showDetail(context, tools[i]),
+                      zone: _distanceLabel(tools[i]),
                     ),
                     childCount: tools.length,
                   ),

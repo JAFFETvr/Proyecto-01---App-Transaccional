@@ -315,9 +315,10 @@ class ToolRemoteDatasource {
       final jobId = (json.decode(utf8.decode(startResponse.bodyBytes))
           as Map<String, dynamic>)['job_id'] as String;
 
-      // 45 intentos x 2s = 90s máximo, igual al timeout que Go ya usa hacia
-      // ML para esta misma operación.
-      for (var intento = 0; intento < 45; intento++) {
+      // 65 intentos x 2s = 130s máximo, por encima del contexto de 120s que
+      // usa Go para este job (ticket_job_store.go), para no rendirse antes
+      // que el propio backend.
+      for (var intento = 0; intento < 65; intento++) {
         await Future.delayed(const Duration(seconds: 2));
 
         final statusRes = await http.get(
