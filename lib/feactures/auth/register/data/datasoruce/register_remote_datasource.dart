@@ -58,6 +58,14 @@ class RegisterRemoteDatasource {
     }
   }
 
+  // La verificación KYC puede tardar 15-20+ segundos (Haar Cascade + arranque
+  // en frío del worker de PaddleOCR + ArcFace) — una sola petición HTTP tan
+  // larga corría el riesgo de que algún proxy intermedio (Railway) la
+  // cortara a medias aunque el servidor sí hubiera terminado bien
+  // (confirmado en producción: el log de Go mostraba 200 OK mientras la app
+  // ya había mostrado el rechazo). Ahora el POST arranca la verificación en
+  // segundo plano y responde de inmediato con un job_id; aquí se pregunta
+  // el estatus cada 2s hasta que termine.
   Future<Map<String, dynamic>> verifyKyc({
     required String inePath,
     required String selfiePath,
@@ -71,16 +79,45 @@ class RegisterRemoteDatasource {
       req.fields['curp'] = curp;
 
       final streamedRes = await req.send();
-      final res = await http.Response.fromStream(streamedRes);
+      final startRes = await http.Response.fromStream(streamedRes);
+      final startBody =
+          json.decode(utf8.decode(startRes.bodyBytes)) as Map<String, dynamic>;
 
-      final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-      if (res.statusCode == 200) {
-        return body;
+      if (startRes.statusCode != 202) {
+        throw AppError(
+          statusCode: startRes.statusCode,
+          message:
+              startBody['error'] as String? ?? 'La validación KYC fue rechazada.',
+        );
+      }
+      final jobId = startBody['job_id'] as String;
+
+      // 60 intentos x 2s = 120s máximo, igual al timeout que Go ya usa para
+      // esta misma operación.
+      for (var intento = 0; intento < 60; intento++) {
+        await Future.delayed(const Duration(seconds: 2));
+
+        final statusRes =
+            await http.get(Uri.parse('$_baseUrl/auth/verify-kyc/$jobId'));
+        final statusBody =
+            json.decode(utf8.decode(statusRes.bodyBytes)) as Map<String, dynamic>;
+
+        if (statusBody['status'] == 'processing') continue;
+
+        if (statusBody['status'] == 'done') {
+          return statusBody;
+        }
+
+        throw AppError(
+          statusCode: statusRes.statusCode,
+          message: statusBody['error'] as String? ??
+              'La validación KYC fue rechazada.',
+        );
       }
 
-      throw AppError(
-        statusCode: res.statusCode,
-        message: body['error'] as String? ?? 'La validación KYC fue rechazada.',
+      throw const AppError(
+        statusCode: 0,
+        message: 'La verificación KYC tardó demasiado. Intenta de nuevo.',
       );
     } on AppError {
       rethrow;
