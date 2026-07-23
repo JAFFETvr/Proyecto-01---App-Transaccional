@@ -38,7 +38,7 @@ class AccountTab extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -228,7 +228,7 @@ class AccountTab extends StatelessWidget {
                   ),
                 ),
               ],
-              const Spacer(),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 height: 52,
