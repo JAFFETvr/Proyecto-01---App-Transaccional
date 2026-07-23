@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// Almacenamiento encriptado para los datos sensibles del perfil del
@@ -19,16 +20,30 @@ class SensitiveDataStore {
   static const _kPhone = 'sensitive_phone';
   static const _kIne = 'sensitive_ine';
 
+  // Ver nota en SecureSessionStore._writeResilient: el Keychain de iOS
+  // puede truena con "-25299 the specified item already exists" en una key
+  // huérfana de una instalación anterior; se borra y se reintenta una vez.
+  static Future<void> _writeResilient(String key, String value) async {
+    try {
+      await _storage.write(key: key, value: value);
+    } on PlatformException {
+      try {
+        await _storage.delete(key: key);
+        await _storage.write(key: key, value: value);
+      } catch (_) {}
+    } catch (_) {}
+  }
+
   static Future<void> saveAll({
     required String name,
     required String email,
     required String phone,
     required String ine,
   }) async {
-    await _storage.write(key: _kName, value: name);
-    await _storage.write(key: _kEmail, value: email);
-    await _storage.write(key: _kPhone, value: phone);
-    await _storage.write(key: _kIne, value: ine);
+    await _writeResilient(_kName, name);
+    await _writeResilient(_kEmail, email);
+    await _writeResilient(_kPhone, phone);
+    await _writeResilient(_kIne, ine);
   }
 
   static Future<String?> readName() => _storage.read(key: _kName);
