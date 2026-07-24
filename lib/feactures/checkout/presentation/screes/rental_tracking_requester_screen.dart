@@ -88,6 +88,20 @@ class _RentalTrackingRequesterScreenState
     }
   }
 
+  // Avanza de la pantalla de "fondos retenidos" a la de confirmar entrega.
+  // El setState se difiere un frame (en vez de llamarse directo desde el tap)
+  // porque este botón coincide con el primer evento del stream SSE de la
+  // renta (que ahora sí llega en tiempo real): si ese notifyListeners() del
+  // RentalProvider cae en el mismo instante que este setState local, Flutter
+  // puede toparse con "buildScope missed some dirty elements" y perder el
+  // repintado, dejando la pantalla congelada aunque el estado ya cambió.
+  // Diferirlo evita la carrera entre ambos orígenes de rebuild.
+  void _goToConfirmDelivery() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _localPhase = 1);
+    });
+  }
+
   Future<void> _openChat(RentalEntity rental) async {
     await RentalChatSheet.show(
       context,
@@ -481,18 +495,7 @@ class _RentalTrackingRequesterScreenState
               child: _localPhase == 0 && phaseIndicatorIndex == 0
                   ? _Phase1Widget(
                       rental: rental,
-                      onNext: () {
-                        // DIAGNÓSTICO TEMPORAL: confirma si el toque llega a
-                        // registrarse. Quitar una vez identificado el bug.
-                        debugPrint('[DEBUG] "Listo para confirmar entrega" presionado');
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('DEBUG: botón detectado, cambiando de fase…'),
-                            duration: Duration(seconds: 2),
-                          ),
-                        );
-                        setState(() => _localPhase = 1);
-                      },
+                      onNext: _goToConfirmDelivery,
                       onCancel: rental.canCancel
                           ? () => _cancelRental(rental.id)
                           : null,
