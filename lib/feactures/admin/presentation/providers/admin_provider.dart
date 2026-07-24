@@ -5,6 +5,7 @@ import '../../domain/entitie/admin_stats_entity.dart';
 import '../../domain/entitie/insurance_claim_entity.dart';
 import '../../domain/usesCases/get_admin_stats_usecase.dart';
 import '../../domain/usesCases/get_admin_rentals_usecase.dart';
+import '../../domain/usesCases/get_insurance_claim_usecase.dart';
 import '../../domain/usesCases/resolve_dispute_usecase.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 
@@ -12,14 +13,17 @@ class AdminProvider extends ChangeNotifier {
   final GetAdminStatsUseCase _getStats;
   final GetAdminRentalsUseCase _getRentals;
   final ResolveDisputeUseCase _resolveDispute;
+  final GetInsuranceClaimUseCase _getInsuranceClaim;
 
   AdminProvider({
     required GetAdminStatsUseCase getStats,
     required GetAdminRentalsUseCase getRentals,
     required ResolveDisputeUseCase resolveDispute,
+    required GetInsuranceClaimUseCase getInsuranceClaim,
   }) : _getStats = getStats,
        _getRentals = getRentals,
-       _resolveDispute = resolveDispute;
+       _resolveDispute = resolveDispute,
+       _getInsuranceClaim = getInsuranceClaim;
 
   AdminStatsEntity? _stats;
   List<RentalEntity> _rentals = [];
@@ -86,6 +90,23 @@ class AdminProvider extends ChangeNotifier {
       _loading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Consulta el monto de seguro y los datos bancarios del propietario de una
+  /// renta cuantas veces haga falta (para reabrir el diálogo de datos
+  /// bancarios sin tener que volver a resolver la disputa).
+  Future<InsuranceClaimEntity?> fetchInsuranceClaim(String rentalId) async {
+    try {
+      return await _getInsuranceClaim.execute(rentalId);
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al consultar los datos bancarios.';
+      notifyListeners();
+      return null;
     }
   }
 }

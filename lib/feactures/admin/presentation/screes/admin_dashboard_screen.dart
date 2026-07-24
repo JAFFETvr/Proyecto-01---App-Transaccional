@@ -11,6 +11,7 @@ import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 import '../../domain/entitie/insurance_claim_entity.dart';
 import '../providers/admin_provider.dart';
+import '../../../support/presentation/screens/admin_support_threads_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -330,6 +331,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // automático (Mercado Pago no ofrece una API de envío de dinero con esta
   // integración), así que se le muestran al admin los datos bancarios del
   // propietario para que haga la transferencia manual por fuera de la app.
+  bool _hasInsuranceClaimToView(RentalEntity rental) {
+    return rental.status == 'completed' &&
+        rental.disputeReason.contains('[Dictamen Admin - capture]');
+  }
+
+  Future<void> _viewInsuranceClaim(RentalEntity rental) async {
+    final adminProvider = context.read<AdminProvider>();
+    final claim = await adminProvider.fetchInsuranceClaim(rental.id);
+    if (!mounted) return;
+    if (claim == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            adminProvider.error ?? 'No se pudieron consultar los datos bancarios',
+          ),
+          backgroundColor: AppColors.danger,
+        ),
+      );
+      return;
+    }
+    _showInsuranceClaimDialog(context, claim);
+  }
+
   void _showInsuranceClaimDialog(
     BuildContext context,
     InsuranceClaimEntity claim,
@@ -474,6 +498,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                color: context.textSecondary,
+                tooltip: 'Chat con propietarios',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminSupportThreadsScreen(),
+                  ),
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.refresh_rounded),
                 color: context.textSecondary,
@@ -799,6 +834,38 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   ),
                                 ),
                                 onPressed: () => _showResolveDialog(r),
+                              ),
+                            ),
+                          ],
+                          if (_hasInsuranceClaimToView(r)) ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(
+                                  Icons.account_balance_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  'Ver datos bancarios',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.orange600,
+                                  side: const BorderSide(
+                                    color: AppColors.orange500,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () => _viewInsuranceClaim(r),
                               ),
                             ),
                           ],

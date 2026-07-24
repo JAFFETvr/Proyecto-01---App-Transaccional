@@ -1,4 +1,5 @@
 import '../../domain/entitie/admin_stats_entity.dart';
+import '../../domain/entitie/insurance_claim_entity.dart';
 import '../../domain/entitie/resolve_dispute_result_entity.dart';
 import '../../domain/repositories/admin_repository.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
@@ -26,4 +27,8 @@ class AdminRepositoryImpl implements AdminRepository {
     action: action,
     notes: notes,
   );
+
+  @override
+  Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId) =>
+      _datasource.getInsuranceClaim(rentalId);
 }

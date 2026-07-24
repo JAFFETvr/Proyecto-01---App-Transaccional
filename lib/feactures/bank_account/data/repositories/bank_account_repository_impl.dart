@@ -20,4 +20,7 @@ class BankAccountRepositoryImpl implements BankAccountRepository {
     accountHolder: accountHolder,
     bankName: bankName,
   );
+
+  @override
+  Future<void> deleteBankAccount() => _datasource.deleteBankAccount();
 }

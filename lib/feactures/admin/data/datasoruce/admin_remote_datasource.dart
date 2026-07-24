@@ -141,4 +141,41 @@ class AdminRemoteDatasource {
       throw const AppError(statusCode: 0, message: 'Sin conexión.');
     }
   }
+
+  /// Consulta el monto de seguro y los datos bancarios del propietario de una
+  /// renta cuantas veces haga falta (a diferencia de la respuesta de
+  /// resolveDispute, que solo se ve una vez).
+  Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_baseUrl/admin/rentals/$rentalId/insurance-claim'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      final body =
+          json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      final claimJson = body['insurance_claim'] as Map<String, dynamic>?;
+      if (claimJson == null) {
+        return const InsuranceClaimEntity(
+          amount: 0.0,
+          bankClabe: '',
+          bankAccountHolder: '',
+          bankName: '',
+          bankAccountRegistered: false,
+        );
+      }
+      return InsuranceClaimEntity(
+        amount: (claimJson['amount'] as num?)?.toDouble() ?? 0.0,
+        bankClabe: claimJson['bank_clabe'] as String? ?? '',
+        bankAccountHolder: claimJson['bank_account_holder'] as String? ?? '',
+        bankName: claimJson['bank_name'] as String? ?? '',
+        bankAccountRegistered:
+            claimJson['bank_account_registered'] as bool? ?? false,
+      );
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError(statusCode: 0, message: 'Sin conexión.');
+    }
+  }
 }

@@ -71,4 +71,18 @@ class BankAccountRemoteDatasource {
       throw const AppError(statusCode: 0, message: 'Sin conexión.');
     }
   }
+
+  Future<void> deleteBankAccount() async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$_baseUrl/auth/bank-account'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError(statusCode: 0, message: 'Sin conexión.');
+    }
+  }
 }
