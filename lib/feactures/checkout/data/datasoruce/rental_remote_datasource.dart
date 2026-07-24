@@ -135,15 +135,8 @@ class RentalRemoteDatasource {
           .transform(const LineSplitter());
 
       await for (final line in streamLines) {
-        // El backend (gin-contrib/sse) emite las líneas como "data:{json}"
-        // SIN espacio tras los dos puntos. Antes se buscaba "data: " con
-        // espacio, así que NINGÚN evento hacía match y la vista nunca se
-        // actualizaba en tiempo real (había que recargar). Se aceptan ambos
-        // formatos, quitando el único espacio opcional que permite el spec SSE.
-        if (line.startsWith('data:')) {
-          var dataStr = line.substring(5);
-          if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
-          dataStr = dataStr.trim();
+        if (line.startsWith('data: ')) {
+          final dataStr = line.substring(6).trim();
           if (dataStr.isNotEmpty && dataStr != 'keep-alive') {
             final data = json.decode(dataStr) as Map<String, dynamic>;
             yield _fromJson(data);
