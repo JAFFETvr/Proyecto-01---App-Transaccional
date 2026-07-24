@@ -324,6 +324,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  // Consulta persistente de los datos bancarios del propietario para el pago
+  // del seguro tras una disputa ganada. A diferencia del diálogo que se abre
+  // una sola vez al dictaminar, esto se puede reabrir cuantas veces se quiera
+  // desde el botón de la tarjeta (los datos se piden de nuevo al backend).
+  Future<void> _openInsuranceClaim(String rentalId) async {
+    final claim =
+        await context.read<AdminProvider>().fetchInsuranceClaim(rentalId);
+    if (!mounted) return;
+    if (claim == null || claim.amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Esta herramienta no tenía seguro activo.'),
+        ),
+      );
+      return;
+    }
+    _showInsuranceClaimDialog(context, claim);
+  }
+
   // La herramienta tenía el seguro ToolShare activo: además de la garantía
   // ya cobrada por Mercado Pago, el seguro le cubre un 30% adicional del
   // valor estimado al propietario. No hay forma de transferir ese monto
@@ -799,6 +818,41 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                   ),
                                 ),
                                 onPressed: () => _showResolveDialog(r),
+                              ),
+                            ),
+                          ],
+                          // Disputa ya resuelta a favor del propietario
+                          // (garantía cobrada por el admin): botón persistente
+                          // para volver a ver los datos bancarios del seguro.
+                          if (r.paymentStatus == 'captured_admin') ...[
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton.icon(
+                                icon: const Icon(
+                                  Icons.account_balance_wallet_outlined,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  'Datos de pago del propietario',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.orange500,
+                                  side: const BorderSide(
+                                    color: AppColors.orange500,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                onPressed: () => _openInsuranceClaim(r.id),
                               ),
                             ),
                           ],

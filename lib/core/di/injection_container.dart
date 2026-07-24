@@ -108,6 +108,7 @@ class InjectionContainer {
         getStats: AdminDI.provideGetAdminStats(),
         getRentals: AdminDI.provideGetAdminRentals(),
         resolveDispute: AdminDI.provideResolveDispute(),
+        getInsuranceClaim: AdminDI.provideGetInsuranceClaim(),
       ),
     ),
     ChangeNotifierProvider<ReviewProvider>(

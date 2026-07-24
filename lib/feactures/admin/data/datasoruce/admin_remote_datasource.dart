@@ -120,25 +120,48 @@ class AdminRemoteDatasource {
       final body =
           json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
       final rental = _rentalFromJson(body['rental'] as Map<String, dynamic>);
-      final claimJson = body['insurance_claim'] as Map<String, dynamic>?;
       return ResolveDisputeResultEntity(
         rental: rental,
-        insuranceClaim: claimJson == null
-            ? null
-            : InsuranceClaimEntity(
-                amount: (claimJson['amount'] as num?)?.toDouble() ?? 0.0,
-                bankClabe: claimJson['bank_clabe'] as String? ?? '',
-                bankAccountHolder:
-                    claimJson['bank_account_holder'] as String? ?? '',
-                bankName: claimJson['bank_name'] as String? ?? '',
-                bankAccountRegistered:
-                    claimJson['bank_account_registered'] as bool? ?? false,
-              ),
+        insuranceClaim: _claimFromJson(
+          body['insurance_claim'] as Map<String, dynamic>?,
+        ),
       );
     } on AppError {
       rethrow;
     } catch (_) {
       throw const AppError(statusCode: 0, message: 'Sin conexión.');
     }
+  }
+
+  /// Consulta (de forma persistente) el pago de seguro pendiente al
+  /// propietario de una renta y sus datos bancarios. null si la herramienta
+  /// no tenía seguro activo.
+  Future<InsuranceClaimEntity?> getInsuranceClaim(String rentalId) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_baseUrl/admin/rentals/$rentalId/insurance-claim'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
+      final body =
+          json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
+      return _claimFromJson(body['insurance_claim'] as Map<String, dynamic>?);
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError(statusCode: 0, message: 'Sin conexión.');
+    }
+  }
+
+  InsuranceClaimEntity? _claimFromJson(Map<String, dynamic>? claimJson) {
+    if (claimJson == null) return null;
+    return InsuranceClaimEntity(
+      amount: (claimJson['amount'] as num?)?.toDouble() ?? 0.0,
+      bankClabe: claimJson['bank_clabe'] as String? ?? '',
+      bankAccountHolder: claimJson['bank_account_holder'] as String? ?? '',
+      bankName: claimJson['bank_name'] as String? ?? '',
+      bankAccountRegistered:
+          claimJson['bank_account_registered'] as bool? ?? false,
+    );
   }
 }
