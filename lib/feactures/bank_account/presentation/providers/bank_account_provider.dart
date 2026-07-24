@@ -3,6 +3,13 @@ import '../../../../core/error/app_error.dart';
 import '../../domain/entitie/bank_account_entity.dart';
 import '../../domain/repositories/bank_account_repository.dart';
 
+const _emptyBankAccount = BankAccountEntity(
+  clabe: '',
+  accountHolder: '',
+  bankName: '',
+  registered: false,
+);
+
 class BankAccountProvider extends ChangeNotifier {
   final BankAccountRepository _repository;
 
@@ -47,6 +54,26 @@ class BankAccountProvider extends ChangeNotifier {
         accountHolder: accountHolder,
         bankName: bankName,
       );
+      return true;
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      return false;
+    } catch (_) {
+      _error = 'Sin conexión al servidor.';
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> delete() async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+    try {
+      await _repository.deleteBankAccount();
+      _account = _emptyBankAccount;
       return true;
     } on AppError catch (e) {
       _error = e.userMessage;

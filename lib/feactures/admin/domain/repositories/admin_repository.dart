@@ -1,4 +1,5 @@
 import '../entitie/admin_stats_entity.dart';
+import '../entitie/insurance_claim_entity.dart';
 import '../entitie/resolve_dispute_result_entity.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 
@@ -12,4 +13,6 @@ abstract class AdminRepository {
     required String action,
     required String notes,
   });
+
+  Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId);
 }

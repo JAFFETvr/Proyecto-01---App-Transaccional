@@ -7,6 +7,7 @@ import '../theme/theme_extensions.dart';
 import '../../feactures/auth/login/presentation/providers/login_provider.dart';
 import '../../feactures/mp_connect/presentation/screes/mp_connect_screen.dart';
 import '../../feactures/bank_account/presentation/screes/bank_account_screen.dart';
+import '../../feactures/support/presentation/screens/support_chat_screen.dart';
 
 class AccountTab extends StatelessWidget {
   final Future<void> Function() onLogout;
@@ -223,6 +224,59 @@ class AccountTab extends StatelessWidget {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const BankAccountScreen()),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: AppColors.cardShadow,
+                  ),
+                  child: Material(
+                    type: MaterialType.transparency,
+                    borderRadius: BorderRadius.circular(16),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 4,
+                      ),
+                      leading: const Icon(
+                        Icons.chat_bubble_outline_rounded,
+                        color: AppColors.orange500,
+                      ),
+                      title: Text(
+                        'Chat con soporte',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.w600,
+                          color: context.textPrimary,
+                        ),
+                      ),
+                      subtitle: Text(
+                        'Dudas o aclaraciones con el administrador',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: context.textSecondary,
+                        ),
+                      ),
+                      trailing: Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 16,
+                        color: context.colors.outline,
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SupportChatScreen(
+                            ownerId: user!.id,
+                            ownerName: 'Soporte ToolShare',
+                            currentUserId: user.id,
+                            asAdmin: false,
+                          ),
+                        ),
                       ),
                     ),
                   ),
