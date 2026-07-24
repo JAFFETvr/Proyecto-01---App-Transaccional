@@ -481,7 +481,18 @@ class _RentalTrackingRequesterScreenState
               child: _localPhase == 0 && phaseIndicatorIndex == 0
                   ? _Phase1Widget(
                       rental: rental,
-                      onNext: () => setState(() => _localPhase = 1),
+                      onNext: () {
+                        // DIAGNÓSTICO TEMPORAL: confirma si el toque llega a
+                        // registrarse. Quitar una vez identificado el bug.
+                        debugPrint('[DEBUG] "Listo para confirmar entrega" presionado');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('DEBUG: botón detectado, cambiando de fase…'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                        setState(() => _localPhase = 1);
+                      },
                       onCancel: rental.canCancel
                           ? () => _cancelRental(rental.id)
                           : null,
