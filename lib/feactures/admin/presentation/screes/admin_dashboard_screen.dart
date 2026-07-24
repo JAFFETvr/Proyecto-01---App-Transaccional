@@ -494,13 +494,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.refresh_rounded),
-                color: context.textSecondary,
-                tooltip: 'Actualizar datos',
-                onPressed: () =>
-                    provider.fetchDashboardData(statusFilter: _currentFilter),
-              ),
-              IconButton(
                 icon: const Icon(Icons.logout_rounded),
                 color: context.textSecondary,
                 tooltip: 'Cerrar sesión',

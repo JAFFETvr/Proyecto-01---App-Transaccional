@@ -542,23 +542,28 @@ class _RentalTrackingOwnerScreenState
                           ? const Center(child: CircularProgressIndicator())
                           : Row(
                               children: [
-                                Expanded(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.danger,
-                                      side: const BorderSide(color: AppColors.danger),
-                                      minimumSize: const Size(0, 48),
-                                    ),
-                                    onPressed: () => _reportDispute(rental.id),
-                                    icon: const Icon(Icons.report_problem_outlined, size: 18),
-                                    label: const Text(
-                                      'Disputa',
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
+                                // En efectivo no hay fondos retenidos por la
+                                // plataforma: la disputa no aplica, se oculta y
+                                // "Aceptar Retorno" ocupa todo el ancho.
+                                if (!rental.isCash) ...[
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: AppColors.danger,
+                                        side: const BorderSide(color: AppColors.danger),
+                                        minimumSize: const Size(0, 48),
+                                      ),
+                                      onPressed: () => _reportDispute(rental.id),
+                                      icon: const Icon(Icons.report_problem_outlined, size: 18),
+                                      label: const Text(
+                                        'Disputa',
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
+                                  const SizedBox(width: 12),
+                                ],
                                 Expanded(
                                   child: Container(
                                     decoration: BoxDecoration(

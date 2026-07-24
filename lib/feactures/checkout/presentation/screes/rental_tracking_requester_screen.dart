@@ -1010,15 +1010,19 @@ class _Phase3RequesterWidget extends StatelessWidget {
                         height: 55,
                         onPressed: onConfirmReturn,
                       ),
-                      const SizedBox(height: 14),
-                      TextButton.icon(
-                        onPressed: onReportDispute,
-                        icon: const Icon(Icons.report_problem_outlined, color: AppColors.danger),
-                        label: Text(
-                          'Reportar problema / disputa',
-                          style: GoogleFonts.inter(color: AppColors.danger, fontWeight: FontWeight.w700),
+                      // En efectivo no hay fondos retenidos por la plataforma,
+                      // así que una disputa no aplica: no se ofrece.
+                      if (!rental.isCash) ...[
+                        const SizedBox(height: 14),
+                        TextButton.icon(
+                          onPressed: onReportDispute,
+                          icon: const Icon(Icons.report_problem_outlined, color: AppColors.danger),
+                          label: Text(
+                            'Reportar problema / disputa',
+                            style: GoogleFonts.inter(color: AppColors.danger, fontWeight: FontWeight.w700),
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
           ] else ...[
