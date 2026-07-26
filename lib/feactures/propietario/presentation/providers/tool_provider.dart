@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../domain/usesCases/get_tools_usecase.dart';
@@ -94,8 +93,7 @@ class ToolProvider extends ChangeNotifier {
         _cancelInsurance = cancelInsurance;
 
   Future<void> checkSubscriptionStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    _isPro = prefs.getBool('user_is_pro') ?? false;
+    _isPro = await SessionPrefsStore.isPro();
     notifyListeners();
   }
 
@@ -312,8 +310,8 @@ class ToolProvider extends ChangeNotifier {
       _error = e.userMessage;
       return null;
     } catch (e, stack) {
-      print('FLUTTER RUNTIME ERROR IN predictCondition: $e');
-      print(stack);
+      debugPrint('FLUTTER RUNTIME ERROR IN predictCondition: $e');
+      debugPrint(stack.toString());
       _error = 'Sin conexión al predecir desgaste: $e';
       return null;
     } finally {
@@ -365,15 +363,15 @@ class ToolProvider extends ChangeNotifier {
     notifyListeners();
     try {
       final res = await _extractTicketPrice.execute(photo);
-      print('FLUTTER DEBUG: extractTicketPrice Response -> $res');
+      debugPrint('FLUTTER DEBUG: extractTicketPrice Response -> $res');
       return res;
     } on AppError catch (e) {
-      print('FLUTTER DEBUG: extractTicketPrice AppError -> ${e.userMessage}');
+      debugPrint('FLUTTER DEBUG: extractTicketPrice AppError -> ${e.userMessage}');
       _error = e.userMessage;
       return null;
     } catch (e, stack) {
-      print('FLUTTER DEBUG: extractTicketPrice Unexpected Error -> $e');
-      print(stack);
+      debugPrint('FLUTTER DEBUG: extractTicketPrice Unexpected Error -> $e');
+      debugPrint(stack.toString());
       _error = 'Sin conexión al leer el ticket: $e';
       return null;
     } finally {

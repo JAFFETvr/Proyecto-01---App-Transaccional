@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/config/api_config.dart';
 import '../../domain/entitie/saved_card_entity.dart';
@@ -10,8 +10,7 @@ class CardRemoteDatasource {
   static const _mpTokenUrl = 'https://api.mercadopago.com/v1/card_tokens';
 
   Future<Map<String, String>> get _authHeaders async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token') ?? '';
+    final token = await SessionPrefsStore.token() ?? '';
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',

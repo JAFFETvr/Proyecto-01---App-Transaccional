@@ -24,6 +24,7 @@
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
+import '../session/session_provider.dart';
 import '../../feactures/auth/login/presentation/providers/login_provider.dart';
 import '../../feactures/auth/register/presentation/providers/register_provider.dart';
 import '../../feactures/propietario/presentation/providers/tool_provider.dart';
@@ -35,6 +36,8 @@ import '../../feactures/review/presentation/providers/review_provider.dart';
 import '../../feactures/payment_methods/presentation/providers/card_provider.dart';
 import '../../feactures/mp_connect/presentation/providers/mp_connect_provider.dart';
 import '../../feactures/bank_account/presentation/providers/bank_account_provider.dart';
+import '../../feactures/support/presentation/providers/support_chat_provider.dart';
+import '../../feactures/support/presentation/providers/support_threads_provider.dart';
 
 import '../../feactures/auth/login/di/login_di.dart';
 import '../../feactures/auth/register/di/register_di.dart';
@@ -46,9 +49,13 @@ import '../../feactures/review/di/review_di.dart';
 import '../../feactures/payment_methods/di/payment_methods_di.dart';
 import '../../feactures/mp_connect/di/mp_connect_di.dart';
 import '../../feactures/bank_account/di/bank_account_di.dart';
+import '../../feactures/support/di/support_di.dart';
 
 class InjectionContainer {
   static List<SingleChildWidget> get providers => [
+    ChangeNotifierProvider<SessionProvider>(
+      create: (_) => SessionProvider(),
+    ),
     ChangeNotifierProvider<LoginProvider>(
       create: (_) => LoginProvider(loginUseCase: LoginDI.provideLoginUseCase()),
     ),
@@ -126,6 +133,12 @@ class InjectionContainer {
     ),
     ChangeNotifierProvider<BankAccountProvider>(
       create: (_) => BankAccountDI.provideBankAccountProvider(),
+    ),
+    ChangeNotifierProvider<SupportChatProvider>(
+      create: (_) => SupportDI.provideSupportChatProvider(),
+    ),
+    ChangeNotifierProvider<SupportThreadsProvider>(
+      create: (_) => SupportDI.provideSupportThreadsProvider(),
     ),
   ];
 }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../../core/services/session_prefs_store.dart';
+import '../../../../../core/services/location_service.dart';
+import '../../../../../core/session/session_provider.dart';
 import '../providers/catalog_provider.dart';
 import '../components/tool_card.dart';
 import '../../domain/entitie/tool_entity.dart';
@@ -30,7 +31,7 @@ class CatalogScreen extends StatefulWidget {
 
 class _CatalogScreenState extends State<CatalogScreen> {
   int _selectedIndex = 0;
-  Position? _myPosition;
+  ({double latitude, double longitude})? _myPosition;
 
   @override
   void initState() {
@@ -45,28 +46,10 @@ class _CatalogScreenState extends State<CatalogScreen> {
   // Ubicación silenciosa: si no hay permiso o falla, simplemente no se
   // muestra distancia en las tarjetas (mejor que mostrar un número falso).
   Future<void> _loadMyPosition() async {
-    try {
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
-
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.deniedForever ||
-          perm == LocationPermission.denied) {
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
-      );
-      if (mounted) setState(() => _myPosition = pos);
-    } catch (_) {
-      // Sin ubicación disponible: las tarjetas simplemente no muestran distancia.
-    }
+    final pos = await LocationService.tryGetCurrentPosition(
+      highAccuracy: false,
+    );
+    if (mounted && pos != null) setState(() => _myPosition = pos);
   }
 
   // Distancia real entre el usuario y la herramienta, o null si no se puede
@@ -76,7 +59,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
     if (pos == null) return null;
     if (tool.latitude == 0.0 && tool.longitude == 0.0) return null;
 
-    final meters = Geolocator.distanceBetween(
+    final meters = LocationService.distanceMeters(
       pos.latitude,
       pos.longitude,
       tool.latitude,
@@ -87,13 +70,13 @@ class _CatalogScreenState extends State<CatalogScreen> {
   }
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await SessionPrefsStore.clear();
     // Limpia la sesión de Mercado Pago que quedó dentro del WebView (si no,
     // el siguiente usuario que inicie sesión en este mismo dispositivo vería
     // precargada la cuenta de MP de quien usó la app antes que él).
     await WebViewCookieManager().clearCookies();
     if (!mounted) return;
+    context.read<SessionProvider>().clear();
     context.read<LoginProvider>().logout();
     context.read<RegisterProvider>().logout();
     context.read<ToolProvider>().clearTools();
@@ -305,7 +288,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                 ),
                 scrollDirection: Axis.horizontal,
                 itemCount: provider.categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
                 itemBuilder: (_, i) {
                   final cat = provider.categories[i];
                   final isSelected = provider.filterCategory == cat;
@@ -315,7 +298,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
                     onSelected: (_) =>
                         context.read<CatalogProvider>().setCategory(cat),
                     showCheckmark: false,
-                    selectedColor: AppColors.orange500.withOpacity(0.12),
+                    selectedColor: AppColors.orange500.withValues(alpha: 0.12),
                     labelStyle: GoogleFonts.inter(
                       color: isSelected
                           ? AppColors.orange600

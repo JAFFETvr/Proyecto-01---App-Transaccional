@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../navigation/app_navigator.dart';
+import '../session/session_provider.dart';
+import 'session_prefs_store.dart';
 import 'secure_session_store.dart';
 import 'sensitive_data_store.dart';
 import '../../feactures/auth/login/presentation/providers/login_provider.dart';
@@ -38,11 +39,11 @@ class SessionService {
       await SensitiveDataStore.wipe();
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await SessionPrefsStore.clear();
     await SecureSessionStore.clear();
 
     if (context != null && context.mounted) {
+      context.read<SessionProvider>().clear();
       context.read<LoginProvider>().logout();
       context.read<RegisterProvider>().logout();
       context.read<ToolProvider>().clearTools();

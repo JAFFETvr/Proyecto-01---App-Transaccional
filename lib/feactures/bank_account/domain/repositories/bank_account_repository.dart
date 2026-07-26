@@ -8,4 +8,6 @@ abstract class BankAccountRepository {
     required String accountHolder,
     required String bankName,
   });
+
+  Future<void> deleteBankAccount();
 }

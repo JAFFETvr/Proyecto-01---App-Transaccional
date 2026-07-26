@@ -5,8 +5,8 @@ import '../../domain/entitie/admin_stats_entity.dart';
 import '../../domain/entitie/insurance_claim_entity.dart';
 import '../../domain/usesCases/get_admin_stats_usecase.dart';
 import '../../domain/usesCases/get_admin_rentals_usecase.dart';
-import '../../domain/usesCases/resolve_dispute_usecase.dart';
 import '../../domain/usesCases/get_insurance_claim_usecase.dart';
+import '../../domain/usesCases/resolve_dispute_usecase.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 
 class AdminProvider extends ChangeNotifier {
@@ -62,22 +62,6 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
-  /// Consulta (de forma persistente) el pago de seguro pendiente al
-  /// propietario de una renta, para que el admin pueda volver a ver sus datos
-  /// bancarios cuantas veces quiera, no solo al dictaminar. Devuelve null si
-  /// la herramienta no tenía seguro activo o si falló la consulta.
-  Future<InsuranceClaimEntity?> fetchInsuranceClaim(String rentalId) async {
-    try {
-      return await _getInsuranceClaim.execute(rentalId);
-    } on AppError catch (e) {
-      _error = e.userMessage;
-      return null;
-    } catch (_) {
-      _error = 'Sin conexión al consultar los datos del seguro.';
-      return null;
-    }
-  }
-
   Future<bool> resolveDispute({
     required String rentalId,
     required String action,
@@ -106,6 +90,23 @@ class AdminProvider extends ChangeNotifier {
       _loading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// Consulta el monto de seguro y los datos bancarios del propietario de una
+  /// renta cuantas veces haga falta (para reabrir el diálogo de datos
+  /// bancarios sin tener que volver a resolver la disputa).
+  Future<InsuranceClaimEntity?> fetchInsuranceClaim(String rentalId) async {
+    try {
+      return await _getInsuranceClaim.execute(rentalId);
+    } on AppError catch (e) {
+      _error = e.userMessage;
+      notifyListeners();
+      return null;
+    } catch (_) {
+      _error = 'Sin conexión al consultar los datos bancarios.';
+      notifyListeners();
+      return null;
     }
   }
 }

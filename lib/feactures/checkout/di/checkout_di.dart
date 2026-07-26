@@ -12,6 +12,7 @@ import '../domain/usesCases/get_preference_usecase.dart';
 import '../domain/usesCases/confirm_payment_usecase.dart';
 import '../domain/usesCases/reconcile_payment_usecase.dart';
 import '../domain/usesCases/stream_rental_usecase.dart';
+import '../domain/repositories/rental_repository.dart';
 
 class CheckoutDI {
   static final _datasource = RentalRemoteDatasource();
@@ -29,5 +30,5 @@ class CheckoutDI {
   static ConfirmPaymentUseCase provideConfirmPayment() => ConfirmPaymentUseCase(_repository);
   static ReconcilePaymentUseCase provideReconcilePayment() => ReconcilePaymentUseCase(_repository);
   static StreamRentalUseCase provideStreamRental() => StreamRentalUseCase(_repository);
-  static get repository => _repository;
+  static RentalRepository get repository => _repository;
 }

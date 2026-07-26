@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../core/error/app_error.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../../core/services/secure_session_store.dart';
 import '../../../../../core/services/sensitive_data_store.dart';
-import '../../../../../core/services/fcm_service.dart';
 import '../../domain/entitie/user_entity.dart';
 import '../../domain/usesCases/login_usecase.dart';
 
@@ -55,13 +54,14 @@ class LoginProvider extends ChangeNotifier {
         password: password,
       );
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token',  _user!.token);
-      await prefs.setString('user_id',    _user!.id);
-      await prefs.setString('user_name',  _user!.name);
-      await prefs.setString('user_email', _user!.email);
-      await prefs.setString('user_role',  _user!.role);
-      await prefs.setBool('user_is_pro',  _user!.isPro);
+      await SessionPrefsStore.saveSession(
+        token: _user!.token,
+        id: _user!.id,
+        name: _user!.name,
+        email: _user!.email,
+        role: _user!.role,
+        isPro: _user!.isPro,
+      );
 
       // Token y marca de tiempo de actividad también en almacén encriptado,
       // para que el watchdog de inactividad los use tras un cierre total de la app.

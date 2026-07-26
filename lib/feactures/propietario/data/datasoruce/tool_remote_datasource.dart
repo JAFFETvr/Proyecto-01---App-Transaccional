@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/tool_entity.dart';
@@ -10,8 +10,7 @@ class ToolRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, String>> get _authHeaders async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token') ?? '';
+    final token = await SessionPrefsStore.token() ?? '';
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
@@ -188,8 +187,7 @@ class ToolRemoteDatasource {
       _throwIfError(res);
       final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
       final isPro = body['is_pro'] as bool? ?? false;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('user_is_pro', isPro);
+      await SessionPrefsStore.setIsPro(isPro);
       return isPro;
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
@@ -204,8 +202,7 @@ class ToolRemoteDatasource {
       _throwIfError(res);
       final body = json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
       final isPro = body['is_pro'] as bool? ?? false;
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('user_is_pro', isPro);
+      await SessionPrefsStore.setIsPro(isPro);
       return isPro;
     } on AppError { rethrow; }
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }

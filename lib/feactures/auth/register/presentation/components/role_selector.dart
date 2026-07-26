@@ -65,7 +65,7 @@ class _RoleCard extends StatelessWidget {
             width: isSelected ? 2 : 1,
           ),
           color: isSelected
-              ? cs.primaryContainer.withOpacity(0.3)
+              ? cs.primaryContainer.withValues(alpha: 0.3)
               : cs.surface,
         ),
         child: Column(

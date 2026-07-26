@@ -215,7 +215,7 @@ class MaterialTheme {
           borderSide: const BorderSide(color: AppColors.danger, width: 2),
         ),
         hintStyle: GoogleFonts.inter(
-          color: AppColors.slate600.withOpacity(0.5),
+          color: AppColors.slate600.withValues(alpha: 0.5),
           fontSize: 14,
         ),
         labelStyle: GoogleFonts.inter(color: AppColors.slate600, fontSize: 14),
@@ -226,7 +226,7 @@ class MaterialTheme {
 
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.slate100,
-        selectedColor: AppColors.orange500.withOpacity(0.12),
+        selectedColor: AppColors.orange500.withValues(alpha: 0.12),
         labelStyle: GoogleFonts.inter(fontSize: 13, fontWeight: FontWeight.w500),
         side: BorderSide.none,
         shape: RoundedRectangleBorder(

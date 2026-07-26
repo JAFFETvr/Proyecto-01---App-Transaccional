@@ -70,7 +70,6 @@ class ToolLocationField extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text('Abrir Mapa'),
               onPressed: !editable
                   ? null
                   : () async {
@@ -83,6 +82,7 @@ class ToolLocationField extends StatelessWidget {
                       );
                       if (res != null) onLocationPicked(res);
                     },
+              child: const Text('Abrir Mapa'),
             ),
           ),
         ),

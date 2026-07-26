@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../core/services/session_prefs_store.dart';
+import '../../../../../core/session/session_provider.dart';
 import '../providers/register_provider.dart';
 import '../components/role_selector.dart';
 
@@ -216,6 +216,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           selfiePath: selfiePath!,
                           curp: _ineCtrl.text.trim(),
                         );
+                        if (!ctx.mounted) return;
                         if (res != null) {
                           setDialogState(() {
                             kycLoading = false;
@@ -282,9 +283,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('user_is_pro', provider.user!.isPro);
+    await SessionPrefsStore.setIsPro(provider.user!.isPro);
 
+    if (!mounted) return;
+    await context.read<SessionProvider>().refresh();
     if (!mounted) return;
 
     final dest = provider.user!.isOwner

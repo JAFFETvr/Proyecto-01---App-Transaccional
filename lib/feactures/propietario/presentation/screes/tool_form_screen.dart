@@ -439,6 +439,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
     }
 
+    if (!mounted) return;
     if (_latitude == null || _longitude == null || _latitude == 0.0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -521,6 +522,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         );
       }
     }
+    if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -89,7 +89,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
               interactionOptions: const InteractionOptions(
                 flags: InteractiveFlag.all,
               ),
-              onTap: (_, __) => setState(() => _selectedTool = null),
+              onTap: (_, _) => setState(() => _selectedTool = null),
             ),
             children: [
               TileLayer(
@@ -130,7 +130,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -178,7 +178,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.slate900.withOpacity(0.95),
+                        color: AppColors.slate900.withValues(alpha: 0.95),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: AppColors.cardShadow,
                       ),
@@ -234,6 +234,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                   heroTag: 'map_my_location',
                   backgroundColor: AppColors.slate900,
                   foregroundColor: Colors.white,
+                  onPressed: _locating ? null : _goToMyLocation,
                   child: _locating
                       ? const SizedBox(
                           width: 18,
@@ -244,7 +245,6 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                           ),
                         )
                       : const Icon(Icons.my_location_rounded),
-                  onPressed: _locating ? null : _goToMyLocation,
                 ),
               ],
             ),
@@ -269,7 +269,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                     borderRadius: BorderRadius.circular(22),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.18),
+                        color: Colors.black.withValues(alpha: 0.18),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -290,7 +290,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                                 child: Image.network(
                                   _selectedTool!.photoUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Icon(
+                                  errorBuilder: (_, _, _) => Icon(
                                     Icons.handyman_rounded,
                                     color: context.textSecondary,
                                     size: 32,
@@ -315,7 +315,7 @@ class _CatalogMapScreenState extends State<CatalogMapScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.orange500.withOpacity(0.12),
+                                color: AppColors.orange500.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(

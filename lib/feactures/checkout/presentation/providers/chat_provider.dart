@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/datasoruce/chat_seen_local_store.dart';
 import '../../domain/entitie/message_entity.dart';
 import '../../domain/repositories/rental_repository.dart';
 
@@ -90,16 +90,10 @@ class ChatProvider extends ChangeNotifier {
   // No hay push (FCM está deshabilitado), así que el "sin leer" se calcula
   // comparando el último mensaje de la OTRA persona contra una marca de
   // tiempo local ("visto") que se guarda cada vez que se abre/cierra el chat.
-  static String _seenKey(String rentalId) => 'chat_seen_$rentalId';
-
   /// Marca el chat de [rentalId] como visto justo ahora. Se llama al abrir y
   /// al cerrar el chat, para que el punto rojo desaparezca.
   Future<void> markChatSeen(String rentalId) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(
-      _seenKey(rentalId),
-      DateTime.now().toUtc().toIso8601String(),
-    );
+    await ChatSeenLocalStore.markSeen(rentalId, DateTime.now());
   }
 
   /// Devuelve true si hay algún mensaje de la otra persona más reciente que la
@@ -122,9 +116,7 @@ class ChatProvider extends ChangeNotifier {
       }
       if (lastFromOther == null) return false;
 
-      final prefs = await SharedPreferences.getInstance();
-      final seenRaw = prefs.getString(_seenKey(rentalId));
-      final seen = seenRaw != null ? DateTime.tryParse(seenRaw) : null;
+      final seen = await ChatSeenLocalStore.lastSeen(rentalId);
       if (seen == null) return true;
       return lastFromOther.isAfter(seen);
     } catch (_) {

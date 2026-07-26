@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
+import '../../../../../core/services/location_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../domain/entitie/tool_entity.dart';
@@ -33,39 +33,21 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
   // Ubicación silenciosa: si no hay permiso o falla, no se muestra distancia
   // (mejor que un número inventado).
   Future<void> _loadDistance() async {
-    try {
-      if (widget.tool.latitude == 0.0 && widget.tool.longitude == 0.0) return;
+    if (widget.tool.latitude == 0.0 && widget.tool.longitude == 0.0) return;
 
-      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return;
+    final pos = await LocationService.tryGetCurrentPosition(highAccuracy: false);
+    if (pos == null) return;
 
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm == LocationPermission.deniedForever ||
-          perm == LocationPermission.denied) {
-        return;
-      }
-
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-        ),
-      );
-      final meters = Geolocator.distanceBetween(
-        pos.latitude,
-        pos.longitude,
-        widget.tool.latitude,
-        widget.tool.longitude,
-      );
-      final label = meters < 1000
-          ? '~${meters.round()} m'
-          : '~${(meters / 1000).toStringAsFixed(1)} km';
-      if (mounted) setState(() => _distanceLabel = label);
-    } catch (_) {
-      // Sin ubicación disponible: no se muestra distancia.
-    }
+    final meters = LocationService.distanceMeters(
+      pos.latitude,
+      pos.longitude,
+      widget.tool.latitude,
+      widget.tool.longitude,
+    );
+    final label = meters < 1000
+        ? '~${meters.round()} m'
+        : '~${(meters / 1000).toStringAsFixed(1)} km';
+    if (mounted) setState(() => _distanceLabel = label);
   }
 
   double get _effectiveRate =>
@@ -127,7 +109,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
             child: Icon(
               Icons.handyman_outlined,
               size: 140,
-              color: Colors.white.withOpacity(0.06),
+              color: Colors.white.withValues(alpha: 0.06),
             ),
           ),
           Center(
@@ -137,8 +119,8 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppColors.orange500.withOpacity(0.15),
-                    AppColors.orange600.withOpacity(0.08),
+                    AppColors.orange500.withValues(alpha: 0.15),
+                    AppColors.orange600.withValues(alpha: 0.08),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -148,7 +130,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
               child: Icon(
                 Icons.handyman_rounded,
                 size: 56,
-                color: AppColors.orange500.withOpacity(0.8),
+                color: AppColors.orange500.withValues(alpha: 0.8),
               ),
             ),
           ),
@@ -213,10 +195,10 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                           vertical: 5,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.12),
+                          color: Colors.white.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Text(
@@ -624,7 +606,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
                       color: context.colors.tertiaryContainer,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: AppColors.success.withOpacity(0.3),
+                        color: AppColors.success.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -704,7 +686,7 @@ class _DayButton extends StatelessWidget {
         height: 32,
         decoration: BoxDecoration(
           color: isEnabled
-              ? AppColors.orange500.withOpacity(0.1)
+              ? AppColors.orange500.withValues(alpha: 0.1)
               : context.colors.surfaceContainerHigh,
           shape: BoxShape.circle,
         ),
@@ -737,9 +719,9 @@ class _InfoChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.07),
+          color: color.withValues(alpha: 0.07),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.15)),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -174,13 +174,13 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
                             heroTag: 'my_location',
                             backgroundColor: AppColors.slate900,
                             foregroundColor: Colors.white,
+                            onPressed: _locating ? null : () => _goToMyLocation(),
                             child: _locating
                                 ? const SizedBox(
                                     width: 16, height: 16,
                                     child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                   )
                                 : const Icon(Icons.my_location_rounded),
-                            onPressed: _locating ? null : () => _goToMyLocation(),
                           ),
                         ],
                       ),
@@ -191,7 +191,7 @@ class _LocationPickerModalState extends State<LocationPickerModal> {
 
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: context.surface, boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, -4))]),
+                decoration: BoxDecoration(color: context.surface, boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, -4))]),
                 child: Row(
                   children: [
                     Expanded(

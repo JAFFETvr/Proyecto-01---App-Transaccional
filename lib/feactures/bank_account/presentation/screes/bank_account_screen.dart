@@ -76,6 +76,55 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
     );
   }
 
+  Future<void> _confirmDelete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('¿Eliminar datos bancarios?'),
+        content: const Text(
+          'Se borrará la CLABE, el titular y el banco registrados. Puedes '
+          'volver a registrarlos cuando quieras.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    if (!mounted) return;
+
+    final provider = context.read<BankAccountProvider>();
+    final ok = await provider.delete();
+    if (!mounted) return;
+    if (ok) {
+      setState(() {
+        _clabeCtrl.clear();
+        _holderCtrl.clear();
+        _bankCtrl.clear();
+      });
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Datos bancarios eliminados ✓'
+              : provider.error ?? 'No se pudieron eliminar los datos',
+        ),
+        backgroundColor: ok ? const Color(0xFF10B981) : AppColors.danger,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<BankAccountProvider>();
@@ -208,6 +257,25 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
                   height: 52,
                   onPressed: provider.loading ? null : _save,
                 ),
+                if (provider.account?.registered == true) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: provider.loading ? null : _confirmDelete,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.danger,
+                        side: const BorderSide(color: AppColors.danger),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Eliminar datos bancarios'),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

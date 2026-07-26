@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../core/services/session_prefs_store.dart';
+import '../../../../core/session/session_provider.dart';
 import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/theme_extensions.dart';
 import '../../../auth/login/presentation/providers/login_provider.dart';
@@ -11,6 +12,7 @@ import '../../../auth/login/presentation/screes/login_screen.dart';
 import '../../../checkout/domain/entitie/rental_entity.dart';
 import '../../domain/entitie/insurance_claim_entity.dart';
 import '../providers/admin_provider.dart';
+import '../../../support/presentation/screens/admin_support_threads_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -33,10 +35,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await SessionPrefsStore.clear();
     await WebViewCookieManager().clearCookies();
     if (!mounted) return;
+    context.read<SessionProvider>().clear();
     context.read<LoginProvider>().logout();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -324,18 +326,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // Consulta persistente de los datos bancarios del propietario para el pago
-  // del seguro tras una disputa ganada. A diferencia del diálogo que se abre
-  // una sola vez al dictaminar, esto se puede reabrir cuantas veces se quiera
-  // desde el botón de la tarjeta (los datos se piden de nuevo al backend).
-  Future<void> _openInsuranceClaim(String rentalId) async {
-    final claim =
-        await context.read<AdminProvider>().fetchInsuranceClaim(rentalId);
+  // La herramienta tenía el seguro ToolShare activo: además de la garantía
+  // ya cobrada por Mercado Pago, el seguro le cubre un 30% adicional del
+  // valor estimado al propietario. No hay forma de transferir ese monto
+  // automático (Mercado Pago no ofrece una API de envío de dinero con esta
+  // integración), así que se le muestran al admin los datos bancarios del
+  // propietario para que haga la transferencia manual por fuera de la app.
+  bool _hasInsuranceClaimToView(RentalEntity rental) {
+    return rental.status == 'completed' &&
+        rental.disputeReason.contains('[Dictamen Admin - capture]');
+  }
+
+  Future<void> _viewInsuranceClaim(RentalEntity rental) async {
+    final adminProvider = context.read<AdminProvider>();
+    final claim = await adminProvider.fetchInsuranceClaim(rental.id);
     if (!mounted) return;
-    if (claim == null || claim.amount <= 0) {
+    if (claim == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Esta herramienta no tenía seguro activo.'),
+        SnackBar(
+          content: Text(
+            adminProvider.error ?? 'No se pudieron consultar los datos bancarios',
+          ),
+          backgroundColor: AppColors.danger,
         ),
       );
       return;
@@ -343,12 +355,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _showInsuranceClaimDialog(context, claim);
   }
 
-  // La herramienta tenía el seguro ToolShare activo: además de la garantía
-  // ya cobrada por Mercado Pago, el seguro le cubre un 30% adicional del
-  // valor estimado al propietario. No hay forma de transferir ese monto
-  // automático (Mercado Pago no ofrece una API de envío de dinero con esta
-  // integración), así que se le muestran al admin los datos bancarios del
-  // propietario para que haga la transferencia manual por fuera de la app.
   void _showInsuranceClaimDialog(
     BuildContext context,
     InsuranceClaimEntity claim,
@@ -493,6 +499,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ],
             ),
             actions: [
+              IconButton(
+                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                color: context.textSecondary,
+                tooltip: 'Chat con propietarios',
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AdminSupportThreadsScreen(),
+                  ),
+                ),
+              ),
               IconButton(
                 icon: const Icon(Icons.logout_rounded),
                 color: context.textSecondary,
@@ -755,7 +772,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                 color: AppColors.dangerBg,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: AppColors.danger.withOpacity(0.3),
+                                  color: AppColors.danger.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Column(
@@ -817,24 +834,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                           // Disputa ya resuelta a favor del propietario
                           // (garantía cobrada por el admin): botón persistente
                           // para volver a ver los datos bancarios del seguro.
-                          if (r.paymentStatus == 'captured_admin') ...[
+                          if (_hasInsuranceClaimToView(r)) ...[
                             const SizedBox(height: 12),
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 icon: const Icon(
-                                  Icons.account_balance_wallet_outlined,
+                                  Icons.account_balance_outlined,
                                   size: 18,
                                 ),
                                 label: Text(
-                                  'Datos de pago del propietario',
+                                  'Ver datos bancarios',
                                   style: GoogleFonts.inter(
                                     fontWeight: FontWeight.w700,
                                     fontSize: 13,
                                   ),
                                 ),
                                 style: OutlinedButton.styleFrom(
-                                  foregroundColor: AppColors.orange500,
+                                  foregroundColor: AppColors.orange600,
                                   side: const BorderSide(
                                     color: AppColors.orange500,
                                   ),
@@ -845,7 +862,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                                onPressed: () => _openInsuranceClaim(r.id),
+                                onPressed: () => _viewInsuranceClaim(r),
                               ),
                             ),
                           ],
@@ -907,7 +924,7 @@ class _MetricCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: iconColor.withOpacity(0.12),
+                  color: iconColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(icon, color: iconColor, size: 18),
@@ -991,7 +1008,7 @@ class _StatusBadge extends StatelessWidget {
         fg = AppColors.success;
         break;
       case 'active':
-        bg = AppColors.blue600.withOpacity(0.15);
+        bg = AppColors.blue600.withValues(alpha: 0.15);
         fg = AppColors.blue600;
         break;
       default:

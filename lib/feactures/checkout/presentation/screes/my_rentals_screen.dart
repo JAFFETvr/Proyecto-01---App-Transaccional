@@ -72,7 +72,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(20),
                     itemCount: sortedRentals.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 14),
+                    separatorBuilder: (_, _) => const SizedBox(height: 14),
                     itemBuilder: (ctx, i) => _RentalCard(
                       rental: sortedRentals[i],
                       onTap: () => _onTapRental(ctx, sortedRentals[i]),
@@ -93,7 +93,7 @@ class _MyRentalsScreenState extends State<MyRentalsScreen> {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.orange500.withOpacity(0.1),
+                color: AppColors.orange500.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.handyman_outlined,
@@ -194,7 +194,7 @@ class _RentalCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: Colors.black.withValues(alpha: 0.04),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -216,7 +216,7 @@ class _RentalCard extends StatelessWidget {
                   clipBehavior: Clip.antiAlias,
                   child: photoUrl.isNotEmpty
                       ? Image.network(photoUrl, fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Icon(
+                          errorBuilder: (_, _, _) => Icon(
                               Icons.construction,
                               color: context.textSecondary))
                       : Icon(Icons.construction,
@@ -267,7 +267,7 @@ class _RentalCard extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.12),
+                      color: statusColor.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(

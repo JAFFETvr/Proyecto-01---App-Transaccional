@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../../core/session/session_provider.dart';
 import 'rental_tracking_requester_screen.dart';
 import '../providers/rental_provider.dart';
 import '../../../../../shared/theme/app_colors.dart';
@@ -499,11 +499,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   height: 55,
                   onPressed: () async {
                           if (tool == null) return;
-                          setState(() => _processingPayment = true);
-
-                          final prefs = await SharedPreferences.getInstance();
                           final payerEmail =
-                              prefs.getString('user_email') ?? '';
+                              context.read<SessionProvider>().userEmail;
+                          setState(() => _processingPayment = true);
 
                           final startDateStr = DateTime.now()
                               .toUtc()
@@ -513,6 +511,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                               .toUtc()
                               .toIso8601String();
 
+                          if (!context.mounted) return;
                           final rentalProv = context.read<RentalProvider>();
 
                           final success = await rentalProv.createRental(
@@ -522,7 +521,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                             paymentMethod: _paymentMethod,
                           );
 
-                          if (!mounted) return;
+                          if (!context.mounted) return;
 
                           if (!success) {
                             setState(() => _processingPayment = false);
@@ -553,7 +552,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
                           setState(() => _processingPayment = false);
 
-                          if (!mounted) return;
+                          if (!context.mounted) return;
 
                           if (initPoint == null) {
                             ScaffoldMessenger.of(context).showSnackBar(

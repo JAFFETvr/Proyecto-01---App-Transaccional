@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 
 import '../../../../../core/error/app_error.dart';
 import '../../../../../core/config/api_config.dart';
@@ -13,8 +13,7 @@ class AdminRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, String>> get _authHeaders async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token') ?? '';
+    final token = await SessionPrefsStore.token() ?? '';
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
@@ -133,10 +132,11 @@ class AdminRemoteDatasource {
     }
   }
 
-  /// Consulta (de forma persistente) el pago de seguro pendiente al
-  /// propietario de una renta y sus datos bancarios. null si la herramienta
-  /// no tenía seguro activo.
-  Future<InsuranceClaimEntity?> getInsuranceClaim(String rentalId) async {
+  /// Consulta el monto de seguro y los datos bancarios del propietario de una
+  /// renta cuantas veces haga falta (a diferencia de la respuesta de
+  /// resolveDispute, que solo se ve una vez). Devuelve un claim vacío
+  /// (amount: 0) si la herramienta no tenía seguro activo.
+  Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId) async {
     try {
       final res = await http.get(
         Uri.parse('$_baseUrl/admin/rentals/$rentalId/insurance-claim'),
@@ -145,7 +145,24 @@ class AdminRemoteDatasource {
       _throwIfError(res);
       final body =
           json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>;
-      return _claimFromJson(body['insurance_claim'] as Map<String, dynamic>?);
+      final claimJson = body['insurance_claim'] as Map<String, dynamic>?;
+      if (claimJson == null) {
+        return const InsuranceClaimEntity(
+          amount: 0.0,
+          bankClabe: '',
+          bankAccountHolder: '',
+          bankName: '',
+          bankAccountRegistered: false,
+        );
+      }
+      return InsuranceClaimEntity(
+        amount: (claimJson['amount'] as num?)?.toDouble() ?? 0.0,
+        bankClabe: claimJson['bank_clabe'] as String? ?? '',
+        bankAccountHolder: claimJson['bank_account_holder'] as String? ?? '',
+        bankName: claimJson['bank_name'] as String? ?? '',
+        bankAccountRegistered:
+            claimJson['bank_account_registered'] as bool? ?? false,
+      );
     } on AppError {
       rethrow;
     } catch (_) {
@@ -153,6 +170,8 @@ class AdminRemoteDatasource {
     }
   }
 
+  // Usado solo por resolveDispute(): ahí sí puede no haber claim (null),
+  // a diferencia de getInsuranceClaim() que siempre devuelve un valor.
   InsuranceClaimEntity? _claimFromJson(Map<String, dynamic>? claimJson) {
     if (claimJson == null) return null;
     return InsuranceClaimEntity(

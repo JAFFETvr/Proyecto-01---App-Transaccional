@@ -8,6 +8,6 @@ class GetInsuranceClaimUseCase {
   final AdminRepository _repository;
   const GetInsuranceClaimUseCase(this._repository);
 
-  Future<InsuranceClaimEntity?> execute(String rentalId) =>
+  Future<InsuranceClaimEntity> execute(String rentalId) =>
       _repository.getInsuranceClaim(rentalId);
 }

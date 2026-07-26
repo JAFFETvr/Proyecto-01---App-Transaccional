@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../../../../core/config/api_config.dart';
 import '../../domain/entitie/rental_entity.dart';
@@ -11,12 +11,11 @@ class RentalRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, String>> get _authHeaders async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token') ?? '';
-    var deviceId = prefs.getString('device_id') ?? '';
+    final token = await SessionPrefsStore.token() ?? '';
+    var deviceId = await SessionPrefsStore.deviceId() ?? '';
     if (deviceId.isEmpty) {
       deviceId = 'dev-${DateTime.now().millisecondsSinceEpoch}';
-      await prefs.setString('device_id', deviceId);
+      await SessionPrefsStore.saveDeviceId(deviceId);
     }
     return {
       'Content-Type': 'application/json',

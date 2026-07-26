@@ -54,7 +54,7 @@ class _LoginFormState extends State<LoginForm> {
                 color: AppColors.dangerBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                    color: AppColors.danger.withOpacity(0.3)),
+                    color: AppColors.danger.withValues(alpha: 0.3)),
               ),
               child: Row(children: [
                 const Icon(Icons.error_outline,

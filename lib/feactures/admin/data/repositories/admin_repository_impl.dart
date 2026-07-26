@@ -29,6 +29,6 @@ class AdminRepositoryImpl implements AdminRepository {
   );
 
   @override
-  Future<InsuranceClaimEntity?> getInsuranceClaim(String rentalId) =>
+  Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId) =>
       _datasource.getInsuranceClaim(rentalId);
 }

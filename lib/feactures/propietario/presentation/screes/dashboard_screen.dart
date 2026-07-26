@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+import '../../../../../core/services/session_prefs_store.dart';
+import '../../../../../core/session/session_provider.dart';
 import '../providers/tool_provider.dart';
 import '../components/tool_list_item.dart';
 import 'tool_form_screen.dart';
@@ -28,24 +29,15 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   static const _freeToolLimit = 3;
 
-  String _userName = '';
   int _selectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadUserName();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ToolProvider>().fetchTools();
       context.read<RentalProvider>().fetchRentals();
     });
-  }
-
-  Future<void> _loadUserName() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (mounted) {
-      setState(() => _userName = prefs.getString('user_name') ?? '');
-    }
   }
 
   Future<void> _showProPromo(BuildContext context) async {
@@ -198,6 +190,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
     if (confirm != true) return;
+    if (!mounted) return;
 
     final provider = context.read<ToolProvider>();
     final ok = await provider.deleteTool(id);
@@ -211,10 +204,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await SessionPrefsStore.clear();
     await WebViewCookieManager().clearCookies();
     if (!mounted) return;
+    context.read<SessionProvider>().clear();
     context.read<LoginProvider>().logout();
     context.read<RegisterProvider>().logout();
     context.read<ToolProvider>().clearTools();
@@ -267,6 +260,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildHomeTab(BuildContext context) {
     final provider = context.watch<ToolProvider>();
+    final userName = context.watch<SessionProvider>().userName;
 
     return RefreshIndicator(
       onRefresh: () => provider.fetchTools(),
@@ -301,7 +295,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const SizedBox(width: 10),
                 Flexible(
                   child: Text(
-                    'Hola, $_userName',
+                    'Hola, $userName',
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
                       fontSize: 14,
@@ -343,7 +337,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF10B981).withOpacity(0.3),
+                            color: const Color(0xFF10B981).withValues(alpha: 0.3),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -380,7 +374,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 Text(
                                   'Publica herramientas ilimitadas y de cualquier valor.',
                                   style: GoogleFonts.inter(
-                                    color: Colors.white.withOpacity(0.9),
+                                    color: Colors.white.withValues(alpha: 0.9),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -659,7 +653,7 @@ class _MetricCard extends StatelessWidget {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 20),

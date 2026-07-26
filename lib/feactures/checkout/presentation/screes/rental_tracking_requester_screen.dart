@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/services/location_service.dart';
 import '../providers/rental_provider.dart';
 import '../providers/chat_provider.dart';
 import '../../domain/entitie/rental_entity.dart';
@@ -126,6 +126,7 @@ class _RentalTrackingRequesterScreenState
       ),
     );
     if (confirm != true) return;
+    if (!mounted) return;
 
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().cancelRental(rentalId);
@@ -197,28 +198,13 @@ class _RentalTrackingRequesterScreenState
     }
 
     setState(() => _loading = true);
-    double? latitude;
-    double? longitude;
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission perm = await Geolocator.checkPermission();
-        if (perm == LocationPermission.denied) {
-          perm = await Geolocator.requestPermission();
-        }
-        if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
-          final pos = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
-          latitude = pos.latitude;
-          longitude = pos.longitude;
-        }
-      }
-    } catch (_) {}
+    final pos = await LocationService.tryGetCurrentPosition();
 
+    if (!mounted) return;
     final ok = await context.read<RentalProvider>().confirmDelivery(
           rentalId,
-          latitude: latitude,
-          longitude: longitude,
+          latitude: pos?.latitude,
+          longitude: pos?.longitude,
         );
 
     setState(() => _loading = false);
@@ -261,6 +247,7 @@ class _RentalTrackingRequesterScreenState
       return;
     }
 
+    if (!mounted) return;
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().confirmReturn(rentalId);
     setState(() => _loading = false);
@@ -324,6 +311,7 @@ class _RentalTrackingRequesterScreenState
       ),
     );
 
+    if (!mounted) return;
     if (confirm != true || reasonCtrl.text.trim().length < 10) {
       if (confirm == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -366,7 +354,7 @@ class _RentalTrackingRequesterScreenState
         icon: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.orange500.withOpacity(0.1),
+            color: AppColors.orange500.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.info_outline_rounded,
@@ -589,7 +577,7 @@ class _RentalTrackingRequesterScreenState
           const SizedBox(height: 24),
           if (rental.disputeReason.isNotEmpty)
             Card(
-              color: AppColors.dangerBg.withOpacity(0.4),
+              color: AppColors.dangerBg.withValues(alpha: 0.4),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -860,7 +848,7 @@ class _Phase2RequesterWidget extends StatelessWidget {
           Container(
             width: 100, height: 100,
             decoration: BoxDecoration(
-              color: AppColors.orange500.withOpacity(0.12),
+              color: AppColors.orange500.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.handshake_outlined,
@@ -890,10 +878,10 @@ class _Phase2RequesterWidget extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.07),
+              color: const Color(0xFF6366F1).withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: const Color(0xFF6366F1).withOpacity(0.2)),
+                  color: const Color(0xFF6366F1).withValues(alpha: 0.2)),
             ),
             child: Row(children: [
               const Icon(Icons.info_outline,
@@ -973,7 +961,7 @@ class _Phase3RequesterWidget extends StatelessWidget {
             Container(
               width: 90, height: 90,
               decoration: BoxDecoration(
-                color: AppColors.orange500.withOpacity(0.1),
+                color: AppColors.orange500.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.assignment_return_outlined,
@@ -1098,7 +1086,7 @@ class _PhaseIndicator extends StatelessWidget {
                 color: done
                     ? null
                     : active
-                        ? AppColors.orange500.withOpacity(0.1)
+                        ? AppColors.orange500.withValues(alpha: 0.1)
                         : context.borderColor,
                 border: Border.all(
                   color:
@@ -1152,7 +1140,7 @@ class _InfoTile extends StatelessWidget {
       Container(
         width: 36, height: 36,
         decoration: BoxDecoration(
-          color: AppColors.orange500.withOpacity(0.1),
+          color: AppColors.orange500.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(icon, size: 18, color: AppColors.orange500),
@@ -1202,7 +1190,7 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6366F1).withOpacity(0.25),
+                    color: const Color(0xFF6366F1).withValues(alpha: 0.25),
                     blurRadius: 20,
                     spreadRadius: 4,
                   ),
@@ -1240,7 +1228,7 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFEEF2FF),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF6366F1).withOpacity(0.25)),
+              border: Border.all(color: const Color(0xFF6366F1).withValues(alpha: 0.25)),
             ),
             child: Column(
               children: [
@@ -1266,7 +1254,7 @@ class _WaitingOwnerConfirmWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppColors.orange500.withOpacity(0.3)),
+              border: Border.all(color: AppColors.orange500.withValues(alpha: 0.3)),
             ),
             child: Row(children: [
               const Icon(Icons.lock_clock_rounded,

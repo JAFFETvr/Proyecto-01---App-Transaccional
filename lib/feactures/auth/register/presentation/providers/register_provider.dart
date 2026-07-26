@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../core/error/app_error.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../../core/services/secure_session_store.dart';
 import '../../../../../core/services/sensitive_data_store.dart';
 import '../../domain/entitie/user_entity.dart';
@@ -84,14 +84,15 @@ class RegisterProvider extends ChangeNotifier {
         ine: ine,
       );
 
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('jwt_token',  _user!.token);
-      await prefs.setString('user_id',    _user!.id);
-      await prefs.setString('user_name',  _user!.name);
-      await prefs.setString('user_email', _user!.email);
-      await prefs.setString('user_role',  _user!.role);
-      await prefs.setString('user_phone', _user!.phone);
-      await prefs.setString('user_ine',   _user!.ine);
+      await SessionPrefsStore.saveSession(
+        token: _user!.token,
+        id: _user!.id,
+        name: _user!.name,
+        email: _user!.email,
+        role: _user!.role,
+        phone: _user!.phone,
+        ine: _user!.ine,
+      );
 
       await SecureSessionStore.saveToken(_user!.token);
       await SecureSessionStore.saveLastActive(DateTime.now());

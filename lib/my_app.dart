@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/session_prefs_store.dart';
 
 import 'shared/theme/util.dart';
 import 'shared/theme/theme.dart';
@@ -9,7 +9,6 @@ import 'shared/theme/theme.dart';
 import 'core/di/injection_container.dart';
 import 'core/services/fake_gps_service.dart';
 import 'core/services/secure_session_store.dart';
-import 'core/services/fcm_service.dart';
 import 'core/navigation/app_navigator.dart';
 
 import './feactures/auth/login/presentation/screes/login_screen.dart';
@@ -94,9 +93,8 @@ class _AppGateState extends State<_AppGate> {
       return FakeGpsBlockedScreen(onRetry: _retry);
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token');
-    final role = prefs.getString('user_role') ?? '';
+    final token = await SessionPrefsStore.token();
+    final role = await SessionPrefsStore.userRole();
 
     if (token == null) return const LoginScreen();
 
@@ -107,15 +105,15 @@ class _AppGateState extends State<_AppGate> {
     final lastActive = await SecureSessionStore.readLastActive();
     if (lastActive != null &&
         DateTime.now().difference(lastActive) >= InactivityWatcher.timeout) {
-      await prefs.clear();
+      await SessionPrefsStore.clear();
       await SecureSessionStore.clear();
       return const LoginScreen();
     }
 
     // Reafirma la suscripción al tópico de borrado remoto de este usuario
     // (defensivo: por si el sistema operativo la hubiera perdido).
-    final userId = prefs.getString('user_id');
-    if (userId != null && userId.isNotEmpty) {
+    final userId = await SessionPrefsStore.userId();
+    if (userId.isNotEmpty) {
       // TODO: reactivar cuando Firebase tenga credenciales
       // FcmService.subscribeToUserTopic(userId);
     }

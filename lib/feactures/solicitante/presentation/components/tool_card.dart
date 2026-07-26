@@ -31,7 +31,7 @@ class ToolCard extends StatelessWidget {
       child: Icon(
         Icons.handyman_outlined,
         size: 52,
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
       ),
     );
   }
@@ -75,7 +75,7 @@ class ToolCard extends StatelessWidget {
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
                             colors: [
-                              Colors.black.withOpacity(0.35),
+                              Colors.black.withValues(alpha: 0.35),
                               Colors.transparent,
                             ],
                           ),
@@ -89,7 +89,7 @@ class ToolCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.92),
+                            color: Colors.white.withValues(alpha: 0.92),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(

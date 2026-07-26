@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/session/session_provider.dart';
 import '../providers/login_provider.dart';
 import '../components/login_form.dart';
 
@@ -29,6 +30,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     final provider = context.read<LoginProvider>();
     if (provider.user == null) return;
+
+    await context.read<SessionProvider>().refresh();
+    if (!mounted) return;
 
     context.read<ToolProvider>().clearTools();
     context.read<RentalProvider>().clearState();

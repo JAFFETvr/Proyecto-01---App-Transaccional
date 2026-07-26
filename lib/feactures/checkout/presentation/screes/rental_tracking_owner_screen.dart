@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../../core/services/location_service.dart';
 import '../providers/rental_provider.dart';
 import '../providers/chat_provider.dart';
 import '../../domain/entitie/rental_entity.dart';
@@ -157,6 +157,7 @@ class _RentalTrackingOwnerScreenState
       ),
     );
     if (confirm != true) return;
+    if (!mounted) return;
 
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().cancelRental(rentalId);
@@ -228,28 +229,13 @@ class _RentalTrackingOwnerScreenState
     }
 
     setState(() => _loading = true);
-    double? latitude;
-    double? longitude;
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (serviceEnabled) {
-        LocationPermission perm = await Geolocator.checkPermission();
-        if (perm == LocationPermission.denied) {
-          perm = await Geolocator.requestPermission();
-        }
-        if (perm == LocationPermission.always || perm == LocationPermission.whileInUse) {
-          final pos = await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
-          latitude = pos.latitude;
-          longitude = pos.longitude;
-        }
-      }
-    } catch (_) {}
+    final pos = await LocationService.tryGetCurrentPosition();
 
+    if (!mounted) return;
     final ok = await context.read<RentalProvider>().confirmDelivery(
           rentalId,
-          latitude: latitude,
-          longitude: longitude,
+          latitude: pos?.latitude,
+          longitude: pos?.longitude,
         );
 
     setState(() => _loading = false);
@@ -291,6 +277,7 @@ class _RentalTrackingOwnerScreenState
       return;
     }
 
+    if (!mounted) return;
     setState(() => _loading = true);
     final ok = await context.read<RentalProvider>().confirmReturn(rentalId);
     setState(() => _loading = false);
@@ -354,6 +341,7 @@ class _RentalTrackingOwnerScreenState
       ),
     );
 
+    if (!mounted) return;
     if (confirm != true || reasonCtrl.text.trim().length < 10) {
       if (confirm == true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -386,7 +374,7 @@ class _RentalTrackingOwnerScreenState
         icon: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: const Color(0xFF4F46E5).withOpacity(0.1),
+            color: const Color(0xFF4F46E5).withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: const Icon(Icons.info_outline_rounded,
@@ -700,7 +688,7 @@ class _OwnerPhase0 extends StatelessWidget {
           Container(
             width: 90, height: 90,
             decoration: BoxDecoration(
-              color: AppColors.orange500.withOpacity(0.1),
+              color: AppColors.orange500.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.construction_outlined,
@@ -729,7 +717,7 @@ class _OwnerPhase0 extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F172A).withOpacity(0.04),
+              color: const Color(0xFF0F172A).withValues(alpha: 0.04),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: context.borderColor),
             ),
@@ -930,7 +918,7 @@ class _OwnerPhase2Rejected extends StatelessWidget {
           const SizedBox(height: 16),
           if (rental.disputeReason.isNotEmpty)
             Card(
-              color: AppColors.dangerBg.withOpacity(0.4),
+              color: AppColors.dangerBg.withValues(alpha: 0.4),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -989,7 +977,7 @@ class _OwnerPhaseIndicator extends StatelessWidget {
                 color: done
                     ? null
                     : active
-                        ? AppColors.orange500.withOpacity(0.1)
+                        ? AppColors.orange500.withValues(alpha: 0.1)
                         : context.borderColor,
                 border: Border.all(
                   color:

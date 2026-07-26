@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../../core/services/session_prefs_store.dart';
 import '../../../../core/error/app_error.dart';
 import '../../../../core/config/api_config.dart';
 import '../../domain/entitie/bank_account_entity.dart';
@@ -9,8 +9,7 @@ class BankAccountRemoteDatasource {
   static String get _baseUrl => ApiConfig.baseUrl;
 
   Future<Map<String, String>> get _authHeaders async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwt_token') ?? '';
+    final token = await SessionPrefsStore.token() ?? '';
     return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
@@ -65,6 +64,20 @@ class BankAccountRemoteDatasource {
       );
       _throwIfError(res);
       return _fromJson(json.decode(utf8.decode(res.bodyBytes)) as Map<String, dynamic>);
+    } on AppError {
+      rethrow;
+    } catch (_) {
+      throw const AppError(statusCode: 0, message: 'Sin conexión.');
+    }
+  }
+
+  Future<void> deleteBankAccount() async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$_baseUrl/auth/bank-account'),
+        headers: await _authHeaders,
+      );
+      _throwIfError(res);
     } on AppError {
       rethrow;
     } catch (_) {
