@@ -1,12 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 
 class FakeGpsService {
-  /// Verifica si la ubicación actual del dispositivo proviene de un
-  /// proveedor simulado (apps de "Fake GPS" / Mock Location).
-  ///
-  /// En Android, geolocator expone `Position.isMocked`, respaldado por
-  /// `Location.isMock()` de la plataforma. iOS no expone una API pública
-  /// equivalente, por lo que ahí siempre se reporta `false`.
+  /// Detecta ubicación simulada (Fake GPS); en iOS siempre retorna `false`.
   static Future<bool> isMockLocationActive() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();

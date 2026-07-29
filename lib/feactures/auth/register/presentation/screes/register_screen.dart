@@ -263,10 +263,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final registered = provider.user;
     if (registered == null) return;
 
-    // El registro solo llena RegisterProvider.user; el resto de la app (tab
-    // de Cuenta, Mis Rentas, etc.) lee la sesión desde LoginProvider, así que
-    // sin esto quedaría en null y esas pantallas aparecerían vacías hasta
-    // cerrar sesión y volver a entrar manualmente.
+    // El resto de la app lee la sesión desde LoginProvider, no RegisterProvider.
     context.read<LoginProvider>().setUser(
       login_domain.UserEntity(
         id: registered.id,

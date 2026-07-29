@@ -1,9 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Almacén encriptado de la sesión: token JWT y marca de tiempo de la
-/// última interacción del usuario. En Android usa EncryptedSharedPreferences
-/// (respaldado por el Keystore) y en iOS el Keychain.
+/// Almacén encriptado de sesión (token + última actividad): Keystore/Keychain.
 class SecureSessionStore {
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -12,12 +10,7 @@ class SecureSessionStore {
   static const _kToken = 'secure_jwt_token';
   static const _kLastActiveAt = 'secure_last_active_at';
 
-  // El Keychain de iOS a veces truena con "-25299 the specified item
-  // already exists" al escribir una key que quedó huérfana de una
-  // instalación/firma anterior (muy común reinstalando en debug). Se borra
-  // la entrada y se reintenta una vez en vez de dejar la excepción sin
-  // manejar — esto se llama en cada toque de pantalla (ver
-  // InactivityWatcher), así que un fallo aquí no debe tronar la app.
+  // Workaround: Keychain iOS a veces da -25299 en key huérfana; borra y reintenta.
   static Future<void> _writeResilient(String key, String value) async {
     try {
       await _storage.write(key: key, value: value);

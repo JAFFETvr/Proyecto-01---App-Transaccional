@@ -71,9 +71,7 @@ class _CatalogScreenState extends State<CatalogScreen> {
 
   Future<void> _logout() async {
     await SessionPrefsStore.clear();
-    // Limpia la sesión de Mercado Pago que quedó dentro del WebView (si no,
-    // el siguiente usuario que inicie sesión en este mismo dispositivo vería
-    // precargada la cuenta de MP de quien usó la app antes que él).
+    // Evita que el siguiente usuario del dispositivo vea la sesión de MP previa.
     await WebViewCookieManager().clearCookies();
     if (!mounted) return;
     context.read<SessionProvider>().clear();

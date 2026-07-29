@@ -354,9 +354,7 @@ class ToolProvider extends ChangeNotifier {
     }
   }
 
-  /// Lee por OCR el precio de un ticket de compra. Es la fuente de precio
-  /// más confiable: si es válido, se usa como precio_base_manual verificado
-  /// en la siguiente llamada a autoValuate en vez del catálogo semilla.
+  /// Si es válido, se usa como precio_base_manual verificado en autoValuate.
   Future<Map<String, dynamic>?> extractTicketPrice(File photo) async {
     _loading = true;
     _error = null;
@@ -418,9 +416,7 @@ class ToolProvider extends ChangeNotifier {
     }
   }
 
-  /// Reconcilia el seguro sin payment_id (el backend lo busca en MP por
-  /// external_reference). Devuelve true si el seguro quedó activo. Se usa al
-  /// regresar del navegador de pago.
+  /// Respaldo sin payment_id, vía external_reference en MP.
   Future<bool> reconcileInsurance(String toolId) async {
     try {
       final updated = await _reconcileInsurance.execute(toolId);

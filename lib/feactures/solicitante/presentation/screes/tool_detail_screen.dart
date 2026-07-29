@@ -56,11 +56,7 @@ class _ToolDetailScreenState extends State<ToolDetailScreen> {
   // Comisión de servicio de ToolShare: no reembolsable, calculada sobre la
   // renta (coincide con rentaldomain.ServiceCommissionRate en el backend).
   double get _commission => _subtotal * 0.05;
-  // Depósito de garantía: reembolsable si no hay disputa. No se pide en
-  // herramienta con valor estimado por debajo de DepositThreshold (coincide
-  // con rentaldomain.DepositThreshold en el backend); arriba del umbral es
-  // 10% del valor estimado (no del subtotal de la renta), topado a 2x el
-  // subtotal para que no se sienta desproporcionado en rentas cortas.
+  // Debe coincidir con rentaldomain.DepositThreshold en el backend.
   static const _depositThreshold = 1000.0;
   double get _deposit => widget.tool.estimatedValue < _depositThreshold
       ? 0.0

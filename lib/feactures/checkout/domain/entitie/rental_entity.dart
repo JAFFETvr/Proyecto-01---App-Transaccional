@@ -72,11 +72,7 @@ class RentalEntity {
   bool get isCash => paymentMethod == 'cash';
   bool get isCard => paymentMethod == 'card';
 
-  // En tarjeta, los fondos solo están realmente retenidos cuando Mercado Pago
-  // confirmó el pago. Antes de eso la renta existe en la BD pero nadie ha
-  // pagado nada, así que NO se debe mostrar como "Fondos retenidos".
-  // En efectivo nunca hay fondos retenidos en la plataforma (el dinero se
-  // intercambia directo entre las dos personas).
+  // En tarjeta, fondos retenidos solo si MP ya confirmó el pago; en efectivo nunca.
   bool get isPaidCard {
     if (!isCard) return false;
     const paidStates = {
@@ -133,9 +129,7 @@ class RentalEntity {
   // prefijo "[Dictamen Admin - <acción>]".
   bool get disputeResolvedByAdmin => disputeReason.contains('[Dictamen Admin');
 
-  // 'capture' => se cobró el depósito a favor del propietario (el propietario
-  // gana). 'refund' => se reembolsó al solicitante (el solicitante gana).
-  // null si la disputa aún no tiene fallo.
+  // 'capture' = gana el propietario, 'refund' = gana el solicitante.
   String? get disputeAdminAction {
     if (!disputeResolvedByAdmin) return null;
     if (disputeReason.contains('- capture]')) return 'capture';

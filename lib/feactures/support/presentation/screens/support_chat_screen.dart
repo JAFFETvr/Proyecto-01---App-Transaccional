@@ -6,9 +6,7 @@ import '../../../../shared/theme/app_colors.dart';
 import '../../../../shared/theme/theme_extensions.dart';
 import '../providers/support_chat_provider.dart';
 
-/// Chat de soporte entre el propietario y el administrador. [ownerId] es el
-/// dueño del hilo: si lo abre el propio propietario es su propio ID, si lo
-/// abre un admin es el ID del propietario cuyo hilo está consultando.
+/// [ownerId] es el dueño del hilo, no necesariamente quien lo abre (puede ser un admin).
 class SupportChatScreen extends StatefulWidget {
   final String ownerId;
   final String ownerName;

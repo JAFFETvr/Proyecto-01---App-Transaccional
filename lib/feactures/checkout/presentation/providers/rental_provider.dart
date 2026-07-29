@@ -30,10 +30,7 @@ class RentalProvider extends ChangeNotifier {
   final StreamRentalUseCase _streamRental;
 
   StreamSubscription<RentalEntity>? _rentalSubscription;
-  // Renta que se está siguiendo en vivo, y timer para reconectar el stream
-  // si se cae (red, timeout del proxy de Railway, etc.). Sin esto, el
-  // seguimiento de renta se quedaba "congelado" hasta salir y volver a
-  // entrar a la pantalla en cuanto el stream SSE se cortaba una vez.
+  // Sin reconexión, el stream SSE se quedaba "congelado" al cortarse.
   String? _listeningRentalId;
   Timer? _reconnectTimer;
 
@@ -315,10 +312,7 @@ class RentalProvider extends ChangeNotifier {
     }
   }
 
-  // Respaldo del webhook: se llama en cuanto MP redirige al WebView a la
-  // URL de éxito. El backend vuelve a verificar el pago directo con MP
-  // antes de tocar nada, así que esto es seguro de intentar aunque el
-  // webhook ya lo haya hecho (es idempotente del lado del servidor).
+  // Respaldo del webhook al redirect de éxito; idempotente en el backend.
   Future<bool> confirmPayment(String rentalId, String paymentId) async {
     try {
       final rental = await _confirmPayment.execute(rentalId, paymentId);
@@ -335,9 +329,7 @@ class RentalProvider extends ChangeNotifier {
     }
   }
 
-  // Reconcilia el pago sin payment_id (el backend lo busca en MP por
-  // external_reference). Devuelve la renta actualizada, o null si falló la
-  // llamada. Se usa desde el botón "Ya completé el pago" y al reanudar la app.
+  // Backend busca el pago en MP por external_reference (sin payment_id).
   Future<RentalEntity?> reconcilePayment(String rentalId) async {
     try {
       final rental = await _reconcilePayment.execute(rentalId);

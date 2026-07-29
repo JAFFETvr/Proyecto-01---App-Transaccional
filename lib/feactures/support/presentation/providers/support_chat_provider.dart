@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entitie/support_message_entity.dart';
 import '../../domain/repositories/support_repository.dart';
 
-/// Chat de soporte entre el propietario y el administrador. Mismo patrón de
-/// polling que ChatProvider (checkout), pero el hilo se identifica por
-/// [ownerId] en vez de un rentalId, y quién lo envía depende de [asAdmin].
+/// Mismo patrón de polling que ChatProvider, pero el hilo se identifica por [ownerId].
 class SupportChatProvider extends ChangeNotifier {
   final SupportRepository _repository;
 

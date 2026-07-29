@@ -6,9 +6,7 @@ import 'session_service.dart';
 /// una orden de borrado remoto (en vez de una notificación general).
 const String kWipeAction = 'wipe_sensitive_data';
 
-/// Handler de mensajes en segundo plano / app terminada. FCM exige que sea
-/// una función de nivel superior (o estática) anotada con @pragma para que
-/// el motor de Dart no la elimine en modo release.
+/// Debe ser top-level y llevar @pragma para no ser eliminada en release.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   if (message.data['action'] == kWipeAction) {
@@ -16,9 +14,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 }
 
-/// Encapsula FCM: permisos, tópico específico por usuario (para que el
-/// borrado remoto apunte a UN usuario, nunca a todos) y los listeners que
-/// detectan la orden de borrado en cada estado de la app.
+/// Encapsula FCM: permisos, tópico por usuario y listeners de borrado remoto.
 class FcmService {
   static bool _initialized = false;
 
@@ -47,9 +43,7 @@ class FcmService {
     });
   }
 
-  /// Suscribe este dispositivo al tópico exclusivo del usuario logueado.
-  /// Enviar un mensaje a este tópico específico (desde la consola de
-  /// Firebase) es lo que hace que el borrado sea dirigido a ESE usuario.
+  /// Tópico exclusivo del usuario: así el borrado remoto apunta solo a él.
   static Future<void> subscribeToUserTopic(String userId) {
     return FirebaseMessaging.instance.subscribeToTopic(topicFor(userId));
   }

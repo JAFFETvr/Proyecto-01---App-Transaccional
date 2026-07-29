@@ -64,9 +64,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// Puerta de entrada de la app: bloquea el acceso si detecta un proveedor
-/// de ubicación simulada (Fake GPS) y, solo si el chequeo pasa, resuelve
-/// la pantalla inicial según la sesión guardada.
+/// Bloquea si detecta Fake GPS; si no, resuelve la pantalla inicial según la sesión.
 class _AppGate extends StatefulWidget {
   const _AppGate();
 
@@ -98,10 +96,7 @@ class _AppGateState extends State<_AppGate> {
 
     if (token == null) return const LoginScreen();
 
-    // La app pudo haber sido cerrada por completo (proceso terminado) mientras
-    // estaba inactiva. Como el reloj de inactividad vive en memoria, se
-    // reconstruye comparando contra la marca de tiempo persistida en el
-    // almacén encriptado.
+    // Reconcilia inactividad contra la marca persistida (por si el proceso fue cerrado).
     final lastActive = await SecureSessionStore.readLastActive();
     if (lastActive != null &&
         DateTime.now().difference(lastActive) >= InactivityWatcher.timeout) {

@@ -7,9 +7,7 @@ import '../screes/insurance_checkout_screen.dart';
 import '../components/tool_list_item.dart' show kInsuranceMonthlyRate;
 import 'section_title.dart';
 
-/// Sección "Garantía y seguro" del formulario de herramienta: la garantía es
-/// informativa/automática (la paga el solicitante), el seguro es opcional y
-/// lo contrata el propietario vía Mercado Pago.
+/// Sección "Garantía y seguro": garantía automática, seguro opcional vía MP.
 class ToolShareBackupCard extends StatefulWidget {
   final String toolId;
   final double estimatedValue;
@@ -41,9 +39,7 @@ class _ToolShareBackupCardState extends State<ToolShareBackupCard> {
     _insuranceActive = widget.insuranceActive;
   }
 
-  /// El WebView de pago no devuelve el tool actualizado directamente; se lee
-  /// del ToolProvider (ya sincronizado por confirmInsurancePayment) para
-  /// reflejar el cambio sin tener que salir y volver a entrar a la pantalla.
+  /// El WebView de pago no devuelve el tool actualizado; se lee del provider.
   void _syncInsuranceFromProvider() {
     final tools = context.read<ToolProvider>().tools;
     for (final t in tools) {

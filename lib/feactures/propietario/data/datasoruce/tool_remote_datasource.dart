@@ -285,15 +285,7 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
-  // El OCR del ticket puede tardar decenas de segundos (arranque en frío del
-  // worker de PaddleOCR en el servicio de ML) — una sola petición HTTP tan
-  // larga se topaba con el timeout del proxy de Railway y se cortaba a
-  // medias aunque el servidor sí hubiera terminado bien. Ahora el POST
-  // arranca el OCR en segundo plano y responde de inmediato con un job_id;
-  // aquí se pregunta el estatus cada 2s hasta que termine. El resultado
-  // final tiene el mismo formato (valid/detected_price/confidence/error)
-  // que antes devolvía el POST directo, para no tocar nada en
-  // _pickTicketImage.
+  // OCR corre async (job_id) para evitar el timeout del proxy de Railway.
   Future<Map<String, dynamic>> extractTicketPrice(File photo) async {
     try {
       final uri = Uri.parse('$_baseUrl/tools/extract-ticket-price');
@@ -312,9 +304,7 @@ class ToolRemoteDatasource {
       final jobId = (json.decode(utf8.decode(startResponse.bodyBytes))
           as Map<String, dynamic>)['job_id'] as String;
 
-      // 65 intentos x 2s = 130s máximo, por encima del contexto de 120s que
-      // usa Go para este job (ticket_job_store.go), para no rendirse antes
-      // que el propio backend.
+      // 65x2s=130s, por encima del contexto de 120s del job en el backend.
       for (var intento = 0; intento < 65; intento++) {
         await Future.delayed(const Duration(seconds: 2));
 
@@ -370,9 +360,7 @@ class ToolRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión al confirmar el pago del seguro.'); }
   }
 
-  // Reconcilia el seguro sin payment_id: el backend lo busca en MP por
-  // external_reference ("ins:<toolId>"). Se usa al regresar del checkout
-  // cuando no se pudo interceptar el payment_id (pago en navegador externo).
+  // Backup: reconcilia buscando en MP por external_reference, sin payment_id.
   Future<ToolEntity> reconcileInsurance(String toolId) async {
     try {
       final res = await http.post(

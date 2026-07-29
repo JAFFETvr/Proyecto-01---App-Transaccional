@@ -1,15 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-/// Almacenamiento encriptado para los datos sensibles del perfil del
-/// usuario (Android: EncryptedSharedPreferences respaldado por el
-/// Keystore; iOS: Keychain).
-///
-/// Se define como un almacén independiente del token de sesión
-/// ([SecureSessionStore]) porque conceptualmente protege un dato distinto:
-/// información personal identificable (PII) del usuario, no credenciales
-/// de autenticación. Se puede borrar de forma remota vía FCM sin afectar
-/// la sesión si así se requiriera.
+/// Almacén encriptado de PII, separado del token: borrable vía FCM sin afectar la sesión.
 class SensitiveDataStore {
   static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -20,9 +12,7 @@ class SensitiveDataStore {
   static const _kPhone = 'sensitive_phone';
   static const _kIne = 'sensitive_ine';
 
-  // Ver nota en SecureSessionStore._writeResilient: el Keychain de iOS
-  // puede truena con "-25299 the specified item already exists" en una key
-  // huérfana de una instalación anterior; se borra y se reintenta una vez.
+  // Ver SecureSessionStore._writeResilient: mismo workaround del bug -25299 de Keychain.
   static Future<void> _writeResilient(String key, String value) async {
     try {
       await _storage.write(key: key, value: value);

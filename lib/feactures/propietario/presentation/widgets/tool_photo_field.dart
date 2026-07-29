@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'section_title.dart';
 
-/// Selector de fotos de la herramienta en distintos ángulos. Cada foto se
-/// verifica por separado con la CNN de desgaste al subirse; la condición
-/// final de la herramienta usa el peor score entre todas (ver
-/// MinRequiredPhotos en el backend) — mientras menos fotos "favorecedoras"
-/// puedan ocultar el desgaste real, mejor.
+/// Selector de fotos; la condición final usa el peor score entre todas.
 class ToolPhotoField extends StatelessWidget {
   final List<File> pickedImages;
   final List<String> existingPhotoUrls;
@@ -36,9 +32,7 @@ class ToolPhotoField extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    // Ya publicada (no editable): las fotos y su condición ya quedaron
-    // verificadas por la CNN al momento de subirlas — no hace falta seguir
-    // pidiendo el mínimo de nuevo, solo mostrar lo que ya se tiene.
+    // No editable = ya publicada, no hace falta exigir mínimo de nuevo.
     final metMinimum = !editable || _totalCount >= minPhotos;
     final canAddMore = editable && pickedImages.length < maxPhotos && !loading;
 

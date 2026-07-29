@@ -12,10 +12,7 @@ import '../../../../shared/theme/theme_extensions.dart';
 import '../../../../shared/widgets/primary_gradient_button.dart';
 import '../../../../shared/utils/webview_scheme_guard.dart';
 
-/// Pantalla para que el propietario vincule su propia cuenta de Mercado Pago
-/// (Marketplace/OAuth). Una vez vinculada, cada renta que cobre se divide
-/// automáticamente: la comisión de servicio se queda en la plataforma y el
-/// resto se deposita directo en su cuenta de Mercado Pago.
+/// Vincula la cuenta de Mercado Pago del propietario (Marketplace/OAuth).
 class MpConnectScreen extends StatefulWidget {
   const MpConnectScreen({super.key});
 
@@ -37,9 +34,7 @@ class _MpConnectScreenState extends State<MpConnectScreen> {
       ..setNavigationDelegate(NavigationDelegate(
         onPageFinished: (_) => setState(() => _webViewReady = true),
         onNavigationRequest: (req) {
-          // El backend responde una página HTML propia al terminar el OAuth
-          // (ver MPConnectCallback); al llegar ahí cerramos el WebView y
-          // refrescamos el estado.
+          // Backend responde HTML propia al terminar OAuth (ver MPConnectCallback).
           if (req.url.contains('/auth/mp-connect/callback')) {
             Future.microtask(() async {
               if (!mounted) return;

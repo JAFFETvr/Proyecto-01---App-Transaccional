@@ -5,12 +5,7 @@ import 'package:geolocator/geolocator.dart';
 class LocationService {
   const LocationService._();
 
-  /// Devuelve la posición actual, o `null` si el servicio está apagado, el
-  /// permiso fue denegado o hubo cualquier error. No lanza: es "best effort",
-  /// pensado para adjuntar coordenadas opcionales a una acción (p. ej. la
-  /// confirmación de entrega). Con [highAccuracy] en `false` usa precisión
-  /// media (más rápido y con menos batería) para usos no críticos como
-  /// mostrar la distancia aproximada en un catálogo.
+  /// Best effort: no lanza, retorna `null` en cualquier fallo.
   static Future<({double latitude, double longitude})?> tryGetCurrentPosition({
     bool highAccuracy = true,
   }) async {

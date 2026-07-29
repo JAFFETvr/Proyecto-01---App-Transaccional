@@ -39,18 +39,13 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool _isAvailable = true;
   String _wearLevel = 'Nuevo';
   final List<File> _pickedImages = [];
-  // Score de cada foto en _pickedImages (mismo índice), calculado por la CNN
-  // en cuanto se agrega la foto en esta pantalla (antes de publicar).
-  // _wearLevel siempre refleja el PEOR score entre todas.
+  // Score por foto (mismo índice que _pickedImages); _wearLevel usa el peor.
   final List<double> _photoScores = [];
   double? _latitude;
   double? _longitude;
   bool _imageLoading = false;
 
-  // Debe coincidir con MinRequiredPhotos en Api_Apptransacional/internal/tool/service/tool_service.go.
-  // Con menos fotos, una sola imagen favorecedora puede ocultar desgaste real;
-  // el backend usa el peor score entre todas, así que hacen falta varios
-  // ángulos para que esa protección tenga sentido.
+  // Debe coincidir con MinRequiredPhotos en tool_service.go (backend).
   static const _minRequiredPhotos = 2;
 
   bool _ticketLoading = false;
@@ -305,9 +300,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     );
   }
 
-  // Traduce el score continuo de la CNN (1.0 nuevo / 0.65 uso_moderado /
-  // 0.40 viejo_desgastado — ver SCORE_MAPPING en api/routes_tool.py) a la
-  // etiqueta del dropdown.
+  // Mapeo de score a etiqueta: debe coincidir con SCORE_MAPPING en api/routes_tool.py.
   String _wearLevelForScore(double score) {
     if (score >= 0.9) return 'Nuevo';
     if (score >= 0.5) return 'Buen Estado';
@@ -322,9 +315,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     setState(() => _wearLevel = _wearLevelForScore(peor));
   }
 
-  // La CNN se evalúa AQUÍ, en cuanto se agrega cada foto a esta pantalla —
-  // antes de publicar. Así "Condición física" y el precio sugerido ya
-  // reflejan las fotos reales mientras se llena el formulario.
+  // La CNN evalúa cada foto aquí, antes de publicar.
   Future<void> _addImage() async {
     final source = await _chooseImageSource();
     if (source == null) return;
@@ -490,21 +481,13 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     if (!mounted) return;
     final ok = saved != null;
     if (ok && _pickedImages.isNotEmpty) {
-      // Las fotos ya se evaluaron con la CNN al agregarlas en esta pantalla
-      // (_addImage) y el precio final ya lo decidió el usuario dentro del
-      // rango sugerido — aquí solo hace falta persistir los archivos en el
-      // servidor. Se suben en paralelo (no una por una) para no alargar el
-      // tiempo de publicado, y NO se vuelve a recalcular ni a pisar el
-      // precio que el usuario ya eligió.
+      // Solo se persisten los archivos; la CNN ya evaluó en _addImage.
       final toolId = saved.id;
       final results = await Future.wait(
         _pickedImages.map((img) => provider.uploadPhoto(toolId, img)),
       );
       final subidas = results.where((r) => r).length;
-      // Al subir en paralelo, la respuesta de cada foto puede no reflejar
-      // todavía a las demás (llegan casi al mismo tiempo). Un solo refresh
-      // de la lista deja la copia local consistente con el servidor sin
-      // añadir más que 1 petición extra.
+      // Subida en paralelo: un refresh final deja la copia local consistente.
       if (subidas > 0 && mounted) {
         await provider.fetchTools();
       }
@@ -645,13 +628,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
         ? _suggestedPrice * 2
         : _minPrice + 10;
 
-    // provider.loading cubre create/update/uploadPhoto (ver ToolProvider) —
-    // mientras dura el guardado real en el servidor, no se puede salir de la
-    // pantalla ni por gesto ni por la flecha de la AppBar. Sin esto, el
-    // usuario podía navegar fuera a media subida: las llamadas seguían
-    // corriendo igual (ToolProvider vive arriba en el árbol, no se destruye
-    // con esta pantalla), pero él nunca veía la confirmación y podía volver
-    // a publicar por duplicado creyendo que no se había guardado.
+    // Bloquea salir mientras provider.loading, para evitar publicar duplicado.
     return PopScope(
       canPop: !provider.loading,
       onPopInvokedWithResult: (didPop, result) {

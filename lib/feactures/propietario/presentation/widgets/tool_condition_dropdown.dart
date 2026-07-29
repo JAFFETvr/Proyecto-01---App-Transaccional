@@ -2,10 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'section_title.dart';
 
-/// Muestra la condición física de la herramienta. Nunca es editable a mano:
-/// la asigna la CNN a partir de las fotos (peor score entre todas — ver
-/// _actualizarCondicionDesdeFotos en tool_form_screen.dart). El dropdown
-/// solo sirve para visualizar el valor ya calculado.
+/// Solo lectura: la condición la asigna la CNN, no el usuario.
 class ToolConditionDropdown extends StatelessWidget {
   static const options = ['Nuevo', 'Buen Estado', 'Desgastado'];
 

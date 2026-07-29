@@ -20,10 +20,7 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen>
     with WidgetsBindingObserver {
   bool _processingPayment = false;
-  // El pago con tarjeta se abre en un navegador real (no en un WebView
-  // embebido): Mercado Pago deshabilita el botón "Pagar" cuando detecta un
-  // WKWebView genérico por seguridad anti-fraude. Mientras el usuario está en
-  // ese navegador, la app queda en este estado de "esperando pago".
+  // MP deshabilita "Pagar" en WebView embebido (anti-fraude); se abre en navegador real.
   bool _awaitingExternalPayment = false;
   bool _reconciling = false;
   String _paymentMethod = 'card';
@@ -34,13 +31,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   Map<String, dynamic> get _args =>
       ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>? ?? {};
 
-  // Cuando el usuario regresa a la app tras pagar en Mercado Pago, el checkout
-  // pudo haber escapado al navegador externo (Safari) porque MP abrió la app
-  // del banco / de MP por deep link. En ese caso el WebView nunca intercepta
-  // el redirect de éxito y no se dispara confirm-payment. Al reanudarse la
-  // app se le pregunta al backend por el estado real de la renta: si el pago
-  // ya se confirmó (el backend lo confirma al cargar /payment/success), se
-  // navega al seguimiento; si fue rechazado, se avisa.
+  // Si MP redirige a Safari, el WebView no intercepta el éxito; se reconcilia al reanudar.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && _awaitingExternalPayment) {
@@ -48,12 +39,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     }
   }
 
-  // Abre el checkout de Mercado Pago en un navegador real in-app
-  // (SFSafariViewController en iOS / Custom Tab en Android). Es la forma
-  // recomendada por MP: en un WebView embebido su anti-fraude deja el botón
-  // "Pagar" inerte. Al regresar a la app se reconcilia el pago con el backend
-  // (que lo busca en MP por external_reference), así no dependemos de
-  // interceptar el redirect de retorno.
+  // WebView embebido deja "Pagar" inerte (anti-fraude MP); se abre navegador real in-app.
   Future<void> _openExternalCheckout(String initPoint) async {
     final uri = Uri.tryParse(initPoint);
     if (uri == null) return;
@@ -83,10 +69,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     if (rental == null) return;
 
     setState(() => _reconciling = true);
-    // reconcilePayment pega al backend que BUSCA el pago en Mercado Pago por
-    // external_reference (no requiere payment_id), así funciona aunque el
-    // redirect del checkout haya terminado en Safari. Si falla la llamada,
-    // cae a un refetch simple del estado de la renta.
+    // Busca el pago en MP por external_reference; si falla, cae a refetch simple.
     final reconciled = await rentalProv.reconcilePayment(rental.id);
     if (reconciled == null) {
       await rentalProv.fetchRental(rental.id);
@@ -166,10 +149,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     final commission = _args['commission'] ?? 0.0;
     final priceDay = _args['pricePerDay'] ?? 0.0;
 
-    // En efectivo el dinero se intercambia directo entre solicitante y
-    // propietario: ToolShare no cobra comisión de servicio ni retiene depósito
-    // (no pasa nada por la pasarela). El precio queda fijo en la tarifa de la
-    // renta. Solo en tarjeta se suman comisión + depósito al total.
+    // En efectivo no hay comisión ni depósito: el dinero es directo entre las partes.
     final bool isCash = _paymentMethod == 'cash';
     final double rentOnly =
         (priceDay as num).toDouble() * (days as num).toInt();
@@ -484,9 +464,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                   child: Center(child: CircularProgressIndicator()),
                 )
               : _awaitingExternalPayment
-              // Mientras esperamos que el usuario pague en el navegador, el
-              // botón sirve para verificar el pago al volver (el backend lo
-              // busca en MP por external_reference, no requiere payment_id).
+              // Backend verifica el pago por external_reference (no requiere payment_id).
               ? PrimaryGradientButton(
                   label: 'Ya completé el pago — verificar',
                   icon: Icons.refresh_rounded,

@@ -58,14 +58,7 @@ class RegisterRemoteDatasource {
     }
   }
 
-  // La verificación KYC puede tardar 15-20+ segundos (Haar Cascade + arranque
-  // en frío del worker de PaddleOCR + ArcFace) — una sola petición HTTP tan
-  // larga corría el riesgo de que algún proxy intermedio (Railway) la
-  // cortara a medias aunque el servidor sí hubiera terminado bien
-  // (confirmado en producción: el log de Go mostraba 200 OK mientras la app
-  // ya había mostrado el rechazo). Ahora el POST arranca la verificación en
-  // segundo plano y responde de inmediato con un job_id; aquí se pregunta
-  // el estatus cada 2s hasta que termine.
+  // Proxy (Railway) cortaba peticiones largas; ahora se hace polling por job_id.
   Future<Map<String, dynamic>> verifyKyc({
     required String inePath,
     required String selfiePath,

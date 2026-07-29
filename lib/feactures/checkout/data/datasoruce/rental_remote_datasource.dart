@@ -251,10 +251,7 @@ class RentalRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
-  // Respaldo del webhook: se llama en cuanto Mercado Pago redirige al
-  // WebView a la URL de éxito, para no depender solo de que el webhook
-  // llegue. El backend vuelve a verificar el pago directo con MP antes de
-  // marcar nada como rentado.
+  // Respaldo del webhook: se llama al redirigir MP a la URL de éxito.
   Future<RentalEntity> confirmPayment(String rentalId, String paymentId) async {
     try {
       final headers = await _authHeaders;
@@ -269,9 +266,7 @@ class RentalRemoteDatasource {
     catch (_) { throw const AppError(statusCode: 0, message: 'Sin conexión.'); }
   }
 
-  // Reconcilia el pago sin payment_id: el backend lo busca en Mercado Pago por
-  // external_reference (= ID de la renta). Se usa cuando el redirect del
-  // checkout terminó en el navegador externo y la app nunca lo interceptó.
+  // Backend busca el pago en MP por external_reference (sin payment_id).
   Future<RentalEntity> reconcilePayment(String rentalId) async {
     try {
       final headers = await _authHeaders;

@@ -3,9 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../domain/entitie/rental_entity.dart';
 
-/// Aviso de "hay que devolver pronto" (12 h o menos) o "ya venció". Como FCM
-/// está deshabilitado, esta es la forma de avisar: se hace visible dentro de
-/// la pantalla de seguimiento de la renta.
+/// Aviso de devolución próxima o vencida (reemplaza push, FCM está deshabilitado).
 class ReturnDueBanner extends StatelessWidget {
   final RentalEntity rental;
   const ReturnDueBanner({super.key, required this.rental});
@@ -96,9 +94,7 @@ class ChatIconWithBadge extends StatelessWidget {
   }
 }
 
-/// Tarjeta con el resultado del dictamen de disputa emitido por el admin,
-/// interpretado según el rol (para el propietario "capture" = ganó; para el
-/// solicitante "refund" = ganó). Muestra también las notas del admin.
+/// Resultado del dictamen de disputa, interpretado según el rol (capture/refund).
 class DisputeResultCard extends StatelessWidget {
   final RentalEntity rental;
   final bool isOwner;

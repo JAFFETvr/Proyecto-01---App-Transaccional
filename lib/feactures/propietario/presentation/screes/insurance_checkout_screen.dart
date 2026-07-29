@@ -8,13 +8,7 @@ import '../../../../../shared/theme/theme_extensions.dart';
 import '../../../../../shared/widgets/primary_gradient_button.dart';
 import '../providers/tool_provider.dart';
 
-/// Abre el flujo de pago del seguro mensual para una herramienta.
-///
-/// Igual que la renta: el checkout de Mercado Pago se abre en un navegador
-/// real (no en un WebView embebido, donde MP deja el botón "Pagar" inerte por
-/// anti-fraude). Al volver a la app se reconcilia el pago con el backend
-/// (que lo busca en MP por external_reference), sin depender de interceptar el
-/// redirect de retorno.
+/// Se abre en navegador real: MP bloquea el botón "Pagar" en WebView embebido.
 Future<void> openInsuranceCheckout(BuildContext context, String toolId) async {
   final toolProvider = context.read<ToolProvider>();
   final initPoint = await toolProvider.getInsurancePreference(toolId);

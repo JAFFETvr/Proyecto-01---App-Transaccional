@@ -132,10 +132,7 @@ class AdminRemoteDatasource {
     }
   }
 
-  /// Consulta el monto de seguro y los datos bancarios del propietario de una
-  /// renta cuantas veces haga falta (a diferencia de la respuesta de
-  /// resolveDispute, que solo se ve una vez). Devuelve un claim vacío
-  /// (amount: 0) si la herramienta no tenía seguro activo.
+  /// A diferencia de resolveDispute, se puede consultar repetidas veces.
   Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId) async {
     try {
       final res = await http.get(

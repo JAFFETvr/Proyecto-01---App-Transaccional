@@ -359,9 +359,7 @@ class _RentalCard extends StatelessWidget {
   }
 }
 
-/// Aviso visible cuando faltan 12 h o menos para la fecha de devolución (o ya
-/// se venció). Como no hay push, esta es la forma de "avisar" que hay que
-/// devolver la herramienta: se hace visible en la sección de rentas.
+/// Aviso de devolución próxima o vencida (reemplaza push, no hay notificaciones).
 class _ReturnReminderBanner extends StatelessWidget {
   final RentalEntity rental;
   const _ReturnReminderBanner({required this.rental});

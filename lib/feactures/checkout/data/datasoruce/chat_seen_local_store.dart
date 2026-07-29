@@ -1,9 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Almacén local (SharedPreferences) de la marca de tiempo en que cada chat de
-/// renta fue visto por última vez. Vive en la capa de datos para que el
-/// provider de chat no hable directamente con `SharedPreferences`; el punto
-/// rojo de "mensajes sin leer" se calcula comparando contra este valor.
+/// Marca de tiempo del último chat visto, usada para calcular no leídos.
 class ChatSeenLocalStore {
   const ChatSeenLocalStore._();
 

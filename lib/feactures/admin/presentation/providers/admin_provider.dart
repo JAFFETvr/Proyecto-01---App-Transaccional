@@ -29,9 +29,7 @@ class AdminProvider extends ChangeNotifier {
   List<RentalEntity> _rentals = [];
   bool _loading = false;
   String? _error;
-  // Se llena tras resolveDispute() si la herramienta tenía seguro activo y
-  // el propietario ganó la disputa, para que la pantalla muestre el monto y
-  // los datos bancarios a transferir manualmente.
+  // Se llena tras resolveDispute() si el propietario ganó y tenía seguro.
   InsuranceClaimEntity? _lastInsuranceClaim;
 
   AdminStatsEntity? get stats => _stats;
@@ -93,9 +91,7 @@ class AdminProvider extends ChangeNotifier {
     }
   }
 
-  /// Consulta el monto de seguro y los datos bancarios del propietario de una
-  /// renta cuantas veces haga falta (para reabrir el diálogo de datos
-  /// bancarios sin tener que volver a resolver la disputa).
+  /// Permite reabrir el diálogo de datos bancarios sin resolver de nuevo.
   Future<InsuranceClaimEntity?> fetchInsuranceClaim(String rentalId) async {
     try {
       return await _getInsuranceClaim.execute(rentalId);

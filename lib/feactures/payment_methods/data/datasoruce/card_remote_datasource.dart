@@ -48,9 +48,7 @@ class CardRemoteDatasource {
     }
   }
 
-  /// Tokeniza los datos de la tarjeta directamente contra Mercado Pago (no
-  /// pasan por nuestro backend). El resultado es un token de un solo uso que
-  /// sí se envía al backend para guardar la tarjeta.
+  /// Va directo a Mercado Pago, no por nuestro backend; produce un token de un solo uso.
   Future<String> tokenizeCard({
     required String publicKey,
     required String cardNumber,

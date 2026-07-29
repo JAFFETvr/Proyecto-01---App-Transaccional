@@ -2,13 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../services/session_prefs_store.dart';
 
-/// Logic holder de solo lectura que expone a la capa de presentación los datos
-/// del perfil de la sesión, sin que las vistas toquen `SharedPreferences` ni
-/// manejen la asincronía del storage.
-///
-/// La escritura de la sesión la hacen los providers de login/registro sobre
-/// [SessionPrefsStore]; aquí solo se lee. Tras un login/registro exitoso hay
-/// que llamar a [refresh] para reflejar al nuevo usuario.
+/// Expone el perfil de sesión de solo lectura; llamar [refresh] tras login/registro.
 class SessionProvider extends ChangeNotifier {
   String _userName = '';
   String _userId = '';

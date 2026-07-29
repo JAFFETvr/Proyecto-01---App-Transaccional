@@ -7,10 +7,7 @@ import '../../../../shared/theme/theme_extensions.dart';
 import '../../../../shared/widgets/primary_gradient_button.dart';
 import '../providers/bank_account_provider.dart';
 
-/// Datos bancarios del propietario, usados solo para que el administrador
-/// transfiera manualmente el pago de una disputa ganada con seguro activo
-/// (Mercado Pago no ofrece una API de transferencia directa entre cuentas
-/// con la integración actual).
+/// Datos bancarios para que el admin transfiera manualmente (MP no tiene API de envío).
 class BankAccountScreen extends StatefulWidget {
   const BankAccountScreen({super.key});
 
@@ -27,10 +24,7 @@ class _BankAccountScreenState extends State<BankAccountScreen> {
   @override
   void initState() {
     super.initState();
-    // Se espera la respuesta del GET y se llenan los controllers
-    // directamente aquí, en vez de depender de que build() reaccione al
-    // cambio del provider — así el formulario siempre se prellena al entrar
-    // a la pantalla, sin importar el timing del primer rebuild.
+    // Se llenan los controllers aquí en vez de depender de build() por timing.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<BankAccountProvider>();
       await provider.fetch();

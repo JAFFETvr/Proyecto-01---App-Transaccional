@@ -31,9 +31,7 @@ class _RentalTrackingOwnerScreenState
   bool _hasUnreadChat = false;
   Timer? _unreadTimer;
 
-  // Para avisar (in-app) cuando la OTRA parte cambia de estado. Se comparan
-  // las banderas contra el build anterior para disparar el aviso una sola vez
-  // por transición.
+  // Se comparan contra el build anterior para avisar cada transición una sola vez.
   bool? _prevReqDelivery;
   bool? _prevReqReturn;
   String? _prevStatus;
@@ -79,11 +77,7 @@ class _RentalTrackingOwnerScreenState
     });
   }
 
-  // Se guarda la referencia al provider porque en dispose() ya no es seguro
-  // hacer context.read<T>(): si toda la pantalla se está desmontando junto
-  // con sus ancestros (ej. al navegar con pushAndRemoveUntil), buscar un
-  // ancestro InheritedWidget en ese momento truena con "Looking up a
-  // deactivated widget's ancestor is unsafe".
+  // Guardado porque context.read<T>() no es seguro en dispose() si el ancestro ya se desmontó.
   late final RentalProvider _rentalProvider;
 
   @override
@@ -530,9 +524,7 @@ class _RentalTrackingOwnerScreenState
                           ? const Center(child: CircularProgressIndicator())
                           : Row(
                               children: [
-                                // En efectivo no hay fondos retenidos por la
-                                // plataforma: la disputa no aplica, se oculta y
-                                // "Aceptar Retorno" ocupa todo el ancho.
+                                // En efectivo no hay fondos retenidos: se oculta la disputa.
                                 if (!rental.isCash) ...[
                                   Expanded(
                                     child: OutlinedButton.icon(

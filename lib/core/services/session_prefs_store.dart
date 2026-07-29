@@ -1,12 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Único punto de acceso a las preferencias planas de la sesión
-/// (SharedPreferences). Centraliza los nombres de las claves para que ninguna
-/// capa las escriba a mano y evita que la capa de presentación hable
-/// directamente con `SharedPreferences`.
-///
-/// El token también se guarda cifrado en [SecureSessionStore]; aquí vive la
-/// copia plana que consumen los datasources para autenticar cada request.
+/// Único punto de acceso a SharedPreferences de sesión; centraliza las keys.
 class SessionPrefsStore {
   const SessionPrefsStore._();
 
@@ -44,8 +38,7 @@ class SessionPrefsStore {
       (await _prefs).getString(_kDeviceId);
 
   // --- Escritura ---
-  /// Persiste el perfil de la sesión. `isPro` lo entrega el login; `phone`/
-  /// `ine` los entrega el registro. Cada capa pasa solo lo que conoce.
+  /// Persiste el perfil de sesión; cada capa pasa solo los campos que conoce.
   static Future<void> saveSession({
     required String token,
     required String id,

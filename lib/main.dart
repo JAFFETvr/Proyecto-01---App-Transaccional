@@ -22,10 +22,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // TODO: reactivar cuando Firebase tenga credenciales (firebase_options.dart / google-services.json)
-  // await Firebase.initializeApp(
-  //   options: DefaultFirebaseOptions.currentPlatform,
-  // );
-  // await FcmService.initialize();
 
   runApp(
     DevicePreview(

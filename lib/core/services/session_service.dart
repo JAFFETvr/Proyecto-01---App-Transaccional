@@ -12,18 +12,13 @@ import '../../feactures/auth/register/presentation/providers/register_provider.d
 import '../../feactures/propietario/presentation/providers/tool_provider.dart';
 import '../../feactures/checkout/presentation/providers/rental_provider.dart';
 
-/// Cierra la sesión activa: limpia el estado en memoria, borra las
-/// preferencias planas y regresa al login. Usado por servicios que no
-/// tienen un BuildContext propio de pantalla (watchdog de inactividad,
-/// handler de borrado remoto por FCM).
+/// Cierra sesión sin BuildContext (usado por watchdog de inactividad y FCM).
 class SessionService {
   static Future<void> logoutForInactivity() => _closeSession(
         message: 'Sesión cerrada por inactividad.',
       );
 
-  /// Disparado al recibir la notificación FCM de borrado remoto dirigida a
-  /// este usuario: elimina los 4 campos sensibles del almacén encriptado
-  /// y cierra la sesión, como en un escenario de dispositivo perdido/robado.
+  /// Borra los datos sensibles y cierra sesión (dispositivo perdido/robado).
   static Future<void> wipeAndLogout() => _closeSession(
         message: 'Tus datos sensibles fueron borrados remotamente.',
         wipeSensitiveData: true,

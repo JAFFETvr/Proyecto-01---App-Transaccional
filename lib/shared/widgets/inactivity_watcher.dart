@@ -5,15 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/services/secure_session_store.dart';
 import '../../core/services/session_service.dart';
 
-/// Envuelve la app y cierra la sesión automáticamente cuando el usuario
-/// no interactúa (toques, scroll) durante [timeout].
-///
-/// La marca de tiempo de la última interacción se persiste en el almacén
-/// encriptado ([SecureSessionStore]) en cada reinicio del contador, no solo
-/// en memoria: así, si el usuario deja la app en segundo plano o el proceso
-/// se cierra, al volver se compara contra el reloj real y se fuerza el
-/// cierre de sesión si ya se excedió el límite, en vez de reiniciar el
-/// conteo desde cero.
+/// Cierra sesión por inactividad; la última interacción se persiste para sobrevivir un reinicio del proceso.
 class InactivityWatcher extends StatefulWidget {
   static const Duration timeout = Duration(minutes: 5);
 

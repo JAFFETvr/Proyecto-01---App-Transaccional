@@ -1,6 +1,4 @@
-/// Lo que le debe el seguro de ToolShare al propietario tras ganar una
-/// disputa (30% del valor estimado si la herramienta tenía seguro activo),
-/// junto con sus datos bancarios registrados para transferirlo manualmente.
+/// Pago de seguro (30% del valor estimado) al propietario tras ganar disputa.
 class InsuranceClaimEntity {
   final double amount;
   final String bankClabe;

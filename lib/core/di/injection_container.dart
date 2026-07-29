@@ -1,26 +1,4 @@
-// Inyección de Dependencias: DI Manual (no Service Locator, no DI Automatizada).
-//
-// Cada feature construye su propio grafo de dependencias por constructor en
-// una clase `XxxDI` bajo `feactures/<feature>/di/` (ej. `PropietarioDI`):
-// Datasource -> Repository -> UseCase -> Provider, sin ningún contenedor de
-// resolución automática ni anotaciones/codegen. Eso es DI manual clásica.
-//
-// `InjectionContainer` es el único lugar donde ese resultado se registra en
-// el árbol de widgets, usando `MultiProvider` del paquete `provider`. Que las
-// pantallas lean una dependencia con `context.read<ToolProvider>()` NO es
-// Service Locator en el sentido de este material (get_it/GetIt.instance):
-// aquí la resolución está acotada al árbol de widgets vía InheritedWidget, no
-// hay un registro global consultable con `getIt<T>()` fuera de un
-// BuildContext. Tampoco hay `injectable` + `build_runner` generando el
-// registro (DI Automatizada) — todo el cableado de arriba es código escrito
-// a mano.
-//
-// Si en algún momento se migra a Service Locator real: agregar `get_it`,
-// registrar cada dependencia en `GetIt.instance` (reemplazando las `XxxDI`),
-// y sustituir `MultiProvider` por consultas directas al locator. Para DI
-// Automatizada, el siguiente paso sería anotar esas mismas clases con
-// `@injectable`/`@lazySingleton` y generar el registro con `injectable` +
-// `build_runner` sobre ese mismo `GetIt.instance`.
+// DI manual por feature (XxxDI); registrado aquí vía MultiProvider, no Service Locator.
 import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 

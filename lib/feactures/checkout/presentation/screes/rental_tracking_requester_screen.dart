@@ -35,11 +35,7 @@ class _RentalTrackingRequesterScreenState
   bool _hasUnreadChat = false;
   Timer? _unreadTimer;
 
-  // Se guarda la referencia al provider porque en dispose() ya no es seguro
-  // hacer context.read<T>(): si toda la pantalla se está desmontando junto
-  // con sus ancestros (ej. al navegar con pushAndRemoveUntil), buscar un
-  // ancestro InheritedWidget en ese momento truena con "Looking up a
-  // deactivated widget's ancestor is unsafe".
+  // Guardado porque context.read<T>() no es seguro en dispose() si el ancestro ya se desmontó.
   late final RentalProvider _rentalProvider;
 
   @override
@@ -67,9 +63,7 @@ class _RentalTrackingRequesterScreenState
     });
   }
 
-  // Revisa periódicamente si hay mensajes nuevos de la otra persona para
-  // mostrar el punto rojo en el icono de chat (no hay push, así que se
-  // consulta cada pocos segundos mientras la pantalla está abierta).
+  // Sin push: se consulta cada pocos segundos mientras la pantalla está abierta.
   void _startUnreadWatch() {
     _unreadTimer?.cancel();
     _refreshUnread();
@@ -664,9 +658,7 @@ class _RentalTrackingRequesterScreenState
   }
 
   Widget _buildCancelledWidget(RentalEntity rental) {
-    // Una disputa resuelta con "refund" deja la renta en cancelled: en ese
-    // caso se muestra el resultado (ganó/perdió) en vez de un simple
-    // "cancelada".
+    // Disputa resuelta con "refund" deja la renta en cancelled: se muestra el resultado.
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -731,9 +723,7 @@ class _Phase1Widget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // En efectivo no hay fondos retenidos: el dinero es directo entre las dos
-    // personas. Solo en tarjeta (con pago confirmado) tiene sentido decir
-    // "fondos retenidos".
+    // En efectivo no hay fondos retenidos; solo aplica con tarjeta confirmada.
     final cash = rental.isCash;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),

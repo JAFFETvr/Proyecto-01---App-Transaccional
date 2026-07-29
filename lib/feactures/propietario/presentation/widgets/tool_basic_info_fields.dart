@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'section_title.dart';
 
-/// Campos de datos básicos de la herramienta: nombre, marca/modelo,
-/// antigüedad, categoría, valor de catálogo (calculado, no editable) y
-/// descripción.
+/// Campos de datos básicos de la herramienta.
 class ToolBasicInfoFields extends StatelessWidget {
   final TextEditingController nameCtrl;
   final TextEditingController brandCtrl;

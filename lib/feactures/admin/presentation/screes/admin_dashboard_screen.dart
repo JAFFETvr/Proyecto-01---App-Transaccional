@@ -326,12 +326,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  // La herramienta tenía el seguro ToolShare activo: además de la garantía
-  // ya cobrada por Mercado Pago, el seguro le cubre un 30% adicional del
-  // valor estimado al propietario. No hay forma de transferir ese monto
-  // automático (Mercado Pago no ofrece una API de envío de dinero con esta
-  // integración), así que se le muestran al admin los datos bancarios del
-  // propietario para que haga la transferencia manual por fuera de la app.
+  // Mercado Pago no ofrece envío de dinero, así que el admin transfiere manual.
   bool _hasInsuranceClaimToView(RentalEntity rental) {
     return rental.status == 'completed' &&
         rental.disputeReason.contains('[Dictamen Admin - capture]');
@@ -831,9 +826,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                               ),
                             ),
                           ],
-                          // Disputa ya resuelta a favor del propietario
-                          // (garantía cobrada por el admin): botón persistente
-                          // para volver a ver los datos bancarios del seguro.
+                          // Disputa ya resuelta a favor del propietario.
                           if (_hasInsuranceClaimToView(r)) ...[
                             const SizedBox(height: 12),
                             SizedBox(

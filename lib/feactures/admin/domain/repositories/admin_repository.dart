@@ -14,8 +14,6 @@ abstract class AdminRepository {
     required String notes,
   });
 
-  /// Consulta el pago de seguro pendiente al propietario de una renta.
-  /// Devuelve un claim vacío (amount: 0) si la herramienta no tenía seguro
-  /// activo.
+  /// Devuelve claim vacío (amount: 0) si la herramienta no tenía seguro.
   Future<InsuranceClaimEntity> getInsuranceClaim(String rentalId);
 }

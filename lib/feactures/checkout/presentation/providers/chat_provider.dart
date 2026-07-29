@@ -85,21 +85,12 @@ class ChatProvider extends ChangeNotifier {
     }
   }
 
-  // --- Indicador de mensajes sin leer (punto rojo en el icono de chat) ---
-  //
-  // No hay push (FCM está deshabilitado), así que el "sin leer" se calcula
-  // comparando el último mensaje de la OTRA persona contra una marca de
-  // tiempo local ("visto") que se guarda cada vez que se abre/cierra el chat.
-  /// Marca el chat de [rentalId] como visto justo ahora. Se llama al abrir y
-  /// al cerrar el chat, para que el punto rojo desaparezca.
+  // Sin FCM: "no leído" se calcula comparando contra la marca "visto" local.
   Future<void> markChatSeen(String rentalId) async {
     await ChatSeenLocalStore.markSeen(rentalId, DateTime.now());
   }
 
-  /// Devuelve true si hay algún mensaje de la otra persona más reciente que la
-  /// última vez que este usuario abrió el chat. No toca el estado del chat
-  /// activo (se puede llamar en segundo plano desde la pantalla de
-  /// seguimiento sin interferir con el sheet abierto).
+  /// True si hay mensajes nuevos de la otra persona; no toca el chat activo.
   Future<bool> hasUnreadFor(String rentalId, String currentUserId) async {
     try {
       final msgs = await _repository.getMessages(rentalId);

@@ -8,9 +8,7 @@ import '../../../../shared/theme/theme_extensions.dart';
 import '../providers/support_threads_provider.dart';
 import 'support_chat_screen.dart';
 
-/// Lista de propietarios con conversación de soporte activa. Tocar una
-/// conversación abre el mismo SupportChatScreen que usa el propietario, pero
-/// como administrador (asAdmin: true).
+/// Abre el mismo SupportChatScreen del propietario, pero como admin (asAdmin: true).
 class AdminSupportThreadsScreen extends StatefulWidget {
   const AdminSupportThreadsScreen({super.key});
 
