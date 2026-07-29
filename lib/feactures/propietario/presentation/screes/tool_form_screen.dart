@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/services/image_compression_service.dart';
 import '../providers/tool_provider.dart';
 import '../../domain/entitie/tool_entity.dart';
 import 'pro_subscription_checkout_screen.dart';
@@ -207,7 +208,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
 
       if (xFile != null && mounted) {
-        final file = File(xFile.path);
+        final file = await ImageCompressionService.compress(File(xFile.path));
+        if (!mounted) return;
         final provider = context.read<ToolProvider>();
         final res = await provider.extractTicketPrice(file);
         final valid = res?['valid'] as bool? ?? false;
@@ -339,7 +341,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
 
       if (xFile != null && mounted) {
-        final file = File(xFile.path);
+        final file = await ImageCompressionService.compress(File(xFile.path));
+        if (!mounted) return;
         final provider = context.read<ToolProvider>();
         final pred = await provider.predictCondition(file);
 
