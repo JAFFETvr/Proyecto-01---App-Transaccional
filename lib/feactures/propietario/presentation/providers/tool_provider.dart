@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../../../core/services/session_prefs_store.dart';
+import '../../../../../core/services/image_compression_service.dart';
 import '../../../../../core/error/app_error.dart';
 import '../../domain/entitie/tool_entity.dart';
 import '../../domain/usesCases/get_tools_usecase.dart';
@@ -300,17 +301,48 @@ class ToolProvider extends ChangeNotifier {
     }
   }
 
-  Future<Map<String, dynamic>?> predictCondition(File photo) async {
+  // Debe coincidir con MinRequiredPhotos en tool_service.go (backend).
+  static const minRequiredPhotos = 2;
+
+  // Mapeo de score a etiqueta: debe coincidir con SCORE_MAPPING en api/routes_tool.py.
+  static String wearLevelForScore(double score) {
+    if (score >= 0.9) return 'Nuevo';
+    if (score >= 0.5) return 'Buen Estado';
+    return 'Desgastado';
+  }
+
+  static double scoreForWearLevel(String level) {
+    if (level == 'Nuevo') return 1.0;
+    if (level == 'Buen Estado') return 0.8;
+    if (level == 'Desgastado') return 0.5;
+    return 0.7;
+  }
+
+  /// Wear level a partir del PEOR score entre todas las fotos subidas.
+  static String worstWearLevel(List<double> scores) {
+    if (scores.isEmpty) return 'Nuevo';
+    return wearLevelForScore(scores.reduce((a, b) => a < b ? a : b));
+  }
+
+  /// Comprime la foto (Isolate, no bloquea la UI) y la evalúa con la CNN.
+  /// Devuelve el archivo comprimido —el que debe guardarse/subirse— y su
+  /// score de condición, o null si la imagen no es válida (ver [error]).
+  Future<({File file, double score})?> evaluatePhotoCondition(
+    File rawPhoto,
+  ) async {
     _loading = true;
     _error = null;
     notifyListeners();
     try {
-      return await _predictCondition.execute(photo);
+      final file = await ImageCompressionService.compress(rawPhoto);
+      final pred = await _predictCondition.execute(file);
+      final score = (pred['score_condicion'] as num?)?.toDouble() ?? 0.70;
+      return (file: file, score: score);
     } on AppError catch (e) {
       _error = e.userMessage;
       return null;
     } catch (e, stack) {
-      debugPrint('FLUTTER RUNTIME ERROR IN predictCondition: $e');
+      debugPrint('FLUTTER RUNTIME ERROR IN evaluatePhotoCondition: $e');
       debugPrint(stack.toString());
       _error = 'Sin conexión al predecir desgaste: $e';
       return null;
@@ -355,11 +387,12 @@ class ToolProvider extends ChangeNotifier {
   }
 
   /// Si es válido, se usa como precio_base_manual verificado en autoValuate.
-  Future<Map<String, dynamic>?> extractTicketPrice(File photo) async {
+  Future<Map<String, dynamic>?> extractTicketPrice(File rawPhoto) async {
     _loading = true;
     _error = null;
     notifyListeners();
     try {
+      final photo = await ImageCompressionService.compress(rawPhoto);
       final res = await _extractTicketPrice.execute(photo);
       debugPrint('FLUTTER DEBUG: extractTicketPrice Response -> $res');
       return res;

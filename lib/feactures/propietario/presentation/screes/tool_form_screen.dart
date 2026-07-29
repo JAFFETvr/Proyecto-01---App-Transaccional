@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/services/image_compression_service.dart';
 import '../providers/tool_provider.dart';
 import '../../domain/entitie/tool_entity.dart';
 import 'pro_subscription_checkout_screen.dart';
@@ -40,14 +39,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
   bool _isAvailable = true;
   String _wearLevel = 'Nuevo';
   final List<File> _pickedImages = [];
-  // Score por foto (mismo índice que _pickedImages); _wearLevel usa el peor.
   final List<double> _photoScores = [];
   double? _latitude;
   double? _longitude;
   bool _imageLoading = false;
-
-  // Debe coincidir con MinRequiredPhotos en tool_service.go (backend).
-  static const _minRequiredPhotos = 2;
 
   bool _ticketLoading = false;
   double? _ticketDetectedPrice;
@@ -94,7 +89,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     if (t != null) {
       // En edición, "Condición física" debe reflejar el score real que ya
       // asignó la CNN al publicar, no el default 'Nuevo' del formulario vacío.
-      _wearLevel = _wearLevelForScore(t.conditionScore);
+      _wearLevel = ToolProvider.wearLevelForScore(t.conditionScore);
       _suggestedPrice = t.dailyRate;
       _minPrice = t.suggestedMinDailyRate;
       _finalPrice = t.dailyRate;
@@ -129,13 +124,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     });
   }
 
-  double _scoreForWearLevel(String level) {
-    if (level == 'Nuevo') return 1.0;
-    if (level == 'Buen Estado') return 0.8;
-    if (level == 'Desgastado') return 0.5;
-    return 0.7;
-  }
-
   Future<void> _updatePricingSuggestion() async {
     final name = _nameCtrl.text.trim();
     if (name.isEmpty || name.length < 3) return;
@@ -145,7 +133,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     try {
       final res = await context.read<ToolProvider>().autoValuate(
         name: name,
-        scoreCondicion: _scoreForWearLevel(_wearLevel),
+        scoreCondicion: ToolProvider.scoreForWearLevel(_wearLevel),
         category: _catCtrl.text.trim(),
         brand: _brandCtrl.text.trim().isEmpty
             ? 'Generico'
@@ -208,10 +196,8 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
 
       if (xFile != null && mounted) {
-        final file = await ImageCompressionService.compress(File(xFile.path));
-        if (!mounted) return;
         final provider = context.read<ToolProvider>();
-        final res = await provider.extractTicketPrice(file);
+        final res = await provider.extractTicketPrice(File(xFile.path));
         final valid = res?['valid'] as bool? ?? false;
         final precio =
             ((res?['detected_price'] ?? res?['precio_detectado']) as num?)
@@ -302,21 +288,6 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     );
   }
 
-  // Mapeo de score a etiqueta: debe coincidir con SCORE_MAPPING en api/routes_tool.py.
-  String _wearLevelForScore(double score) {
-    if (score >= 0.9) return 'Nuevo';
-    if (score >= 0.5) return 'Buen Estado';
-    return 'Desgastado';
-  }
-
-  /// _wearLevel (y por lo tanto el precio sugerido) siempre refleja el PEOR
-  /// score entre todas las fotos agregadas hasta el momento.
-  void _actualizarCondicionDesdeFotos() {
-    if (_photoScores.isEmpty) return;
-    final peor = _photoScores.reduce((a, b) => a < b ? a : b);
-    setState(() => _wearLevel = _wearLevelForScore(peor));
-  }
-
   // La CNN evalúa cada foto aquí, antes de publicar.
   Future<void> _addImage() async {
     final source = await _chooseImageSource();
@@ -341,12 +312,10 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
       }
 
       if (xFile != null && mounted) {
-        final file = await ImageCompressionService.compress(File(xFile.path));
-        if (!mounted) return;
         final provider = context.read<ToolProvider>();
-        final pred = await provider.predictCondition(file);
+        final result = await provider.evaluatePhotoCondition(File(xFile.path));
 
-        if (pred == null && mounted) {
+        if (result == null && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -361,13 +330,12 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
           return;
         }
 
-        final score = (pred!['score_condicion'] as num?)?.toDouble() ?? 0.70;
         if (mounted) {
           setState(() {
-            _pickedImages.add(file);
-            _photoScores.add(score);
+            _pickedImages.add(result!.file);
+            _photoScores.add(result.score);
+            _wearLevel = ToolProvider.worstWearLevel(_photoScores);
           });
-          _actualizarCondicionDesdeFotos();
           await _updatePricingSuggestion();
         }
       }
@@ -393,20 +361,20 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
     setState(() {
       _pickedImages.removeAt(index);
       _photoScores.removeAt(index);
-      if (_photoScores.isEmpty) _wearLevel = 'Nuevo';
+      _wearLevel = ToolProvider.worstWearLevel(_photoScores);
     });
-    if (_photoScores.isNotEmpty) _actualizarCondicionDesdeFotos();
     _updatePricingSuggestion();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
-    if (!_isEditing && _pickedImages.length < _minRequiredPhotos) {
+    if (!_isEditing &&
+        _pickedImages.length < ToolProvider.minRequiredPhotos) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Sube al menos $_minRequiredPhotos fotos en ángulos distintos antes de publicar.',
+            'Sube al menos ${ToolProvider.minRequiredPhotos} fotos en ángulos distintos antes de publicar.',
           ),
           backgroundColor: const Color(0xFFEF4444),
           behavior: SnackBarBehavior.floating,
@@ -477,7 +445,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
             ? 'Generico'
             : _brandCtrl.text.trim(),
         ageMonths: int.tryParse(_ageCtrl.text.trim()) ?? 12,
-        conditionScore: _scoreForWearLevel(_wearLevel),
+        conditionScore: ToolProvider.scoreForWearLevel(_wearLevel),
       );
     }
 
@@ -657,7 +625,7 @@ class _ToolFormScreenState extends State<ToolFormScreen> {
                   pickedImages: _pickedImages,
                   existingPhotoUrls: widget.tool?.photoUrls ?? const [],
                   loading: _imageLoading,
-                  minPhotos: _minRequiredPhotos,
+                  minPhotos: ToolProvider.minRequiredPhotos,
                   onAdd: _addImage,
                   onRemove: _removeImage,
                   editable: !_isEditing,
