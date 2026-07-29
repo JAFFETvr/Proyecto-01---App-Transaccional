@@ -55,15 +55,17 @@ class ToolPhotoField extends StatelessWidget {
               color: metMinimum ? const Color(0xFF16A34A) : cs.error,
             ),
             const SizedBox(width: 6),
-            Text(
-              !editable
-                  ? '$_totalCount fotos verificadas por la IA'
-                  : metMinimum
-                      ? '$_totalCount fotos — mínimo cumplido'
-                      : '$_totalCount de $minPhotos fotos — sube al menos $minPhotos ángulos distintos',
-              style: tt.bodySmall?.copyWith(
-                color: metMinimum ? const Color(0xFF16A34A) : cs.error,
-                fontWeight: FontWeight.w600,
+            Expanded(
+              child: Text(
+                !editable
+                    ? '$_totalCount fotos verificadas por la IA'
+                    : metMinimum
+                        ? '$_totalCount fotos — mínimo cumplido'
+                        : '$_totalCount de $minPhotos fotos — sube al menos $minPhotos ángulos distintos',
+                style: tt.bodySmall?.copyWith(
+                  color: metMinimum ? const Color(0xFF16A34A) : cs.error,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
